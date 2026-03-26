@@ -1,0 +1,35 @@
+# --- Docker ---
+.docker/
+# Ignore active containers/data if mapped to the project root
+data/
+db_data/
+*.tar
+*.tar.gz
+
+# --- Kubernetes ---
+.kube/
+# Ignore generated helm charts or temporary manifests
+charts/
+*-generated.yaml
+
+# --- Secrets & Environment ---
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+*.p12
+*.crt
+
+# --- Terraform (if used for infra) ---
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# --- Logs & Temps ---
+logs/
+*.log
+tmp/
+.DS_Store
