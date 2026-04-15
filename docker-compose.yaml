@@ -1,0 +1,164 @@
+# =============================================================================
+# Local development stack
+#
+# Core services (postgres, keycloak, hapi-fhir, fhir-gateway) start by default.
+# Extension services live behind Docker profiles and are opted in via `dev.sh`:
+#
+#   ./dev.sh up          # core services only
+#   ./dev.sh up --web    # core + web-portal
+#   ./dev.sh up --pipes  # core + data-pipes
+#   ./dev.sh up --full   # everything
+#
+# Auth mode for HAPI FHIR is controlled by the HAPI_CONFIG variable in `.env`.
+#
+# NOTE: A public demo deployment (reverse proxy, VM provisioning, periodic
+# reset job, landing page) is out of scope for this file and will be added
+# later.
+# =============================================================================
+
+services:
+  postgres:
+    image: postgres:18
+    container_name: postgres
+    restart: unless-stopped
+    env_file:
+      - postgres/postgres.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/init/:/docker-entrypoint-initdb.d/
+    ports:
+      - "127.0.0.1:5432:5432"
+    networks: [fhir_net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  keycloak:
+    restart: unless-stopped
+    image: quay.io/keycloak/keycloak:26.5.0
+    container_name: keycloak
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./keycloak/realm-import/:/opt/keycloak/data/import/
+    env_file:
+      - keycloak/keycloak.env
+    environment:
+      - KC_DB_URL_HOST=postgres
+      - KC_DB_URL_PORT=5432
+    command:
+      - "--verbose"
+      - "start"
+      - "--features=persistent-user-sessions"
+      - "--http-enabled=true"
+      - "--hostname-strict=false"
+      - "--http-port=8080"
+      - "--spi-events-listener-jboss-logging-success-level=info"
+      - "--spi-events-listener-jboss-logging-error-level=warn"
+      - "--health-enabled=true"
+      - "--import-realm"
+    ports:
+      - "8081:8080"
+    networks: [fhir_net]
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/9000 && printf 'GET /health/ready HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && cat <&3 | grep -q UP"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  hapi-fhir:
+    restart: unless-stopped
+    image: hapiproject/hapi:v8.8.0-1
+    container_name: hapi-fhir
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./hapi-fhir/${HAPI_CONFIG}:/data/hapi-fhir/config/application.yaml
+    environment:
+      - "SPRING_CONFIG_LOCATION=/data/hapi-fhir/config/"
+      - DB_HOST=postgres
+      - DB_PORT=5432
+    networks: [fhir_net]
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /fhir/metadata HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && head -1 <&3 | grep -q '200 OK'"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+
+  fhir-gateway:
+    image: onaio/fhir-gateway-plugin:v3.0.5
+    container_name: fhir-gateway
+    restart: unless-stopped
+    env_file:
+      - gateway/gateway.env
+    ports:
+      - "8083:8080"
+    depends_on:
+      hapi-fhir:
+        condition: service_started
+    networks: [fhir_net]
+
+  # ---------------------------------------------------------------------------
+  # web-portal (extension service, profile: web / full)
+  #
+  # Stub — not yet wired up. Before enabling, the following still need to be
+  # decided and filled in:
+  #   - Image source: prebuilt registry image, or local build via
+  #     Dockerfile.dev with hot reload for frontend development.
+  #   - Whether dev mode runs in-container or on the host against a
+  #     backend-only compose (documented workflow).
+  #   - Published host port for the web UI.
+  #   - Env vars for backend URLs (fhir-gateway base URL, keycloak issuer,
+  #     OIDC client id, redirect URIs).
+  #   - Dependency order on keycloak and fhir-gateway.
+  # ---------------------------------------------------------------------------
+  # web-portal:
+  #   profiles: ["web", "full"]
+  #   image: TBD
+  #   container_name: web-portal
+  #   restart: unless-stopped
+  #   depends_on:
+  #     fhir-gateway:
+  #       condition: service_started
+  #     keycloak:
+  #       condition: service_healthy
+  #   ports:
+  #     - "3000:3000"
+  #   networks: [fhir_net]
+
+  # ---------------------------------------------------------------------------
+  # data-pipes (extension service, profile: pipes / full)
+  #
+  # Stub — not yet wired up. Before enabling, the following still need to be
+  # decided and filled in:
+  #   - Image coordinates (registry + tag).
+  #   - Required env vars: FHIR source URL, sink configuration (database or
+  #     object store), pipeline schedule/mode.
+  #   - Volume mounts for pipeline config files, if any.
+  #   - Dependency order relative to hapi-fhir.
+  # ---------------------------------------------------------------------------
+  # data-pipes:
+  #   profiles: ["pipes", "full"]
+  #   image: TBD
+  #   container_name: data-pipes
+  #   restart: unless-stopped
+  #   depends_on:
+  #     hapi-fhir:
+  #       condition: service_started
+  #   networks: [fhir_net]
+
+networks:
+  fhir_net:
+    external: false
+
+volumes:
+  postgres_data:
