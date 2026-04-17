@@ -10,6 +10,7 @@ set -euo pipefail
 #   reset                       Stop services and wipe named volumes
 #   logs [service]              Tail logs (all services or one)
 #   render                      Render service config templates from .env
+#   clean                       Remove generated files (.env, application-*.yaml)
 #   help                        Show this help
 #
 # On first run, copy .env.example to .env and fill in values:
@@ -39,22 +40,34 @@ check_prerequisites() {
 }
 
 # --- Env file ----------------------------------------------------------------
+# Secrets workflow:
+#   1. If .env does not exist, copy .env.example to create it.
+#   2. Scan .env for any values set to the literal marker [generated].
+#      Replace each one with a unique random secret (openssl rand -hex 24).
+#
+# This means:
+#   - First run with no .env: file is created and all secrets are populated.
+#   - User copies .env.example manually but leaves some [generated] markers:
+#     the remaining markers are filled in automatically on next run.
+#   - User has already set all values: nothing is changed.
+generate_secret() {
+    openssl rand -hex 24
+}
+
 require_env_file() {
     if [[ ! -f "$ENV_FILE" ]]; then
-        cat >&2 <<EOF
-${RED}[ERROR]${NC} .env not found at $ENV_FILE
-
-Create it from the example and fill in real values before continuing:
-
-    cp .env.example .env
-    \${EDITOR:-vi} .env
-
-Generate strong random secrets with:
-
-    openssl rand -hex 24
-
-EOF
-        exit 1
+        local example="$SCRIPT_DIR/.env.example"
+        [[ -f "$example" ]] || error ".env.example not found at $example"
+        info "No .env found — creating from .env.example..."
+        cp "$example" "$ENV_FILE"
+        chmod 600 "$ENV_FILE"
+    fi
+    if grep -q '=\[generated\]' "$ENV_FILE"; then
+        info "Replacing [generated] markers in .env with random secrets..."
+        while grep -q '=\[generated\]' "$ENV_FILE"; do
+            sed -i "0,/=\[generated\]/{s/=\[generated\]/=$(generate_secret)/}" "$ENV_FILE"
+        done
+        info "Secrets generated. Review at: $ENV_FILE"
     fi
 }
 
@@ -74,10 +87,8 @@ render() {
     local dst="$SCRIPT_DIR/$2"
     local vars="$3"
     [[ -f "$src" ]] || error "Template missing: $1"
-    (
-        umask 077
-        envsubst "$vars" < "$src" > "$dst"
-    )
+    envsubst "$vars" < "$src" > "$dst"
+    chmod 644 "$dst"
     info "  rendered $2"
 }
 
@@ -85,13 +96,9 @@ render_templates() {
     info "Rendering configuration from *.example templates..."
     load_env
 
-    render postgres/postgres.env.example \
-           postgres/postgres.env \
-           '${POSTGRES_ADMIN_PASSWORD} ${KEYCLOAK_DB_PASSWORD} ${HAPI_FHIR_DB_PASSWORD}'
-
-    render keycloak/keycloak.env.example \
-           keycloak/keycloak.env \
-           '${KEYCLOAK_ADMIN_PASSWORD} ${KEYCLOAK_DB_PASSWORD}'
+    render keycloak/ohs-player-realm.json.example \
+           keycloak/ohs-player-realm.json \
+           '${KEYCLOAK_REALM} ${OHS_PLAYER_KEYCLOAK_CLIENT_ID} ${OHS_PLAYER_KEYCLOAK_CLIENT_SECRET} ${OHS_PLAYER_DEFAULT_KEYCLOAK_USERNAME} ${OHS_PLAYER_APP_HOST} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_ID} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET} ${HAPI_FHIR_SERVER_DEFAULT_KEYCLOAK_USERNAME}'
 
     render hapi-fhir/application-no-auth.yaml.example \
            hapi-fhir/application-no-auth.yaml \
@@ -99,7 +106,7 @@ render_templates() {
 
     render hapi-fhir/application-auth.yaml.example \
            hapi-fhir/application-auth.yaml \
-           '${HAPI_FHIR_DB_PASSWORD} ${HAPI_FHIR_KEYCLOAK_CLIENT_SECRET}'
+           '${HAPI_FHIR_DB_PASSWORD} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET}'
 }
 
 # --- Compose helpers ---------------------------------------------------------
@@ -160,6 +167,15 @@ cmd_render() {
     render_templates
 }
 
+cmd_clean() {
+    info "Removing generated files..."
+    rm -f "$SCRIPT_DIR/.env"
+    rm -f "$SCRIPT_DIR/keycloak/ohs-player-realm.json"
+    rm -f "$SCRIPT_DIR/hapi-fhir/application-no-auth.yaml"
+    rm -f "$SCRIPT_DIR/hapi-fhir/application-auth.yaml"
+    info "Cleaned. Run './dev.sh render' to regenerate configs, or './dev.sh up' to regenerate and start services."
+}
+
 # --- Usage -------------------------------------------------------------------
 usage() {
     cat <<EOF
@@ -172,6 +188,7 @@ Commands:
   reset                       Stop services and wipe named volumes
   logs [service]              Tail logs (all services or one)
   render                      Render service config templates from .env
+  clean                       Remove generated files (.env, application-*.yaml)
   help                        Show this help
 
 First-run setup:
@@ -191,6 +208,7 @@ main() {
         reset)    cmd_reset ;;
         logs)     cmd_logs "$@" ;;
         render)   cmd_render ;;
+        clean)    cmd_clean ;;
         help|--help|-h) usage ;;
         *)        error "Unknown command: $command. Run '$0 help' for usage." ;;
     esac

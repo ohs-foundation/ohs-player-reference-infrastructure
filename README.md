@@ -20,48 +20,24 @@ from WSL or Git Bash; native `cmd.exe` / PowerShell are not supported.
 
 ## First-Run Setup
 
-1. **Create your local `.env` from the example:**
+```bash
+./dev.sh up
+```
 
-   ```bash
-   cp .env.example .env
-   ```
+On first run the script auto-generates `.env` from `.env.example`, replacing
+every `[generated]` marker with a unique random secret. It then renders the
+HAPI FHIR config templates, pulls images and brings up the core services.
 
-2. **Edit `.env` and fill in real values.** Every secret ships as
-   `changeme` — you must replace each one before starting the stack.
-   Generate strong random values with:
+`.env` is gitignored. **Never commit it.**
 
-   ```bash
-   openssl rand -hex 24
-   ```
-
-   The file contains five secrets plus one auth-mode selector:
-
-   | Variable | Purpose |
-   |---|---|
-   | `POSTGRES_ADMIN_PASSWORD` | Postgres superuser password |
-   | `KEYCLOAK_DB_PASSWORD` | Password for the `keycloak` DB role |
-   | `KEYCLOAK_ADMIN_PASSWORD` | Keycloak admin console bootstrap password |
-   | `HAPI_FHIR_DB_PASSWORD` | Password for the `hapi_fhir` DB role |
-   | `HAPI_FHIR_KEYCLOAK_CLIENT_SECRET` | OIDC client secret (auth mode only) |
-   | `HAPI_CONFIG` | Which HAPI config to mount (see [Auth mode](#auth-mode)) |
-
-   `.env` is gitignored. **Never commit it.**
-
-3. **Start the stack:**
-
-   ```bash
-   ./dev.sh up
-   ```
-
-   The script renders per-service config files from the `*.example`
-   templates using your `.env`, pulls images and brings up the core
-   services.
+To create `.env` manually instead, copy the example and replace the
+`[generated]` values with your own secrets before running `./dev.sh up`.
 
 ## Services & Ports
 
 | Service | Host port | Notes |
 |---|---|---|
-| Postgres | `127.0.0.1:5432` | Bound to loopback only |
+| Postgres | `127.0.0.1:5433` | Bound to loopback only |
 | Keycloak | `8081` maps to container `8080` | Admin console at <http://localhost:8081> |
 | HAPI FHIR | `8082` maps to container `8080` | HAPI FHIR base at <http://localhost:8082/fhir> |
 | FHIR Gateway | `8083` maps to container `8080` | FHIR Info Gateway entry at <http://localhost:8083> |
@@ -74,6 +50,7 @@ from WSL or Git Bash; native `cmd.exe` / PowerShell are not supported.
 ./dev.sh reset                       Stop services and wipe named volumes
 ./dev.sh logs [service]              Tail logs (all services or one)
 ./dev.sh render                      Render service config templates from .env
+./dev.sh clean                       Remove generated files (.env, application-*.yaml)
 ./dev.sh help                        Show usage
 ```
 
@@ -89,6 +66,43 @@ from WSL or Git Bash; native `cmd.exe` / PowerShell are not supported.
 Extension services currently ship as commented-out stubs in
 `docker-compose.yaml`. The `--web` / `--pipes` / `--full` flags will become
 functional once those services are wired up.
+
+## Verifying the Stack
+
+After `./dev.sh up`, check that all containers are running and healthy:
+
+```bash
+docker compose ps
+```
+
+All core services should show `Up` with `(healthy)` status. Keycloak and
+HAPI FHIR have longer start-up times — wait for their health checks to pass
+before testing (up to 90s for Keycloak, up to 180s for HAPI FHIR).
+
+### Service endpoints
+
+| Service | URL | What to expect |
+|---|---|---|
+| **Postgres** | `psql -h 127.0.0.1 -p ${POSTGRES_PORT:-5433} -U postgres` | Connection prompt (use `POSTGRES_ADMIN_PASSWORD` from `.env`) |
+| **Keycloak** | <http://localhost:8081> | Admin console login page (use `KEYCLOAK_ADMIN_USERNAME` / `KEYCLOAK_ADMIN_PASSWORD` from `.env`) |
+| **HAPI FHIR** | <http://localhost:8082/fhir/metadata> | FHIR CapabilityStatement JSON response |
+| **FHIR Gateway** | <http://localhost:8083/fhir/metadata> | Proxied CapabilityStatement via the gateway |
+
+> Ports above are the defaults. If you changed them in `.env`, substitute
+> your values.
+
+### Quick smoke test
+
+```bash
+# Keycloak is responding
+curl -sf http://localhost:8081/health/ready | grep -q UP && echo "Keycloak: OK"
+
+# HAPI FHIR returns a CapabilityStatement
+curl -sf http://localhost:8082/fhir/metadata | grep -q CapabilityStatement && echo "HAPI FHIR: OK"
+
+# FHIR Gateway proxies to HAPI FHIR
+curl -sf http://localhost:8083/fhir/metadata | grep -q CapabilityStatement && echo "FHIR Gateway: OK"
+```
 
 ## Auth Mode
 
@@ -109,8 +123,8 @@ No compose files are touched. The HAPI volume mount reads the variable
 directly.
 
 When switching **into** auth mode, make sure
-`HAPI_FHIR_KEYCLOAK_CLIENT_SECRET` in `.env` matches the client secret
-configured in the `fhir-server` Keycloak client for the `ohs-realm` realm.
+`HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET` in `.env` matches the client secret
+configured in the `hapi-fhir-server-client` Keycloak client for the `ohs-player` realm.
 
 ## Common Tasks
 
@@ -139,32 +153,27 @@ docker compose restart hapi-fhir
 ```text
 ohs-player-reference-infrastructure/
 ├── keycloak/
-│   ├── realm-import/ohs-realm.json   # imported automatically on first boot
-│   ├── keycloak.env.example
-│   └── keycloak.env                  # rendered by dev.sh (gitignored)
+│   ├── ohs-player-realm.json.example  # realm template
+│   └── ohs-player-realm.json         # rendered by dev.sh (gitignored)
 ├── hapi-fhir/
 │   ├── application-no-auth.yaml.example
-│   ├── application-no-auth.yaml      # rendered by dev.sh (gitignored)
+│   ├── application-no-auth.yaml     # rendered by dev.sh (gitignored)
 │   ├── application-auth.yaml.example
-│   └── application-auth.yaml         # rendered by dev.sh (gitignored)
+│   └── application-auth.yaml        # rendered by dev.sh (gitignored)
 ├── postgres/
-│   ├── init/01-init.sh               # runs once on volume creation
-│   ├── postgres.env.example
-│   └── postgres.env                  # rendered by dev.sh (gitignored)
-├── gateway/
-│   └── gateway.env                   # no secrets; committed
-├── .env.example                      # single source of truth for secrets
-├── .env                              # your local copy (gitignored)
-├── docker-compose.yaml               # all services; extensions behind profiles
-├── dev.sh                            # lifecycle entrypoint
-├── README.md                         # this file
-└── PRODUCTION.md                     # GCP production deployment guide
+│   └── init/01-init.sh              # runs once on volume creation
+├── .env.example                     # single source of truth for config
+├── .env                             # your local copy (gitignored)
+├── docker-compose.yaml              # all services; extensions behind profiles
+├── dev.sh                           # lifecycle entrypoint
+├── README.md                        # this file
+└── PRODUCTION.md                    # GCP production deployment guide
 ```
 
 ## Troubleshooting
 
-**`.env not found`** — You haven't run `cp .env.example .env` yet. See
-[First-Run Setup](#first-run-setup).
+**`.env.example not found`** — The repo is missing its template file.
+Re-clone or restore it from version control.
 
 **Keycloak fails to start with a DB error** — Postgres is still
 initialising. Wait ~30s and re-run `./dev.sh up`, or check

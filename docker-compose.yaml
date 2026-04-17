@@ -19,15 +19,18 @@
 services:
   postgres:
     image: postgres:18
-    container_name: postgres
+    container_name: ohs-postgres
     restart: unless-stopped
-    env_file:
-      - postgres/postgres.env
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_ADMIN_PASSWORD}
+      - KEYCLOAK_DB_PASSWORD=${KEYCLOAK_DB_PASSWORD}
+      - HAPI_FHIR_DB_PASSWORD=${HAPI_FHIR_DB_PASSWORD}
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
       - ./postgres/init/:/docker-entrypoint-initdb.d/
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
     networks: [fhir_net]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -39,17 +42,26 @@ services:
   keycloak:
     restart: unless-stopped
     image: quay.io/keycloak/keycloak:26.5.0
-    container_name: keycloak
+    container_name: ohs-keycloak
     depends_on:
       postgres:
         condition: service_healthy
     volumes:
-      - ./keycloak/realm-import/:/opt/keycloak/data/import/
-    env_file:
-      - keycloak/keycloak.env
+      # Keycloak 26.x requires the import filename to match <realm>-realm.json.
+      # If you change KEYCLOAK_REALM value, you MUST rename keycloak/ohs-player-realm.json to
+      # <new-realm>-realm.json and update the path below to match.
+      - ./keycloak/ohs-player-realm.json:/opt/keycloak/data/import/ohs-player-realm.json:ro
     environment:
+      - KC_BOOTSTRAP_ADMIN_USERNAME=${KEYCLOAK_ADMIN_USERNAME:-admin}
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+      - KC_DB=postgres
       - KC_DB_URL_HOST=postgres
       - KC_DB_URL_PORT=5432
+      - KC_DB_PASSWORD=${KEYCLOAK_DB_PASSWORD}
+      - KC_DB_USERNAME=keycloak
+      - KC_DB_URL_DATABASE=keycloak
+      - KC_PROXY_HEADERS=xforwarded
+      - KC_HOSTNAME=http://localhost:${KEYCLOAK_PORT:-8081}
     command:
       - "--verbose"
       - "start"
@@ -62,7 +74,7 @@ services:
       - "--health-enabled=true"
       - "--import-realm"
     ports:
-      - "8081:8080"
+      - "${KEYCLOAK_PORT:-8081}:8080"
     networks: [fhir_net]
     healthcheck:
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/9000 && printf 'GET /health/ready HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && cat <&3 | grep -q UP"]
@@ -74,21 +86,22 @@ services:
   hapi-fhir:
     restart: unless-stopped
     image: hapiproject/hapi:v8.8.0-1
-    container_name: hapi-fhir
+    container_name: ohs-hapi-fhir
     depends_on:
       postgres:
         condition: service_healthy
     ports:
-      - "8082:8080"
+      - "${HAPI_FHIR_PORT:-8082}:8080"
     volumes:
-      - ./hapi-fhir/${HAPI_CONFIG}:/data/hapi-fhir/config/application.yaml
+      - ./hapi-fhir/${HAPI_CONFIG}:/data/hapi-fhir/config/application.yaml:ro
+      - ./hapi-fhir/health/Healthcheck.class:/healthcheck/Healthcheck.class:ro
     environment:
       - "SPRING_CONFIG_LOCATION=/data/hapi-fhir/config/"
       - DB_HOST=postgres
       - DB_PORT=5432
     networks: [fhir_net]
     healthcheck:
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/8080 && printf 'GET /fhir/metadata HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && head -1 <&3 | grep -q '200 OK'"]
+      test: ["CMD", "java", "-cp", "/healthcheck", "Healthcheck"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -96,12 +109,18 @@ services:
 
   fhir-gateway:
     image: onaio/fhir-gateway-plugin:v3.0.5
-    container_name: fhir-gateway
+    container_name: ohs-fhir-gateway
     restart: unless-stopped
-    env_file:
-      - gateway/gateway.env
+    environment:
+      - PROXY_TO=http://hapi-fhir:8080/fhir
+      - TOKEN_ISSUER=http://keycloak:8080/realms/${KEYCLOAK_REALM:-ohs-player}
+      - ACCESS_CHECKER=permission
+      - ALLOWED_QUERIES_FILE=resources/hapi_page_url_allowed_queries.json
+      - SYNC_FILTER_IGNORE_RESOURCES_FILE=resources/hapi_sync_filter_ignored_queries.json
+      - BACKEND_TYPE=HAPI
+      - RUN_MODE=PROD
     ports:
-      - "8083:8080"
+      - "${FHIR_GATEWAY_PORT:-8083}:8080"
     depends_on:
       hapi-fhir:
         condition: service_started
@@ -124,7 +143,7 @@ services:
   # web-portal:
   #   profiles: ["web", "full"]
   #   image: TBD
-  #   container_name: web-portal
+  #   container_name: ohs-web-portal
   #   restart: unless-stopped
   #   depends_on:
   #     fhir-gateway:
@@ -149,7 +168,7 @@ services:
   # data-pipes:
   #   profiles: ["pipes", "full"]
   #   image: TBD
-  #   container_name: data-pipes
+  #   container_name: ohs-data-pipes
   #   restart: unless-stopped
   #   depends_on:
   #     hapi-fhir:

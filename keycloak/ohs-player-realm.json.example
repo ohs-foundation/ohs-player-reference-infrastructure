@@ -1,6 +1,6 @@
 {
-  "id": "ohs-realm",
-  "realm": "ohs-realm",
+  "id": "${KEYCLOAK_REALM}",
+  "realm": "${KEYCLOAK_REALM}",
   "notBefore": 0,
   "defaultSignatureAlgorithm": "RS256",
   "revokeRefreshToken": false,
@@ -52,7 +52,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -61,7 +61,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -70,7 +70,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -79,7 +79,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -88,7 +88,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -97,7 +97,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -106,7 +106,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -115,7 +115,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -124,7 +124,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -133,7 +133,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -142,7 +142,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -151,7 +151,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -160,7 +160,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -169,7 +169,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -178,7 +178,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -187,7 +187,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -196,7 +196,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -205,7 +205,7 @@
         "description": "${role_offline-access}",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -214,7 +214,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -223,7 +223,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -232,7 +232,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -241,7 +241,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -250,7 +250,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -259,11 +259,13 @@
         "composite": true,
         "composites": {
           "client": {
-            "realm-management": ["query-users"]
+            "realm-management": [
+              "query-users"
+            ]
           }
         },
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -272,7 +274,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -281,7 +283,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -290,7 +292,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -299,7 +301,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -308,7 +310,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -317,7 +319,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -326,7 +328,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -335,7 +337,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -344,7 +346,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -353,7 +355,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -362,7 +364,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -371,7 +373,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -380,7 +382,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -389,7 +391,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -398,7 +400,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -407,7 +409,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -416,7 +418,7 @@
         "description": "${role_uma_authorization}",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -425,7 +427,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -434,7 +436,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -443,7 +445,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -452,7 +454,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -461,7 +463,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -470,7 +472,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -479,7 +481,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -488,7 +490,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -497,7 +499,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -506,7 +508,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -515,7 +517,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -524,7 +526,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -533,7 +535,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -542,7 +544,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -551,7 +553,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -560,7 +562,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -569,7 +571,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -578,7 +580,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -587,7 +589,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -596,7 +598,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -605,7 +607,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -614,7 +616,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -623,7 +625,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -632,7 +634,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -641,7 +643,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -650,7 +652,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -659,7 +661,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -668,7 +670,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -677,7 +679,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -686,7 +688,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -695,7 +697,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -704,11 +706,15 @@
         "composite": true,
         "composites": {
           "client": {
-            "realm-management": ["manage-users", "query-groups", "view-users"]
+            "realm-management": [
+              "manage-users",
+              "query-groups",
+              "view-users"
+            ]
           }
         },
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -717,7 +723,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -726,7 +732,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -735,7 +741,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -744,7 +750,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -753,7 +759,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -762,7 +768,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -771,7 +777,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -780,7 +786,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -789,7 +795,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -798,7 +804,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -807,7 +813,7 @@
         "description": "Ability to add locations",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -816,7 +822,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -825,7 +831,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -834,7 +840,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -843,7 +849,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -852,7 +858,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -861,7 +867,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -870,7 +876,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -879,7 +885,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -888,7 +894,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -897,7 +903,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -906,22 +912,28 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
         "id": "08071035-4ee8-4d34-bb1b-bfb8587c5245",
-        "name": "default-roles-ohs-realm",
+        "name": "default-roles-${KEYCLOAK_REALM}",
         "description": "${role_default-roles}",
         "composite": true,
         "composites": {
-          "realm": ["offline_access", "uma_authorization"],
+          "realm": [
+            "offline_access",
+            "uma_authorization"
+          ],
           "client": {
-            "account": ["view-profile", "manage-account"]
+            "account": [
+              "view-profile",
+              "manage-account"
+            ]
           }
         },
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -930,7 +942,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -939,7 +951,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -948,7 +960,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -957,7 +969,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       },
       {
@@ -966,7 +978,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "ohs-realm",
+        "containerId": "${KEYCLOAK_REALM}",
         "attributes": {}
       }
     ],
@@ -1075,7 +1087,9 @@
           "composite": true,
           "composites": {
             "client": {
-              "realm-management": ["query-clients"]
+              "realm-management": [
+                "query-clients"
+              ]
             }
           },
           "clientRole": true,
@@ -1161,7 +1175,10 @@
           "composite": true,
           "composites": {
             "client": {
-              "realm-management": ["query-groups", "query-users"]
+              "realm-management": [
+                "query-groups",
+                "query-users"
+              ]
             }
           },
           "clientRole": true,
@@ -1181,7 +1198,7 @@
       "security-admin-console": [],
       "admin-cli": [],
       "account-console": [],
-      "ohs-realm-client": [],
+      "${OHS_PLAYER_KEYCLOAK_CLIENT_ID}": [],
       "broker": [
         {
           "id": "5e555a70-f80e-45e8-a4c6-813ed4ec2033",
@@ -1255,7 +1272,9 @@
           "composite": true,
           "composites": {
             "client": {
-              "account": ["view-consent"]
+              "account": [
+                "view-consent"
+              ]
             }
           },
           "clientRole": true,
@@ -1269,7 +1288,9 @@
           "composite": true,
           "composites": {
             "client": {
-              "account": ["manage-account-links"]
+              "account": [
+                "manage-account-links"
+              ]
             }
           },
           "clientRole": true,
@@ -1304,27 +1325,18 @@
         "PUT_PRACTITIONERROLE",
         "POST_CONDITION",
         "GET_FLAG",
-        "POST_STRUCTUREMAP",
         "GET_PLANDEFINITION",
         "PATCH_LIST",
         "POST_GROUP",
         "POST_MEASUREREPORT",
         "POST_QUESTIONNAIRERESPONSE",
-        "PUT_MEASURE",
-        "PUT_BINARY",
         "offline_access",
         "GET_ENCOUNTER",
         "PUT_OBSERVATION",
-        "PUT_ORGANIZATION",
-        "PUT_STRUCTUREMAP",
         "GET_CONDITION",
-        "EDIT_KEYCLOAK_USERS",
-        "PATCH_BINARY",
         "PUT_CAREPLAN",
         "PUT_MEASUREREPORT",
         "PUT_TASK",
-        "PUT_ORGANIZATIONAFFILIATION",
-        "PUT_LOCATION",
         "POST_OBSERVATION",
         "PATCH_QUESTIONNAIRERESPONSE",
         "PUT_PATIENT",
@@ -1332,13 +1344,11 @@
         "PUT_FLAG",
         "POST_CAREPLAN",
         "GET_TASK",
-        "POST_ORGANIZATIONAFFILIATION",
         "PUT_QUESTIONNAIRE",
         "PATCH_ENCOUNTER",
         "uma_authorization",
         "PATCH_GROUP",
         "GET_COMPOSITION",
-        "PATCH_PLANDEFINITION",
         "PUT_LIST",
         "PATCH_CONDITION",
         "POST_LIST",
@@ -1348,9 +1358,7 @@
         "GET_STRUCTUREMAP",
         "GET_PATIENT",
         "GET_OBSERVATION",
-        "POST_CARETEAM",
         "POST_BUNDLE",
-        "PUT_LIBRARY",
         "PATCH_CAREPLAN",
         "GET_MEASURE",
         "POST_ENCOUNTER",
@@ -1361,34 +1369,25 @@
         "GET_BUNDLE",
         "POST_TASK",
         "GET_CARETEAM",
-        "PUT_PLANDEFINITION",
         "PATCH_PATIENT",
         "PUT_GROUP",
         "GET_PRACTITIONERDETAIL",
-        "POST_LIBRARY",
         "VIEW_KEYCLOAK_USERS",
         "PATCH_OBSERVATION",
-        "PUT_COMPOSITION",
         "PATCH_QUESTIONNAIRE",
         "GET_PRACTITIONER-DETAILS",
         "POST_PRACTITIONER",
-        "POST_BINARY",
         "PUT_BUNDLE",
         "PUT_PRACTITIONER",
-        "PATCH_STRUCTUREMAP",
         "PATCH_TASK",
-        "POST_LOCATION",
-        "POST_ORGANIZATION",
         "GET_MEASUREREPORT",
         "GET_LOCATION",
-        "POST_COMPOSITION",
         "GET_LIST",
         "GET_PRACTITIONERROLE",
         "PUT_RELATEDPERSON",
         "PUT_QUESTIONNAIRERESPONSE",
         "GET_QUESTIONNAIRERESPONSE",
-        "POST_PLANDEFINITION",
-        "default-roles-ohs-realm",
+        "default-roles-${KEYCLOAK_REALM}",
         "GET_CAREPLAN",
         "GET_GROUP",
         "GET_ORGANIZATION",
@@ -1490,7 +1489,7 @@
         "GET_QUESTIONNAIRERESPONSE",
         "POST_PLANDEFINITION",
         "POST_ORGANIZATIONAFFILIATION",
-        "default-roles-ohs-realm",
+        "default-roles-${KEYCLOAK_REALM}",
         "GET_CAREPLAN",
         "GET_GROUP",
         "PUT_QUESTIONNAIRE",
@@ -1602,7 +1601,7 @@
         "PUT_QUESTIONNAIRERESPONSE",
         "GET_QUESTIONNAIRERESPONSE",
         "POST_PLANDEFINITION",
-        "default-roles-ohs-realm",
+        "default-roles-${KEYCLOAK_REALM}",
         "GET_CAREPLAN",
         "GET_GROUP",
         "GET_ORGANIZATION",
@@ -1610,33 +1609,19 @@
         "GET_BINARY"
       ],
       "clientRoles": {}
-    },
-    {
-      "id": "67fb831c-2596-4c8e-87d7-6eed0c8a33e9",
-      "name": "Training",
-      "path": "/Training",
-      "subGroups": [],
-      "attributes": {},
-      "realmRoles": [
-        "POST_OBSERVATION",
-        "GET_RELATEDPERSON",
-        "POST_PRACTITIONERROLE",
-        "PATCH_FLAG",
-        "GET_ORGANIZATIONAFFILIATION",
-        "POST_RELATEDPERSON"
-      ],
-      "clientRoles": {}
     }
   ],
   "defaultRole": {
     "id": "08071035-4ee8-4d34-bb1b-bfb8587c5245",
-    "name": "default-roles-ohs-realm",
+    "name": "default-roles-${KEYCLOAK_REALM}",
     "description": "${role_default-roles}",
     "composite": true,
     "clientRole": false,
-    "containerId": "ohs-realm"
+    "containerId": "${KEYCLOAK_REALM}"
   },
-  "requiredCredentials": ["password"],
+  "requiredCredentials": [
+    "password"
+  ],
   "otpPolicyType": "totp",
   "otpPolicyAlgorithm": "HmacSHA1",
   "otpPolicyInitialCounter": 0,
@@ -1651,7 +1636,9 @@
   ],
   "localizationTexts": {},
   "webAuthnPolicyRpEntityName": "keycloak",
-  "webAuthnPolicySignatureAlgorithms": ["ES256"],
+  "webAuthnPolicySignatureAlgorithms": [
+    "ES256"
+  ],
   "webAuthnPolicyRpId": "",
   "webAuthnPolicyAttestationConveyancePreference": "not specified",
   "webAuthnPolicyAuthenticatorAttachment": "not specified",
@@ -1662,7 +1649,9 @@
   "webAuthnPolicyAcceptableAaguids": [],
   "webAuthnPolicyExtraOrigins": [],
   "webAuthnPolicyPasswordlessRpEntityName": "keycloak",
-  "webAuthnPolicyPasswordlessSignatureAlgorithms": ["ES256"],
+  "webAuthnPolicyPasswordlessSignatureAlgorithms": [
+    "ES256"
+  ],
   "webAuthnPolicyPasswordlessRpId": "",
   "webAuthnPolicyPasswordlessAttestationConveyancePreference": "not specified",
   "webAuthnPolicyPasswordlessAuthenticatorAttachment": "not specified",
@@ -1675,15 +1664,33 @@
   "users": [
     {
       "id": "1312cb52-5af1-4161-9728-a661843f6e7b",
-      "username": "service-account-ohs-realm-client",
+      "username": "${OHS_PLAYER_DEFAULT_KEYCLOAK_USERNAME}",
       "emailVerified": false,
       "createdTimestamp": 1700582591403,
       "enabled": true,
       "totp": false,
-      "serviceAccountClientId": "ohs-realm-client",
+      "serviceAccountClientId": "${OHS_PLAYER_KEYCLOAK_CLIENT_ID}",
       "disableableCredentialTypes": [],
       "requiredActions": [],
-      "realmRoles": ["default-roles-ohs-realm"],
+      "realmRoles": [
+        "default-roles-${KEYCLOAK_REALM}"
+      ],
+      "notBefore": 0,
+      "groups": []
+    },
+    {
+      "id": "a4e2c9f1-7b3d-4e8a-9c1f-2d5b6e8f0a3c",
+      "username": "${HAPI_FHIR_SERVER_DEFAULT_KEYCLOAK_USERNAME}",
+      "emailVerified": false,
+      "createdTimestamp": 1700582591403,
+      "enabled": true,
+      "totp": false,
+      "serviceAccountClientId": "${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_ID}",
+      "disableableCredentialTypes": [],
+      "requiredActions": [],
+      "realmRoles": [
+        "default-roles-${KEYCLOAK_REALM}"
+      ],
       "notBefore": 0,
       "groups": []
     }
@@ -1691,14 +1698,19 @@
   "scopeMappings": [
     {
       "clientScope": "offline_access",
-      "roles": ["offline_access"]
+      "roles": [
+        "offline_access"
+      ]
     }
   ],
   "clientScopeMappings": {
     "account": [
       {
         "client": "account-console",
-        "roles": ["manage-account", "view-groups"]
+        "roles": [
+          "manage-account",
+          "view-groups"
+        ]
       }
     ]
   },
@@ -1708,12 +1720,14 @@
       "clientId": "account",
       "name": "${client_account}",
       "rootUrl": "${authBaseUrl}",
-      "baseUrl": "/realms/ohs-realm/account/",
+      "baseUrl": "/realms/${KEYCLOAK_REALM}/account/",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
-      "redirectUris": ["/realms/ohs-realm/account/*"],
+      "redirectUris": [
+        "/realms/${KEYCLOAK_REALM}/account/*"
+      ],
       "webOrigins": [],
       "notBefore": 0,
       "bearerOnly": false,
@@ -1753,12 +1767,14 @@
       "clientId": "account-console",
       "name": "${client_account-console}",
       "rootUrl": "${authBaseUrl}",
-      "baseUrl": "/realms/ohs-realm/account/",
+      "baseUrl": "/realms/${KEYCLOAK_REALM}/account/",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
-      "redirectUris": ["/realms/ohs-realm/account/*"],
+      "redirectUris": [
+        "/realms/${KEYCLOAK_REALM}/account/*"
+      ],
       "webOrigins": [],
       "notBefore": 0,
       "bearerOnly": false,
@@ -1936,13 +1952,17 @@
       "clientId": "security-admin-console",
       "name": "${client_security-admin-console}",
       "rootUrl": "${authAdminUrl}",
-      "baseUrl": "/admin/ohs-realm/console/",
+      "baseUrl": "/admin/${KEYCLOAK_REALM}/console/",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
-      "redirectUris": ["/admin/ohs-realm/console/*"],
-      "webOrigins": ["+"],
+      "redirectUris": [
+        "/admin/${KEYCLOAK_REALM}/console/*"
+      ],
+      "webOrigins": [
+        "+"
+      ],
       "notBefore": 0,
       "bearerOnly": false,
       "consentRequired": false,
@@ -1998,21 +2018,24 @@
     },
     {
       "id": "cbe40899-bc41-4c23-9bdf-0f6556c5811b",
-      "clientId": "ohs-realm-client",
-      "name": "",
+      "clientId": "${OHS_PLAYER_KEYCLOAK_CLIENT_ID}",
+      "name": "OHS Player Client",
       "description": "",
-      "rootUrl": "https://opensrp-web-stage.nawi.ke/",
+      "rootUrl": "http://${OHS_PLAYER_APP_HOST}/",
       "adminUrl": "",
       "baseUrl": "",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
-      "secret": "PO3ADUiQFFjgZteaAmKtDN6HjyXctBaK",
-      "redirectUris": ["https://opensrp-web-stage.nawi.ke/*"],
+      "secret": "${OHS_PLAYER_KEYCLOAK_CLIENT_SECRET}",
+      "redirectUris": [
+        "http://${OHS_PLAYER_APP_HOST}/*",
+        "https://${OHS_PLAYER_APP_HOST}/*"
+      ],
       "webOrigins": [
-        "http://opensrp-web-stage.nawi.ke",
-        "https://opensrp-web-stage.nawi.ke"
+        "http://${OHS_PLAYER_APP_HOST}",
+        "https://${OHS_PLAYER_APP_HOST}"
       ],
       "notBefore": 0,
       "bearerOnly": false,
@@ -2119,6 +2142,44 @@
           }
         }
       ],
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "basic",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ]
+    },
+    {
+      "id": "f7a1b2c3-d4e5-6f78-9a0b-c1d2e3f4a5b6",
+      "clientId": "${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_ID}",
+      "name": "HAPI FHIR Server",
+      "description": "Confidential bearer-only client for HAPI FHIR token validation",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET}",
+      "bearerOnly": true,
+      "consentRequired": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "publicClient": false,
+      "frontchannelLogout": false,
+      "protocol": "openid-connect",
+      "attributes": {},
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": true,
+      "nodeReRegistrationTimeout": -1,
       "defaultClientScopes": [
         "web-origins",
         "acr",
@@ -2707,7 +2768,9 @@
   },
   "smtpServer": {},
   "eventsEnabled": false,
-  "eventsListeners": ["jboss-logging"],
+  "eventsListeners": [
+    "jboss-logging"
+  ],
   "enabledEventTypes": [],
   "adminEventsEnabled": false,
   "adminEventsDetailsEnabled": false,
@@ -2749,7 +2812,9 @@
         "subType": "authenticated",
         "subComponents": {},
         "config": {
-          "allow-default-scopes": ["true"]
+          "allow-default-scopes": [
+            "true"
+          ]
         }
       },
       {
@@ -2778,7 +2843,9 @@
         "subType": "anonymous",
         "subComponents": {},
         "config": {
-          "max-clients": ["200"]
+          "max-clients": [
+            "200"
+          ]
         }
       },
       {
@@ -2788,8 +2855,12 @@
         "subType": "anonymous",
         "subComponents": {},
         "config": {
-          "host-sending-registration-request-must-match": ["true"],
-          "client-uris-must-match": ["true"]
+          "host-sending-registration-request-must-match": [
+            "true"
+          ],
+          "client-uris-must-match": [
+            "true"
+          ]
         }
       },
       {
@@ -2799,7 +2870,9 @@
         "subType": "anonymous",
         "subComponents": {},
         "config": {
-          "allow-default-scopes": ["true"]
+          "allow-default-scopes": [
+            "true"
+          ]
         }
       },
       {
@@ -2830,7 +2903,9 @@
         "providerId": "rsa-generated",
         "subComponents": {},
         "config": {
-          "priority": ["100"]
+          "priority": [
+            "100"
+          ]
         }
       },
       {
@@ -2839,7 +2914,9 @@
         "providerId": "aes-generated",
         "subComponents": {},
         "config": {
-          "priority": ["100"]
+          "priority": [
+            "100"
+          ]
         }
       },
       {
@@ -2848,8 +2925,12 @@
         "providerId": "hmac-generated",
         "subComponents": {},
         "config": {
-          "priority": ["100"],
-          "algorithm": ["HS512"]
+          "priority": [
+            "100"
+          ],
+          "algorithm": [
+            "HS512"
+          ]
         }
       },
       {
@@ -2858,8 +2939,12 @@
         "providerId": "hmac-generated",
         "subComponents": {},
         "config": {
-          "priority": ["100"],
-          "algorithm": ["HS256"]
+          "priority": [
+            "100"
+          ],
+          "algorithm": [
+            "HS256"
+          ]
         }
       },
       {
@@ -2868,8 +2953,12 @@
         "providerId": "rsa-enc-generated",
         "subComponents": {},
         "config": {
-          "priority": ["100"],
-          "algorithm": ["RSA-OAEP"]
+          "priority": [
+            "100"
+          ],
+          "algorithm": [
+            "RSA-OAEP"
+          ]
         }
       }
     ]

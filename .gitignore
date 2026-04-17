@@ -29,8 +29,7 @@ secrets/
 .terraform.lock.hcl
 
 # --- Rendered config (generated from *.example templates by dev.sh) ---
-postgres/postgres.env
-keycloak/keycloak.env
+keycloak/ohs-player-realm.json
 hapi-fhir/application-no-auth.yaml
 hapi-fhir/application-auth.yaml
 

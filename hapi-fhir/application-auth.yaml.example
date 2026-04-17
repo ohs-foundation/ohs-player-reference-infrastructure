@@ -64,8 +64,8 @@ hapi:
 keycloak:
   enabled: true
   auth-server-url: http://keycloak:8080/
-  realm: ohs-realm
-  resource: fhir-server
+  realm: ${KEYCLOAK_REALM}
+  resource: ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_ID}
   ssl-required: none
   credentials:
-    secret: ${HAPI_FHIR_KEYCLOAK_CLIENT_SECRET}
+    secret: ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET}
