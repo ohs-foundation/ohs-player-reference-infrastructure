@@ -1,0 +1,71 @@
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "prometheus,metrics"
+
+spring:
+  flyway:
+    enabled: false
+    check-location: false
+    baselineOnMigrate: true
+  main:
+    allow-circular-references: true
+    allow-bean-definition-overriding: true
+  datasource:
+    url: 'jdbc:postgresql://${DB_HOST}:${DB_PORT}/hapi_fhir'
+    username: hapi_fhir
+    password: ${HAPI_FHIR_DB_PASSWORD}
+    driverClassName: org.postgresql.Driver
+    max-active: 15
+  jpa:
+    properties:
+      hibernate.format_sql: false
+      hibernate.show_sql: false
+      hibernate.hbm2ddl.auto: update
+      hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
+  batch:
+    job:
+      enabled: false
+
+hapi:
+  fhir:
+    elasticsearch:
+      enabled: false
+    use_apache_address_strategy: true
+    use_apache_address_strategy_https: true
+    subscription:
+      resthook_enabled: true
+    fhir_version: R4
+    allow_cascading_deletes: false
+    allow_multiple_delete: false
+    delete_expunge_enabled: false
+    expunge_enabled: false
+    cors:
+      allow_Credentials: true
+      allowed_origin:
+        - '*'
+    search-coord-core-pool-size: 20
+    search-coord-max-pool-size: 100
+    search-coord-queue-capacity: 200
+    tester:
+      home:
+        name: Local Tester
+        server_address: 'http://localhost:8080/fhir'
+        refuse_to_fetch_third_party_urls: false
+        fhir_version: R4
+        validation:
+          requests_enabled: true
+          responses_enabled: true
+    validation:
+      requests_enabled: false
+      responses_enabled: false
+
+keycloak:
+  enabled: true
+  auth-server-url: http://keycloak:8080/
+  realm: ${KEYCLOAK_REALM}
+  resource: ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_ID}
+  ssl-required: none
+  credentials:
+    secret: ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET}

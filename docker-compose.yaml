@@ -1,0 +1,183 @@
+# =============================================================================
+# Local development stack
+#
+# Core services (postgres, keycloak, hapi-fhir, fhir-gateway) start by default.
+# Extension services live behind Docker profiles and are opted in via `dev.sh`:
+#
+#   ./dev.sh up          # core services only
+#   ./dev.sh up --web    # core + web-portal
+#   ./dev.sh up --pipes  # core + data-pipes
+#   ./dev.sh up --full   # everything
+#
+# Auth mode for HAPI FHIR is controlled by the HAPI_CONFIG variable in `.env`.
+#
+# NOTE: A public demo deployment (reverse proxy, VM provisioning, periodic
+# reset job, landing page) is out of scope for this file and will be added
+# later.
+# =============================================================================
+
+services:
+  postgres:
+    image: postgres:18
+    container_name: ohs-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_ADMIN_PASSWORD}
+      - KEYCLOAK_DB_PASSWORD=${KEYCLOAK_DB_PASSWORD}
+      - HAPI_FHIR_DB_PASSWORD=${HAPI_FHIR_DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./postgres/init/:/docker-entrypoint-initdb.d/
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+    networks: [fhir_net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  keycloak:
+    restart: unless-stopped
+    image: quay.io/keycloak/keycloak:26.5.0
+    container_name: ohs-keycloak
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      # Keycloak 26.x requires the import filename to match <realm>-realm.json.
+      # If you change KEYCLOAK_REALM value, you MUST rename keycloak/ohs-player-realm.json to
+      # <new-realm>-realm.json and update the path below to match.
+      - ./keycloak/ohs-player-realm.json:/opt/keycloak/data/import/ohs-player-realm.json:ro
+    environment:
+      - KC_BOOTSTRAP_ADMIN_USERNAME=${KEYCLOAK_ADMIN_USERNAME:-admin}
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+      - KC_DB=postgres
+      - KC_DB_URL_HOST=postgres
+      - KC_DB_URL_PORT=5432
+      - KC_DB_PASSWORD=${KEYCLOAK_DB_PASSWORD}
+      - KC_DB_USERNAME=keycloak
+      - KC_DB_URL_DATABASE=keycloak
+      - KC_PROXY_HEADERS=xforwarded
+      - KC_HOSTNAME=http://localhost:${KEYCLOAK_PORT:-8081}
+    command:
+      - "--verbose"
+      - "start"
+      - "--features=persistent-user-sessions"
+      - "--http-enabled=true"
+      - "--hostname-strict=false"
+      - "--http-port=8080"
+      - "--spi-events-listener-jboss-logging-success-level=info"
+      - "--spi-events-listener-jboss-logging-error-level=warn"
+      - "--health-enabled=true"
+      - "--import-realm"
+    ports:
+      - "${KEYCLOAK_PORT:-8081}:8080"
+    networks: [fhir_net]
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/9000 && printf 'GET /health/ready HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && cat <&3 | grep -q UP"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  hapi-fhir:
+    restart: unless-stopped
+    image: hapiproject/hapi:v8.8.0-1
+    container_name: ohs-hapi-fhir
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${HAPI_FHIR_PORT:-8082}:8080"
+    volumes:
+      - ./hapi-fhir/${HAPI_CONFIG}:/data/hapi-fhir/config/application.yaml:ro
+      - ./hapi-fhir/health/Healthcheck.class:/healthcheck/Healthcheck.class:ro
+    environment:
+      - "SPRING_CONFIG_LOCATION=/data/hapi-fhir/config/"
+      - DB_HOST=postgres
+      - DB_PORT=5432
+    networks: [fhir_net]
+    healthcheck:
+      test: ["CMD", "java", "-cp", "/healthcheck", "Healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+
+  fhir-gateway:
+    image: onaio/fhir-gateway-plugin:v3.0.5
+    container_name: ohs-fhir-gateway
+    restart: unless-stopped
+    environment:
+      - PROXY_TO=http://hapi-fhir:8080/fhir
+      - TOKEN_ISSUER=http://keycloak:8080/realms/${KEYCLOAK_REALM:-ohs-player}
+      - ACCESS_CHECKER=permission
+      - ALLOWED_QUERIES_FILE=resources/hapi_page_url_allowed_queries.json
+      - SYNC_FILTER_IGNORE_RESOURCES_FILE=resources/hapi_sync_filter_ignored_queries.json
+      - BACKEND_TYPE=HAPI
+      - RUN_MODE=PROD
+    ports:
+      - "${FHIR_GATEWAY_PORT:-8083}:8080"
+    depends_on:
+      hapi-fhir:
+        condition: service_started
+    networks: [fhir_net]
+
+  # ---------------------------------------------------------------------------
+  # web-portal (extension service, profile: web / full)
+  #
+  # Stub — not yet wired up. Before enabling, the following still need to be
+  # decided and filled in:
+  #   - Image source: prebuilt registry image, or local build via
+  #     Dockerfile.dev with hot reload for frontend development.
+  #   - Whether dev mode runs in-container or on the host against a
+  #     backend-only compose (documented workflow).
+  #   - Published host port for the web UI.
+  #   - Env vars for backend URLs (fhir-gateway base URL, keycloak issuer,
+  #     OIDC client id, redirect URIs).
+  #   - Dependency order on keycloak and fhir-gateway.
+  # ---------------------------------------------------------------------------
+  # web-portal:
+  #   profiles: ["web", "full"]
+  #   image: TBD
+  #   container_name: ohs-web-portal
+  #   restart: unless-stopped
+  #   depends_on:
+  #     fhir-gateway:
+  #       condition: service_started
+  #     keycloak:
+  #       condition: service_healthy
+  #   ports:
+  #     - "3000:3000"
+  #   networks: [fhir_net]
+
+  # ---------------------------------------------------------------------------
+  # data-pipes (extension service, profile: pipes / full)
+  #
+  # Stub — not yet wired up. Before enabling, the following still need to be
+  # decided and filled in:
+  #   - Image coordinates (registry + tag).
+  #   - Required env vars: FHIR source URL, sink configuration (database or
+  #     object store), pipeline schedule/mode.
+  #   - Volume mounts for pipeline config files, if any.
+  #   - Dependency order relative to hapi-fhir.
+  # ---------------------------------------------------------------------------
+  # data-pipes:
+  #   profiles: ["pipes", "full"]
+  #   image: TBD
+  #   container_name: ohs-data-pipes
+  #   restart: unless-stopped
+  #   depends_on:
+  #     hapi-fhir:
+  #       condition: service_started
+  #   networks: [fhir_net]
+
+networks:
+  fhir_net:
+    external: false
+
+volumes:
+  postgres_data:

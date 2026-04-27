@@ -28,6 +28,11 @@ secrets/
 *.tfstate.*
 .terraform.lock.hcl
 
+# --- Rendered config (generated from *.example templates by dev.sh) ---
+keycloak/ohs-player-realm.json
+hapi-fhir/application-no-auth.yaml
+hapi-fhir/application-auth.yaml
+
 # --- Logs & Temps ---
 logs/
 *.log
