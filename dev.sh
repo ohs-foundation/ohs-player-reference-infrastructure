@@ -107,6 +107,34 @@ render_templates() {
     render hapi-fhir/application-auth.yaml.example \
            hapi-fhir/application-auth.yaml \
            '${HAPI_FHIR_DB_PASSWORD} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET}'
+
+    compile_healthcheck
+}
+
+# --- HAPI healthcheck binary -------------------------------------------------
+# The HAPI image is distroless (no shell, no curl). docker-compose mounts
+# Healthcheck.class into the container and runs it via the JRE. We commit both
+# the .java source and the compiled .class so a fresh clone works without a
+# host JDK; if javac is installed and the source is newer, we recompile to
+# keep the committed binary honest with the source.
+compile_healthcheck() {
+    local src="$SCRIPT_DIR/hapi-fhir/health/Healthcheck.java"
+    local dst="$SCRIPT_DIR/hapi-fhir/health/Healthcheck.class"
+
+    [[ -f "$src" ]] || return 0
+
+    if ! command -v javac >/dev/null 2>&1; then
+        [[ -f "$dst" ]] || error "Healthcheck.class missing and javac not installed. Install a JDK or restore the committed class file."
+        return 0
+    fi
+
+    if [[ -f "$dst" && "$dst" -nt "$src" ]]; then
+        return 0
+    fi
+
+    info "Compiling hapi-fhir/health/Healthcheck.java..."
+    (cd "$SCRIPT_DIR/hapi-fhir/health" && javac Healthcheck.java)
+    info "  compiled Healthcheck.class"
 }
 
 # --- Compose helpers ---------------------------------------------------------

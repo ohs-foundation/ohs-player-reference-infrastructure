@@ -15,8 +15,18 @@ Install the following software on your development machine:
 - **OpenSSL** — used to generate strong random secrets
 - **Bash** (version 4 or newer) — required to run `dev.sh`
 
-All four are available on Linux, macOS and Windows. On Windows, run `dev.sh`
-from WSL or Git Bash; native `cmd.exe` / PowerShell are not supported.
+All four are available on Linux, macOS and Windows. On Windows, run
+`dev.sh` from [WSL](https://learn.microsoft.com/en-us/windows/wsl/install)
+(the recommended option, also required by Docker Desktop) or
+[Git Bash](https://gitforwindows.org/); native `cmd.exe` / PowerShell are
+not supported.
+
+**Optional:**
+
+- **JDK** (any version with `javac`) — only needed if you modify
+  `hapi-fhir/health/Healthcheck.java`. The committed `Healthcheck.class`
+  is used as-is when no JDK is present, so this is not required for a
+  fresh setup. See [HAPI FHIR Healthcheck](#hapi-fhir-healthcheck).
 
 ## First-Run Setup
 
@@ -126,6 +136,31 @@ When switching **into** auth mode, make sure
 `HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET` in `.env` matches the client secret
 configured in the `hapi-fhir-server-client` Keycloak client for the `ohs-player` realm.
 
+## HAPI FHIR Healthcheck
+
+The HAPI FHIR image is distroless - it has no shell, no `curl`, no `wget`.
+Standard Docker `HEALTHCHECK` recipes don't work, so the stack ships a tiny
+Java program that uses the JRE already inside the container to probe
+`/fhir/metadata`.
+
+The two files live in `hapi-fhir/health/`:
+
+| File | Purpose | Committed? |
+|---|---|---|
+| `Healthcheck.java` | Source — readable, reviewable | Yes |
+| `Healthcheck.class` | Compiled bytecode — mounted into the HAPI container at `/healthcheck/` | Yes |
+
+Both are committed so a fresh clone works without a host JDK. `dev.sh`
+recompiles `Healthcheck.class` from `Healthcheck.java` automatically when
+all of the following are true:
+
+- A JDK is installed on the host (`javac` is on `PATH`).
+- `Healthcheck.java` has been modified more recently than `Healthcheck.class`.
+
+If `javac` is not installed, the committed `.class` is used as-is. If you
+edit the source on a machine without a JDK, install a JDK or recompile on
+another machine and commit the updated `.class` alongside the source.
+
 ## Common Tasks
 
 **Tail logs for one service:**
@@ -159,7 +194,10 @@ ohs-player-reference-infrastructure/
 │   ├── application-no-auth.yaml.example
 │   ├── application-no-auth.yaml     # rendered by dev.sh (gitignored)
 │   ├── application-auth.yaml.example
-│   └── application-auth.yaml        # rendered by dev.sh (gitignored)
+│   ├── application-auth.yaml        # rendered by dev.sh (gitignored)
+│   └── health/
+│       ├── Healthcheck.java         # source for the container healthcheck
+│       └── Healthcheck.class        # compiled binary; recompiled by dev.sh if javac is present
 ├── postgres/
 │   └── init/01-init.sh              # runs once on volume creation
 ├── .env.example                     # single source of truth for config
@@ -169,6 +207,65 @@ ohs-player-reference-infrastructure/
 ├── README.md                        # this file
 └── PRODUCTION.md                    # GCP production deployment guide
 ```
+
+## What `dev.sh` Does Under the Hood
+
+`dev.sh` is a thin wrapper around `docker compose` that adds template
+rendering, secrets bootstrapping, and a few convenience flags. If you'd
+rather drive compose directly, the table below shows the equivalent raw
+commands for every subcommand. Run all commands from the repo root.
+
+| `dev.sh` subcommand | Equivalent raw commands |
+|---|---|
+| `./dev.sh up` | `docker compose pull` <br> `docker compose up -d` <br> `docker compose ps` |
+| `./dev.sh up --web` | `docker compose --profile web pull` <br> `docker compose --profile web up -d` |
+| `./dev.sh up --pipes` | `docker compose --profile pipes pull` <br> `docker compose --profile pipes up -d` |
+| `./dev.sh up --full` | `docker compose --profile full pull` <br> `docker compose --profile full up -d` |
+| `./dev.sh down` | `docker compose --profile web --profile pipes --profile full down` |
+| `./dev.sh reset` | `docker compose --profile web --profile pipes --profile full down --volumes` |
+| `./dev.sh logs` | `docker compose logs -f` |
+| `./dev.sh logs <service>` | `docker compose logs -f <service>` |
+| `./dev.sh render` | _No compose equivalent._ Renders config templates from `.env`. See [Steps `dev.sh up` performs before compose](#steps-devsh-up-performs-before-compose). |
+| `./dev.sh clean` | _No compose equivalent._ Deletes `.env` and all rendered config files. |
+| `./dev.sh help` | `docker compose --help` _(shows compose's own help, not the wrapper's)_ |
+
+### Steps `dev.sh up` performs before compose
+
+The wrapper runs three things before any `docker compose` invocation. If
+you skip the wrapper, you'll need to do these yourself the first time and
+whenever `.env.example` or any `*.example` template changes:
+
+1. **Bootstrap `.env`** — if it doesn't exist, copy `.env.example` to
+   `.env` and replace every `[generated]` marker with a unique random
+   secret (`openssl rand -hex 24`).
+2. **Render config templates** — for each pair below, run `envsubst` with
+   an explicit variable list so Spring's `${DB_HOST}` placeholders are
+   preserved while application secrets are substituted:
+
+   ```bash
+   set -a && source .env && set +a
+
+   envsubst '${KEYCLOAK_REALM} ${OHS_PLAYER_KEYCLOAK_CLIENT_ID} ...' \
+     < keycloak/ohs-player-realm.json.example \
+     > keycloak/ohs-player-realm.json
+
+   envsubst '${HAPI_FHIR_DB_PASSWORD}' \
+     < hapi-fhir/application-no-auth.yaml.example \
+     > hapi-fhir/application-no-auth.yaml
+
+   envsubst '${HAPI_FHIR_DB_PASSWORD} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET}' \
+     < hapi-fhir/application-auth.yaml.example \
+     > hapi-fhir/application-auth.yaml
+   ```
+
+3. **Recompile the HAPI healthcheck** — if `Healthcheck.java` is newer
+   than `Healthcheck.class` (and a JDK is installed):
+
+   ```bash
+   javac hapi-fhir/health/Healthcheck.java
+   ```
+
+After those three steps, plain `docker compose up -d` works.
 
 ## Troubleshooting
 
