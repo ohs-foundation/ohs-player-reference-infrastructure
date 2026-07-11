@@ -1,0 +1,35 @@
+fhirdata:
+  fhirFetchMode: "FHIR_SEARCH"
+  # Source overridden at runtime via FHIRDATA_FHIRSERVERURL env var in compose.
+  # Default: hapi-synth. Switch to hapi-fhir for transactional data.
+  fhirServerUrl: "http://hapi-synth:8080/fhir"
+
+  dwhRootPrefix: "/dwh/controller_DWH"
+  generateParquetFiles: true
+
+  # Nightly incremental sync at midnight; purge old snapshots at 00:30
+  incrementalSchedule: "0 0 * * * *"
+  purgeSchedule: "0 30 * * * *"
+  numOfDwhSnapshotsToRetain: 2
+
+  # OHS 12-resource scope
+  resourceList: "Patient,Practitioner,Location,Group,RelatedPerson,Encounter,Condition,Observation,CarePlan,Task,QuestionnaireResponse,Immunization"
+
+  numThreads: 4
+  autoGenerateFlinkConfiguration: true
+  fhirVersion: "R4"
+  structureDefinitionsPath: "classpath:/r4-us-core-definitions"
+  rowGroupSizeForParquetFiles: 33554432
+
+  createHiveResourceTables: false
+  viewDefinitionsDir: "config/views"
+  createParquetViews: false
+  sinkDbConfigPath: "config/postgres-analytics.json"
+
+  recursiveDepth: 1
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,pipeline-metrics

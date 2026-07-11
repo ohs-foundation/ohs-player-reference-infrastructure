@@ -108,6 +108,10 @@ render_templates() {
            hapi-fhir/application-auth.yaml \
            '${HAPI_FHIR_DB_PASSWORD} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET}'
 
+    render data-pipes/config/postgres-analytics.json.example \
+           data-pipes/config/postgres-analytics.json \
+           '${POSTGRES_ADMIN_PASSWORD}'
+
     compile_healthcheck
 }
 
@@ -148,8 +152,9 @@ parse_profiles() {
         case "$arg" in
             --web)   PROFILE_ARGS+=(--profile web)   ;;
             --pipes) PROFILE_ARGS+=(--profile pipes) ;;
+            --synth) PROFILE_ARGS+=(--profile synth) ;;
             --full)  PROFILE_ARGS+=(--profile full)  ;;
-            *)       error "Unknown flag: $arg (expected --web, --pipes, or --full)" ;;
+            *)       error "Unknown flag: $arg (expected --web, --pipes, --synth, or --full)" ;;
         esac
     done
 }
@@ -170,14 +175,14 @@ cmd_up() {
 cmd_down() {
     check_prerequisites
     info "Stopping stack..."
-    compose --profile web --profile pipes --profile full down
+    compose --profile web --profile pipes --profile synth --profile full down
 }
 
 cmd_reset() {
     check_prerequisites
     warn "This will stop all services and delete named volumes (postgres data will be lost)."
     info "Stopping stack and removing volumes..."
-    compose --profile web --profile pipes --profile full down --volumes
+    compose --profile web --profile pipes --profile synth --profile full down --volumes
     info "Reset complete. Run './dev.sh up' to start fresh."
 }
 
@@ -201,6 +206,7 @@ cmd_clean() {
     rm -f "$SCRIPT_DIR/keycloak/ohs-player-realm.json"
     rm -f "$SCRIPT_DIR/hapi-fhir/application-no-auth.yaml"
     rm -f "$SCRIPT_DIR/hapi-fhir/application-auth.yaml"
+    rm -f "$SCRIPT_DIR/data-pipes/config/postgres-analytics.json"
     info "Cleaned. Run './dev.sh render' to regenerate configs, or './dev.sh up' to regenerate and start services."
 }
 
@@ -210,8 +216,10 @@ usage() {
 Usage: $0 <command> [options]
 
 Commands:
-  up [--web|--pipes|--full]   Render configs and start services
+  up [--web|--pipes|--synth|--full]   Render configs and start services
                                 (no flag = core only)
+                                --synth  adds synthetic HAPI + postgres
+                                --pipes  adds synth + analytics pipeline + Superset
   down                        Stop all running services
   reset                       Stop services and wipe named volumes
   logs [service]              Tail logs (all services or one)

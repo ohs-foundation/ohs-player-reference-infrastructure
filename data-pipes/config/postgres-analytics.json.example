@@ -1,0 +1,9 @@
+{
+  "jdbcDriverClass": "org.postgresql.Driver",
+  "databaseService": "postgresql",
+  "databaseHostName": "postgres-analytics",
+  "databasePort": "5432",
+  "databaseUser": "postgres",
+  "databasePassword": "${POSTGRES_ADMIN_PASSWORD}",
+  "databaseName": "analytics"
+}

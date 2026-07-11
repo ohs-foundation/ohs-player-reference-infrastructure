@@ -1,0 +1,37 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "text": "Location flat view — includes partOf for hierarchy traversal and physicalType for jdn filtering",
+  "name": "location_flat",
+  "status": "draft",
+  "resource": "Location",
+  "fhirVersion": ["4.0"],
+  "select": [
+    {
+      "column": [
+        {"path": "getResourceKey()",                          "name": "id"},
+        {"path": "status",                                    "name": "status"},
+        {"path": "name",                                      "name": "name"},
+        {"path": "partOf.getReferenceKey(Location)",          "name": "parent_location_id"},
+        {"path": "managingOrganization.getReferenceKey(Organization)", "name": "org_id"},
+        {"path": "address.city",                              "name": "city"},
+        {"path": "address.country",                           "name": "country"},
+        {"path": "position.longitude",                        "name": "longitude"},
+        {"path": "position.latitude",                         "name": "latitude"}
+      ]
+    },
+    {
+      "forEachOrNull": "physicalType.coding",
+      "column": [
+        {"path": "code",    "name": "physical_type_code"},
+        {"path": "display", "name": "physical_type_display"}
+      ]
+    },
+    {
+      "forEachOrNull": "identifier",
+      "column": [
+        {"path": "use",   "name": "identifier_use"},
+        {"path": "value", "name": "identifier_value"}
+      ]
+    }
+  ]
+}

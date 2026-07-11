@@ -1,0 +1,49 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "text": "RelatedPerson flat view — household composition; join to Patient via patient_id for family-level reporting",
+  "name": "related_person_flat",
+  "status": "draft",
+  "resource": "RelatedPerson",
+  "fhirVersion": ["4.0"],
+  "select": [
+    {
+      "column": [
+        {"path": "getResourceKey()",                 "name": "id"},
+        {"path": "patient.getReferenceKey(Patient)", "name": "patient_id"},
+        {"path": "active",                           "name": "active",       "type": "boolean"},
+        {"path": "gender",                           "name": "gender"},
+        {"path": "birthDate",                        "name": "birth_date",   "type": "date"},
+        {"path": "meta.lastUpdated",                 "name": "last_updated", "type": "dateTime"}
+      ]
+    },
+    {
+      "forEachOrNull": "relationship.coding",
+      "column": [
+        {"path": "code",    "name": "relationship_code"},
+        {"path": "system",  "name": "relationship_sys"},
+        {"path": "display", "name": "relationship_display"}
+      ]
+    },
+    {
+      "forEachOrNull": "name",
+      "column": [
+        {"path": "family", "name": "family"}
+      ],
+      "select": [
+        {
+          "forEachOrNull": "given",
+          "column": [
+            {"path": "$this", "name": "given"}
+          ]
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "identifier",
+      "column": [
+        {"path": "use",   "name": "identifier_use"},
+        {"path": "value", "name": "identifier_value"}
+      ]
+    }
+  ]
+}
