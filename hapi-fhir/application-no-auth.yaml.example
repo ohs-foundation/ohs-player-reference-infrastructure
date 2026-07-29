@@ -41,6 +41,7 @@ hapi:
     allow_multiple_delete: false
     delete_expunge_enabled: false
     expunge_enabled: false
+    bulk_export_enabled: true
     cors:
       allow_Credentials: true
       allowed_origin:
