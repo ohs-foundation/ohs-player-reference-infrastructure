@@ -1,0 +1,41 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "text": "Task flat view — CHW workload; one row per follow-up task; for = patient; basedOn = care plan; owner = responsible CHW",
+  "name": "task_flat",
+  "status": "draft",
+  "resource": "Task",
+  "fhirVersion": ["4.0"],
+  "select": [
+    {
+      "column": [
+        {"path": "getResourceKey()",                                                                          "name": "id"},
+        {"path": "status",                                                                                    "name": "status"},
+        {"path": "intent",                                                                                    "name": "intent"},
+        {"path": "description",                                                                               "name": "description"},
+        {"path": "for.getReferenceKey(Patient)",                                                              "name": "patient_id"},
+        {"path": "owner.getReferenceKey(Practitioner)",                                                       "name": "owner_practitioner_id"},
+        {"path": "authoredOn",                                                                                "name": "authored_on",     "type": "dateTime"},
+        {"path": "lastModified",                                                                              "name": "last_modified",   "type": "dateTime"},
+        {"path": "meta.lastUpdated",                                                                          "name": "last_updated",    "type": "dateTime"},
+        {"path": "meta.tag.where(system='https://smartregister.org/location-tag-id').code.first()",          "name": "location_tag_id"},
+        {"path": "meta.tag.where(system='https://smartregister.org/practitioner-tag-id').code.first()",      "name": "practitioner_tag_id"},
+        {"path": "meta.tag.where(system='https://smartregister.org/organisation-tag-id').code.first()",      "name": "org_tag_id"},
+        {"path": "meta.tag.where(system='https://smartregister.org/care-team-tag-id').code.first()",         "name": "care_team_tag_id"}
+      ]
+    },
+    {
+      "forEachOrNull": "basedOn",
+      "column": [
+        {"path": "getReferenceKey(CarePlan)", "name": "care_plan_id"}
+      ]
+    },
+    {
+      "forEachOrNull": "code.coding",
+      "column": [
+        {"path": "system",  "name": "code_sys"},
+        {"path": "code",    "name": "code_code"},
+        {"path": "display", "name": "code_display"}
+      ]
+    }
+  ]
+}
