@@ -17,51 +17,29 @@
 # =============================================================================
 
 services:
-  postgres:
-    image: postgres:18
-    container_name: ohs-postgres
-    restart: unless-stopped
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=${POSTGRES_ADMIN_PASSWORD}
-      - KEYCLOAK_DB_PASSWORD=${KEYCLOAK_DB_PASSWORD}
-      - HAPI_FHIR_DB_PASSWORD=${HAPI_FHIR_DB_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql
-      - ./postgres/init/:/docker-entrypoint-initdb.d/
-    ports:
-      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
-    networks: [fhir_net]
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-
   keycloak:
     restart: unless-stopped
     image: quay.io/keycloak/keycloak:26.5.0
     container_name: ohs-keycloak
-    depends_on:
-      postgres:
-        condition: service_healthy
     volumes:
-      # Keycloak 26.x requires the import filename to match <realm>-realm.json.
-      # If you change KEYCLOAK_REALM value, you MUST rename keycloak/ohs-player-realm.json to
-      # <new-realm>-realm.json and update the path below to match.
       - ./keycloak/ohs-player-realm.json:/opt/keycloak/data/import/ohs-player-realm.json:ro
+      - ./keycloak/themes:/opt/keycloak/themes:ro
     environment:
-      - KC_BOOTSTRAP_ADMIN_USERNAME=${KEYCLOAK_ADMIN_USERNAME:-admin}
+      - KC_BOOTSTRAP_ADMIN_USERNAME=${KEYCLOAK_ADMIN_USERNAME:-default-admin}
       - KC_BOOTSTRAP_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
       - KC_DB=postgres
-      - KC_DB_URL_HOST=postgres
-      - KC_DB_URL_PORT=5432
+      - KC_DB_URL_HOST=${POSTGRES_HOST}
+      - KC_DB_URL_PORT=${POSTGRES_PORT:-5432}
       - KC_DB_PASSWORD=${KEYCLOAK_DB_PASSWORD}
       - KC_DB_USERNAME=keycloak
       - KC_DB_URL_DATABASE=keycloak
       - KC_PROXY_HEADERS=xforwarded
-      - KC_HOSTNAME=http://localhost:${KEYCLOAK_PORT:-8081}
+      - KC_HOSTNAME=${KEYCLOAK_PUBLIC_URL}
+    # Lets POSTGRES_HOST=host.docker.internal resolve to the Docker host for
+    # local testing against a host-run Postgres. No-op when POSTGRES_HOST is a
+    # real hostname/IP (e.g. on the server).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     command:
       - "--verbose"
       - "start"
@@ -87,9 +65,6 @@ services:
     restart: unless-stopped
     image: hapiproject/hapi:v8.8.0-1
     container_name: ohs-hapi-fhir
-    depends_on:
-      postgres:
-        condition: service_healthy
     ports:
       - "${HAPI_FHIR_PORT:-8082}:8080"
     volumes:
@@ -97,8 +72,14 @@ services:
       - ./hapi-fhir/health/Healthcheck.class:/healthcheck/Healthcheck.class:ro
     environment:
       - "SPRING_CONFIG_LOCATION=/data/hapi-fhir/config/"
-      - DB_HOST=postgres
-      - DB_PORT=5432
+      - DB_HOST=${POSTGRES_HOST}
+      - DB_PORT=${POSTGRES_PORT:-5432}
+    # See keycloak service: lets host.docker.internal resolve for local testing.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      keycloak:
+        condition: service_healthy
     networks: [fhir_net]
     healthcheck:
       test: ["CMD", "java", "-cp", "/healthcheck", "Healthcheck"]
@@ -108,17 +89,30 @@ services:
       start_period: 180s
 
   fhir-gateway:
-    image: onaio/fhir-gateway-plugin:v3.0.5
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        GATEWAY_REF: ${GATEWAY_REF:-main}
+        PLUGIN_REF: ${PLUGIN_REF:-main}
+    image: ohs-fhir-gateway:local
     container_name: ohs-fhir-gateway
     restart: unless-stopped
     environment:
       - PROXY_TO=http://hapi-fhir:8080/fhir
-      - TOKEN_ISSUER=http://keycloak:8080/realms/${KEYCLOAK_REALM:-ohs-player}
-      - ACCESS_CHECKER=permission
+      - TOKEN_ISSUER=${KEYCLOAK_PUBLIC_URL}/realms/${KEYCLOAK_REALM:-ohs-player}
+      # IAM admin client (client_credentials) for user/group/role management.
+      - IAM_PROVIDER=keycloak
+      - IAM_PROVIDER_CLIENT_ID=${FHIR_GATEWAY_KEYCLOAK_CLIENT_ID}
+      - IAM_PROVIDER_CLIENT_SECRET=${FHIR_GATEWAY_KEYCLOAK_CLIENT_SECRET}
+      # ACCESS_CHECKER selects the FHIR proxy access checker. Registered names in
+      # the gateway build: "list", "patient". "permissive" disables access control
+      # but ONLY when RUN_MODE=DEV. Default keeps the server's intended value.
+      - ACCESS_CHECKER=${ACCESS_CHECKER:-permission}
       - ALLOWED_QUERIES_FILE=resources/hapi_page_url_allowed_queries.json
       - SYNC_FILTER_IGNORE_RESOURCES_FILE=resources/hapi_sync_filter_ignored_queries.json
       - BACKEND_TYPE=HAPI
-      - RUN_MODE=PROD
+      - RUN_MODE=${RUN_MODE:-PROD}
     ports:
       - "${FHIR_GATEWAY_PORT:-8083}:8080"
     depends_on:
@@ -126,33 +120,27 @@ services:
         condition: service_started
     networks: [fhir_net]
 
-  # ---------------------------------------------------------------------------
-  # web-portal (extension service, profile: web / full)
-  #
-  # Stub — not yet wired up. Before enabling, the following still need to be
-  # decided and filled in:
-  #   - Image source: prebuilt registry image, or local build via
-  #     Dockerfile.dev with hot reload for frontend development.
-  #   - Whether dev mode runs in-container or on the host against a
-  #     backend-only compose (documented workflow).
-  #   - Published host port for the web UI.
-  #   - Env vars for backend URLs (fhir-gateway base URL, keycloak issuer,
-  #     OIDC client id, redirect URIs).
-  #   - Dependency order on keycloak and fhir-gateway.
-  # ---------------------------------------------------------------------------
-  # web-portal:
-  #   profiles: ["web", "full"]
-  #   image: TBD
-  #   container_name: ohs-web-portal
-  #   restart: unless-stopped
-  #   depends_on:
-  #     fhir-gateway:
-  #       condition: service_started
-  #     keycloak:
-  #       condition: service_healthy
-  #   ports:
-  #     - "3000:3000"
-  #   networks: [fhir_net]
+  ohs-player-web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        WEB_REF: ${WEB_REF:-main}
+        VITE_FHIR_BASE_URL: ${VITE_FHIR_BASE_URL}
+        VITE_OIDC_ISSUER: ${KEYCLOAK_PUBLIC_URL}/realms/${KEYCLOAK_REALM:-ohs-player}
+        VITE_CLIENT_ID: ${VITE_CLIENT_ID:-ohs-player-client}
+        VITE_FHIR_VERSION: ${VITE_FHIR_VERSION:-R4}
+    image: ohs-player-web:local
+    container_name: ohs-player-web
+    restart: unless-stopped
+    ports:
+      - "${OHS_PLAYER_WEB_PORT:-8084}:80"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      fhir-gateway:
+        condition: service_started
+    networks: [fhir_net]
 
   # ---------------------------------------------------------------------------
   # synth stack (profile: synth / pipes / full)
@@ -308,7 +296,6 @@ networks:
     external: false
 
 volumes:
-  postgres_data:
   postgres_synth_data:
   postgres_analytics_data:
   superset_home:
