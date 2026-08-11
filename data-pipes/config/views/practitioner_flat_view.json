@@ -1,0 +1,39 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "text": "Practitioner flat view — includes phone contact (eCHIS uses email system for phone numbers)",
+  "name": "practitioner_flat",
+  "status": "draft",
+  "resource": "Practitioner",
+  "fhirVersion": ["4.0"],
+  "select": [
+    {
+      "column": [
+        {"path": "getResourceKey()",                "name": "id"},
+        {"path": "active",                          "name": "active",  "type": "boolean"},
+        {"path": "gender",                          "name": "gender"},
+        {"path": "telecom.where(system='email').value.first()", "name": "phone"}
+      ]
+    },
+    {
+      "forEachOrNull": "name",
+      "column": [
+        {"path": "family", "name": "family"}
+      ],
+      "select": [
+        {
+          "forEachOrNull": "given",
+          "column": [
+            {"path": "$this", "name": "given"}
+          ]
+        }
+      ]
+    },
+    {
+      "forEachOrNull": "identifier",
+      "column": [
+        {"path": "use",   "name": "identifier_use"},
+        {"path": "value", "name": "identifier_value"}
+      ]
+    }
+  ]
+}

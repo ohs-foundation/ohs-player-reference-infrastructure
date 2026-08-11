@@ -1,0 +1,314 @@
+# =============================================================================
+# Local development stack
+#
+# Core services (postgres, keycloak, hapi-fhir, fhir-gateway) start by default.
+# Extension services live behind Docker profiles and are opted in via `dev.sh`:
+#
+#   ./dev.sh up          # core services only
+#   ./dev.sh up --web    # core + web-portal
+#   ./dev.sh up --pipes  # core + data-pipes
+#   ./dev.sh up --full   # everything
+#
+# Auth mode for HAPI FHIR is controlled by the HAPI_CONFIG variable in `.env`.
+#
+# NOTE: A public demo deployment (reverse proxy, VM provisioning, periodic
+# reset job, landing page) is out of scope for this file and will be added
+# later.
+# =============================================================================
+
+services:
+  postgres:
+    image: postgres:18
+    container_name: ohs-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_ADMIN_PASSWORD}
+      - KEYCLOAK_DB_PASSWORD=${KEYCLOAK_DB_PASSWORD}
+      - HAPI_FHIR_DB_PASSWORD=${HAPI_FHIR_DB_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./postgres/init/:/docker-entrypoint-initdb.d/
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+    networks: [fhir_net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  keycloak:
+    restart: unless-stopped
+    image: quay.io/keycloak/keycloak:26.5.0
+    container_name: ohs-keycloak
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      # Keycloak 26.x requires the import filename to match <realm>-realm.json.
+      # If you change KEYCLOAK_REALM value, you MUST rename keycloak/ohs-player-realm.json to
+      # <new-realm>-realm.json and update the path below to match.
+      - ./keycloak/ohs-player-realm.json:/opt/keycloak/data/import/ohs-player-realm.json:ro
+    environment:
+      - KC_BOOTSTRAP_ADMIN_USERNAME=${KEYCLOAK_ADMIN_USERNAME:-admin}
+      - KC_BOOTSTRAP_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
+      - KC_DB=postgres
+      - KC_DB_URL_HOST=postgres
+      - KC_DB_URL_PORT=5432
+      - KC_DB_PASSWORD=${KEYCLOAK_DB_PASSWORD}
+      - KC_DB_USERNAME=keycloak
+      - KC_DB_URL_DATABASE=keycloak
+      - KC_PROXY_HEADERS=xforwarded
+      - KC_HOSTNAME=http://localhost:${KEYCLOAK_PORT:-8081}
+    command:
+      - "--verbose"
+      - "start"
+      - "--features=persistent-user-sessions"
+      - "--http-enabled=true"
+      - "--hostname-strict=false"
+      - "--http-port=8080"
+      - "--spi-events-listener-jboss-logging-success-level=info"
+      - "--spi-events-listener-jboss-logging-error-level=warn"
+      - "--health-enabled=true"
+      - "--import-realm"
+    ports:
+      - "${KEYCLOAK_PORT:-8081}:8080"
+    networks: [fhir_net]
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/9000 && printf 'GET /health/ready HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && cat <&3 | grep -q UP"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
+  hapi-fhir:
+    restart: unless-stopped
+    image: hapiproject/hapi:v8.8.0-1
+    container_name: ohs-hapi-fhir
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "${HAPI_FHIR_PORT:-8082}:8080"
+    volumes:
+      - ./hapi-fhir/${HAPI_CONFIG}:/data/hapi-fhir/config/application.yaml:ro
+      - ./hapi-fhir/health/Healthcheck.class:/healthcheck/Healthcheck.class:ro
+    environment:
+      - "SPRING_CONFIG_LOCATION=/data/hapi-fhir/config/"
+      - DB_HOST=postgres
+      - DB_PORT=5432
+    networks: [fhir_net]
+    healthcheck:
+      test: ["CMD", "java", "-cp", "/healthcheck", "Healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+
+  fhir-gateway:
+    image: onaio/fhir-gateway-plugin:v3.0.5
+    container_name: ohs-fhir-gateway
+    restart: unless-stopped
+    environment:
+      - PROXY_TO=http://hapi-fhir:8080/fhir
+      - TOKEN_ISSUER=http://keycloak:8080/realms/${KEYCLOAK_REALM:-ohs-player}
+      - ACCESS_CHECKER=permission
+      - ALLOWED_QUERIES_FILE=resources/hapi_page_url_allowed_queries.json
+      - SYNC_FILTER_IGNORE_RESOURCES_FILE=resources/hapi_sync_filter_ignored_queries.json
+      - BACKEND_TYPE=HAPI
+      - RUN_MODE=PROD
+    ports:
+      - "${FHIR_GATEWAY_PORT:-8083}:8080"
+    depends_on:
+      hapi-fhir:
+        condition: service_started
+    networks: [fhir_net]
+
+  # ---------------------------------------------------------------------------
+  # web-portal (extension service, profile: web / full)
+  #
+  # Stub — not yet wired up. Before enabling, the following still need to be
+  # decided and filled in:
+  #   - Image source: prebuilt registry image, or local build via
+  #     Dockerfile.dev with hot reload for frontend development.
+  #   - Whether dev mode runs in-container or on the host against a
+  #     backend-only compose (documented workflow).
+  #   - Published host port for the web UI.
+  #   - Env vars for backend URLs (fhir-gateway base URL, keycloak issuer,
+  #     OIDC client id, redirect URIs).
+  #   - Dependency order on keycloak and fhir-gateway.
+  # ---------------------------------------------------------------------------
+  # web-portal:
+  #   profiles: ["web", "full"]
+  #   image: TBD
+  #   container_name: ohs-web-portal
+  #   restart: unless-stopped
+  #   depends_on:
+  #     fhir-gateway:
+  #       condition: service_started
+  #     keycloak:
+  #       condition: service_healthy
+  #   ports:
+  #     - "3000:3000"
+  #   networks: [fhir_net]
+
+  # ---------------------------------------------------------------------------
+  # synth stack (profile: synth / pipes / full)
+  #
+  # Isolated HAPI FHIR + PostgreSQL for synthetic/test data generation.
+  # Kept separate from the transactional instance (ohs-hapi-fhir) so test
+  # data never touches production records.
+  # Also included in the pipes profile so the pipeline has a FHIR source.
+  #
+  # FHIR endpoint:  http://localhost:${HAPI_SYNTH_PORT:-8085}/fhir
+  # Postgres:       localhost:${POSTGRES_SYNTH_PORT:-5435}
+  #
+  # Load synthetic data:
+  #   python ohs-player-analytics/test-data/generate.py \
+  #     --fhir-url http://localhost:${HAPI_SYNTH_PORT:-8085}/fhir
+  # ---------------------------------------------------------------------------
+  postgres-synth:
+    profiles: ["synth", "pipes", "full"]
+    image: postgres:18
+    container_name: ohs-postgres-synth
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
+      POSTGRES_DB: hapi_fhir
+    volumes:
+      - postgres_synth_data:/var/lib/postgresql
+    ports:
+      - "127.0.0.1:${POSTGRES_SYNTH_PORT:-5435}:5432"
+    networks: [fhir_net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  hapi-synth:
+    profiles: ["synth", "pipes", "full"]
+    image: hapiproject/hapi:v8.8.0-1
+    container_name: ohs-hapi-synth
+    restart: unless-stopped
+    depends_on:
+      postgres-synth:
+        condition: service_healthy
+    ports:
+      - "${HAPI_SYNTH_PORT:-8085}:8080"
+    environment:
+      - hapi.fhir.mdm_enabled=false
+      - hapi.fhir.bulk_export_enabled=true
+      - spring.datasource.url=jdbc:postgresql://postgres-synth:5432/hapi_fhir
+      - spring.datasource.username=postgres
+      - spring.datasource.password=${POSTGRES_ADMIN_PASSWORD}
+      - spring.datasource.driverClassName=org.postgresql.Driver
+      - spring.jpa.properties.hibernate.dialect=ca.uhn.fhir.jpa.model.dialect.HapiFhirPostgresDialect
+    volumes:
+      - ./hapi-fhir/health/Healthcheck.class:/healthcheck/Healthcheck.class:ro
+    networks: [fhir_net]
+    healthcheck:
+      test: ["CMD", "java", "-cp", "/healthcheck", "Healthcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 180s
+
+  # ---------------------------------------------------------------------------
+  # analytics pipeline (profile: pipes / full)
+  #
+  # FHIR Data Pipes reads from hapi-synth, applies ViewDefinitions, and writes
+  # flat tables into postgres-analytics. Superset dashboards query those tables.
+  #
+  # Pipeline control panel: http://localhost:${PIPELINE_PORT:-8090}
+  # Superset:               http://localhost:${SUPERSET_PORT:-8088}  (admin/admin)
+  # Analytics Postgres:     localhost:${POSTGRES_ANALYTICS_PORT:-5434}
+  # ---------------------------------------------------------------------------
+  postgres-analytics:
+    profiles: ["pipes", "full"]
+    image: postgres:18
+    container_name: ohs-postgres-analytics
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
+      POSTGRES_DB: postgres
+    volumes:
+      - postgres_analytics_data:/var/lib/postgresql
+      - ./data-pipes/postgres-init.sql:/docker-entrypoint-initdb.d/01-analytics-init.sql:ro
+    ports:
+      - "127.0.0.1:${POSTGRES_ANALYTICS_PORT:-5434}:5432"
+    networks: [fhir_net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  pipeline-controller:
+    profiles: ["pipes", "full"]
+    image: us-docker.pkg.dev/cloud-build-fhir/fhir-analytics/main:latest
+    platform: linux/amd64
+    container_name: ohs-pipeline-controller
+    restart: unless-stopped
+    depends_on:
+      postgres-analytics:
+        condition: service_healthy
+      hapi-synth:
+        condition: service_healthy
+    ports:
+      - "${PIPELINE_PORT:-8090}:8080"
+    environment:
+      - JAVA_OPTS=${PIPELINE_JAVA_OPTS:--Xms512m -Xmx4g}
+      - FHIRDATA_FHIRSERVERURL=${PIPELINE_FHIR_SOURCE:-http://hapi-synth:8080/fhir}
+      - FHIRDATA_SINKDBCONFIGPATH=config/postgres-analytics.json
+    volumes:
+      - ./data-pipes/config:/app/config:ro
+      - ./data-pipes/dwh:/dwh
+    networks: [fhir_net]
+
+  superset:
+    profiles: ["pipes", "full"]
+    image: apache/superset:latest
+    container_name: ohs-superset
+    restart: unless-stopped
+    user: root
+    depends_on:
+      postgres-analytics:
+        condition: service_healthy
+    ports:
+      - "${SUPERSET_PORT:-8088}:8088"
+    environment:
+      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
+      - SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://postgres:${POSTGRES_ADMIN_PASSWORD}@postgres-analytics:5432/superset
+    volumes:
+      - superset_home:/app/superset_home
+    command:
+      - sh
+      - -c
+      - |
+        superset db upgrade &&
+        superset fab create-admin \
+          --username admin \
+          --firstname OHS \
+          --lastname Admin \
+          --email admin@ohs.local \
+          --password admin || true &&
+        superset init &&
+        gunicorn --bind 0.0.0.0:8088 --workers 2 --timeout 120 'superset.app:create_app()'
+    networks: [fhir_net]
+
+networks:
+  fhir_net:
+    external: false
+
+volumes:
+  postgres_data:
+  postgres_synth_data:
+  postgres_analytics_data:
+  superset_home:

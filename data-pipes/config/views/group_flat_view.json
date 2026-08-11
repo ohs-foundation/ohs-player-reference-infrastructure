@@ -1,0 +1,39 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "text": "Group (household) flat view — one row per household with village from hh_location characteristic; member expansion for household roster",
+  "name": "group_flat",
+  "status": "draft",
+  "resource": "Group",
+  "fhirVersion": ["4.0"],
+  "select": [
+    {
+      "column": [
+        {"path": "getResourceKey()",                                                                                                         "name": "id"},
+        {"path": "name",                                                                                                                     "name": "name"},
+        {"path": "active",                                                                                                                   "name": "active",            "type": "boolean"},
+        {"path": "type",                                                                                                                     "name": "type"},
+        {"path": "quantity",                                                                                                                 "name": "quantity",          "type": "integer"},
+        {"path": "managingEntity.getReferenceKey(Organization)",                                                                             "name": "managing_org_id"},
+        {"path": "characteristic.where(code.coding.where(code='hh_location').exists()).value.ofType(string).first()",                        "name": "village"},
+        {"path": "meta.lastUpdated",                                                                                                         "name": "last_updated",      "type": "dateTime"},
+        {"path": "meta.tag.where(system='https://smartregister.org/location-tag-id').code.first()",                                          "name": "location_tag_id"},
+        {"path": "meta.tag.where(system='https://smartregister.org/practitioner-tag-id').code.first()",                                      "name": "practitioner_tag_id"},
+        {"path": "meta.tag.where(system='https://smartregister.org/organisation-tag-id').code.first()",                                      "name": "org_tag_id"},
+        {"path": "meta.tag.where(system='https://smartregister.org/care-team-tag-id').code.first()",                                         "name": "care_team_tag_id"}
+      ]
+    },
+    {
+      "forEachOrNull": "identifier",
+      "column": [
+        {"path": "use",   "name": "identifier_use"},
+        {"path": "value", "name": "identifier_value"}
+      ]
+    },
+    {
+      "forEachOrNull": "member",
+      "column": [
+        {"path": "entity.getReferenceKey(Patient)", "name": "member_patient_id"}
+      ]
+    }
+  ]
+}

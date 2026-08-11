@@ -1,0 +1,47 @@
+{
+  "resourceType": "http://hl7.org/fhir/uv/sql-on-fhir/StructureDefinition/ViewDefinition",
+  "text": "Encounter flat view — includes class.code (HH visits), typed period dates, and smartregister.org meta tags",
+  "name": "encounter_flat",
+  "status": "draft",
+  "resource": "Encounter",
+  "fhirVersion": ["4.0"],
+  "select": [
+    {
+      "column": [
+        {"path": "getResourceKey()",                                                                          "name": "id"},
+        {"path": "status",                                                                                    "name": "status"},
+        {"path": "class.code",                                                                                "name": "encounter_class"},
+        {"path": "subject.getReferenceKey(Patient)",                                                          "name": "patient_id"},
+        {"path": "serviceProvider.getReferenceKey(Organization)",                                             "name": "service_org_id"},
+        {"path": "period.start",                                                                              "name": "period_start",     "type": "dateTime"},
+        {"path": "period.end",                                                                                "name": "period_end",       "type": "dateTime"},
+        {"path": "episodeOfCare.getReferenceKey(EpisodeOfCare)",                                              "name": "episode_of_care_id"},
+        {"path": "meta.lastUpdated",                                                                          "name": "last_updated",     "type": "dateTime"},
+        {"path": "meta.tag.where(system='https://smartregister.org/location-tag-id').code.first()",          "name": "location_tag_id"},
+        {"path": "meta.tag.where(system='https://smartregister.org/practitioner-tag-id').code.first()",      "name": "practitioner_tag_id"},
+        {"path": "meta.tag.where(system='https://smartregister.org/organisation-tag-id').code.first()",      "name": "org_tag_id"},
+        {"path": "meta.tag.where(system='https://smartregister.org/care-team-tag-id').code.first()",         "name": "care_team_tag_id"}
+      ]
+    },
+    {
+      "forEachOrNull": "type.coding",
+      "column": [
+        {"path": "system",  "name": "type_sys"},
+        {"path": "code",    "name": "type_code"},
+        {"path": "display", "name": "type_display"}
+      ]
+    },
+    {
+      "forEachOrNull": "participant",
+      "column": [
+        {"path": "individual.getReferenceKey(Practitioner)", "name": "practitioner_id"}
+      ]
+    },
+    {
+      "forEachOrNull": "location",
+      "column": [
+        {"path": "location.getReferenceKey(Location)", "name": "location_id"}
+      ]
+    }
+  ]
+}
