@@ -1,6 +1,7 @@
 {
   "id": "${KEYCLOAK_REALM}",
   "realm": "${KEYCLOAK_REALM}",
+  "loginTheme": "ohs",
   "notBefore": 0,
   "defaultSignatureAlgorithm": "RS256",
   "revokeRefreshToken": false,
@@ -1693,6 +1694,30 @@
       ],
       "notBefore": 0,
       "groups": []
+    },
+    {
+      "id": "b7c8d9e0-f1a2-4b3c-8d4e-5f6a7b8c9d0e",
+      "username": "service-account-${FHIR_GATEWAY_KEYCLOAK_CLIENT_ID}",
+      "emailVerified": false,
+      "createdTimestamp": 1700582591403,
+      "enabled": true,
+      "totp": false,
+      "serviceAccountClientId": "${FHIR_GATEWAY_KEYCLOAK_CLIENT_ID}",
+      "disableableCredentialTypes": [],
+      "requiredActions": [],
+      "realmRoles": [
+        "default-roles-${KEYCLOAK_REALM}"
+      ],
+      "clientRoles": {
+        "realm-management": [
+          "manage-users",
+          "view-users",
+          "manage-realm",
+          "view-realm"
+        ]
+      },
+      "notBefore": 0,
+      "groups": []
     }
   ],
   "scopeMappings": [
@@ -2168,6 +2193,44 @@
       "clientAuthenticatorType": "client-secret",
       "secret": "${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET}",
       "bearerOnly": true,
+      "consentRequired": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "publicClient": false,
+      "frontchannelLogout": false,
+      "protocol": "openid-connect",
+      "attributes": {},
+      "authenticationFlowBindingOverrides": {},
+      "fullScopeAllowed": true,
+      "nodeReRegistrationTimeout": -1,
+      "defaultClientScopes": [
+        "web-origins",
+        "acr",
+        "profile",
+        "roles",
+        "basic",
+        "email"
+      ],
+      "optionalClientScopes": [
+        "address",
+        "phone",
+        "offline_access",
+        "microprofile-jwt"
+      ]
+    },
+    {
+      "id": "c3d4e5f6-a7b8-49c0-d1e2-f3a4b5c6d7e8",
+      "clientId": "${FHIR_GATEWAY_KEYCLOAK_CLIENT_ID}",
+      "name": "FHIR Gateway Admin",
+      "description": "Confidential service-account client used by the FHIR gateway IAM provider for user/group/role management (client_credentials grant)",
+      "surrogateAuthRequired": false,
+      "enabled": true,
+      "alwaysDisplayInConsole": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${FHIR_GATEWAY_KEYCLOAK_CLIENT_SECRET}",
+      "bearerOnly": false,
       "consentRequired": false,
       "standardFlowEnabled": false,
       "implicitFlowEnabled": false,

@@ -1,0 +1,158 @@
+/*
+ * OHS login theme overrides — match the Figma "Sign In" card (node 2046:12846).
+ * Layered after the base keycloak `login.css`. Values are literal hex/px (a Keycloak theme has no
+ * access to the app's --ohs-* tokens); they mirror the Figma token map 1:1.
+ * Verified against Keycloak 26.0.8 base login.ftl / template.ftl selectors.
+ */
+
+/* ---- Full-bleed dark background from the exported Figma asset ----
+   KC26 puts the `login-pf` class on <html>, and the base theme styles the background via
+   `.login-pf body` (not `body.login-pf`). Match that exact selector so ours wins on load order. */
+.login-pf body {
+  background: #0d0d0d url("../img/login-bg.svg") no-repeat center center fixed;
+  background-size: cover;
+  font-family: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* Hide Keycloak's realm-name header so the card stands alone like the design. */
+#kc-header,
+#kc-header-wrapper {
+  display: none;
+}
+
+/* ---- Centre the card in the viewport ---- */
+.login-pf-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+/* ---- The card ---- */
+.login-pf-page .card-pf {
+  width: 100%;
+  max-width: 600px;
+  margin: 0;
+  padding: 40px;
+  background: #ffffff;
+  border: none;
+  border-top: none; /* base theme adds a 4px brand top border; remove it */
+  border-radius: 12px;
+  box-shadow:
+    0 0 10px rgba(0, 0, 0, 0.08),
+    0 12px 24px rgba(0, 0, 0, 0.1);
+}
+
+/* ---- Heading "Sign in to continue" ---- */
+#kc-page-title {
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 500;
+  letter-spacing: -1px;
+  color: #0d0d0d;
+  margin: 0 0 24px;
+}
+
+/* ---- Fields ---- */
+#kc-form-login .form-group {
+  margin-bottom: 16px;
+}
+#kc-form-login label {
+  font-size: 12px;
+  line-height: 16px;
+  color: #9e9e9e;
+  margin-bottom: 4px;
+}
+#kc-form-login input#username,
+#kc-form-login input#password,
+#kc-form-login .pf-c-form-control {
+  height: 64px;
+  width: 100%;
+  font-size: 14px;
+  color: #0d0d0d;
+  background: #ffffff;
+  border: 1.5px solid #d4d4d4;
+  border-radius: 8px;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+#kc-form-login input:focus,
+#kc-form-login input:focus-visible {
+  border-color: #696969;
+  outline: none;
+  box-shadow: none;
+}
+
+/* Password show/hide eye toggle is built into the base theme — keep it inside the field box,
+   neutral-coloured, no separate border. */
+#kc-form-login .pf-c-input-group {
+  border: none;
+}
+#kc-form-login .pf-c-input-group .pf-c-button,
+#kc-form-login .pf-c-input-group button {
+  height: 64px;
+  color: #696969;
+  background: transparent;
+  border: 1.5px solid #d4d4d4;
+  border-left: none;
+  border-radius: 0 8px 8px 0;
+}
+/* When the toggle sits in the group, the input loses its right radius so they read as one box. */
+#kc-form-login .pf-c-input-group input#password {
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+}
+
+/* ---- Login button ---- */
+#kc-form-buttons input[type="submit"],
+#kc-login {
+  width: 100%;
+  height: 56px;
+  background: #094f9a;
+  color: #fafafa;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 500;
+  margin-top: 8px;
+  cursor: pointer;
+}
+#kc-form-buttons input[type="submit"]:hover,
+#kc-login:hover {
+  background: #073c75;
+}
+
+/* Hide remember-me / forgot-password / register / info unless the design includes them. */
+#kc-form-options,
+#kc-registration,
+#kc-registration-container,
+#kc-info,
+#kc-info-wrapper {
+  display: none;
+}
+
+/* ---- Open Health Stack mark centred under the button ---- */
+#kc-form-wrapper::after {
+  content: "";
+  display: block;
+  height: 32px;
+  margin-top: 24px;
+  background: url("../img/ohs-logo.png") center / contain no-repeat;
+}
+
+/* ---- Optional: follow OS dark mode (flip the card to the dark variant) ---- */
+@media (prefers-color-scheme: dark) {
+  .login-pf-page .card-pf {
+    background: #0d0d0d;
+  }
+  #kc-page-title,
+  #kc-form-login input#username,
+  #kc-form-login input#password,
+  #kc-form-login .pf-c-form-control {
+    color: #fafafa;
+    background: #0d0d0d;
+  }
+}
