@@ -76,17 +76,29 @@ services:
       - "--features=persistent-user-sessions"
       - "--http-enabled=true"
       - "--hostname-strict=false"
-      - "--http-port=8080"
+      # Keycloak listens on KEYCLOAK_PORT *inside* the container and is published
+      # 1:1, so http://keycloak.localhost:${KEYCLOAK_PORT} is one URL that
+      # resolves from the browser (any *.localhost name goes to 127.0.0.1) and
+      # from other containers (via the fhir_net alias below). The gateway needs
+      # KEYCLOAK_PUBLIC_URL to work from inside the network, which a
+      # localhost-based value cannot do.
+      - "--http-port=${KEYCLOAK_PORT:-8081}"
       - "--spi-events-listener-jboss-logging-success-level=info"
       - "--spi-events-listener-jboss-logging-error-level=warn"
       - "--health-enabled=true"
       - "--import-realm"
     ports:
-      - "${KEYCLOAK_PORT:-8081}:8080"
+      - "${KEYCLOAK_PORT:-8081}:${KEYCLOAK_PORT:-8081}"
     depends_on:
       postgres:
         condition: service_healthy
-    networks: [fhir_net]
+    networks:
+      fhir_net:
+        aliases:
+          # Resolves to this container from inside the network, and to
+          # 127.0.0.1 in the browser, so KEYCLOAK_PUBLIC_URL is one value for
+          # both. nginx/ohs-player.conf hardcodes KEYCLOAK_PORT — keep in sync.
+          - keycloak.localhost
     healthcheck:
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/9000 && printf 'GET /health/ready HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && cat <&3 | grep -q UP"]
       interval: 30s
@@ -153,10 +165,18 @@ services:
     depends_on:
       hapi-fhir:
         condition: service_started
+      # The gateway resolves TOKEN_ISSUER at startup, so it must not race
+      # Keycloak — which itself waits for Postgres and has a 90s start_period.
+      # Without this, restart: unless-stopped turns a missing issuer into a
+      # crash loop instead of a clear failure.
+      keycloak:
+        condition: service_healthy
     networks: [fhir_net]
 
+  # "proxy" is in the profile list because nginx/ohs-player.conf proxies
+  # location / to this service; without it `--proxy` alone serves 502 at /.
   ohs-player-web:
-    profiles: ["web", "full"]
+    profiles: ["web", "proxy", "full"]
     build:
       context: .
       dockerfile: Dockerfile.web

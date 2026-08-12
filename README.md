@@ -4,13 +4,18 @@ The OHS Player Reference Infrastructure repo contains a set of deployment script
 
 Docker Compose stack for running the OHS reference infrastructure locally:
 PostgreSQL, Keycloak, HAPI FHIR Server and FHIR Info Gateway, with optional extension
-services (OHS Player Web Portal, FHIR Data Pipes) behind profiles.
+services behind profiles — the OHS Player Web Portal (`--web`), an isolated
+synthetic-data HAPI FHIR and Postgres pair (`--synth`), FHIR Data Pipes and
+Superset (`--pipes`), and a same-origin nginx front (`--proxy`).
 
 ## Prerequisites
 
 Install the following software on your development machine:
 
-- **Docker Engine** (with the Compose v2 plugin)
+- **Docker Engine** (with the Compose v2 plugin, v2.29 or newer — `dev.sh up`
+  runs `docker compose pull --ignore-buildable`, a flag introduced in v2.29
+  and needed because the stack builds two images from source, which `pull`
+  must skip rather than fail on)
 - **GNU gettext** — provides the template rendering used by `dev.sh`
 - **OpenSSL** — used to generate strong random secrets
 - **Bash** (version 4 or newer) — required to run `dev.sh`
@@ -45,12 +50,21 @@ To create `.env` manually instead, copy the example and replace the
 
 ## Services & Ports
 
-| Service | Host port | Notes |
-|---|---|---|
-| Postgres | `127.0.0.1:5433` | Bound to loopback only |
-| Keycloak | `8081` maps to container `8080` | Admin console at <http://localhost:8081> |
-| HAPI FHIR | `8082` maps to container `8080` | HAPI FHIR base at <http://localhost:8082/fhir> |
-| FHIR Gateway | `8083` maps to container `8080` | FHIR Info Gateway entry at <http://localhost:8083> |
+Defaults from `.env.example`; every port is overridable there.
+
+| Service | Profile | Host port | Notes |
+|---|---|---|---|
+| Postgres | core | `127.0.0.1:5433` | `POSTGRES_HOST_PORT`; bound to loopback only |
+| Keycloak | core | `8081` maps to container `8081` | `KEYCLOAK_PORT`; published 1:1 so one URL works from browser and containers. Admin console at <http://keycloak.localhost:8081> |
+| HAPI FHIR | core | `8082` maps to container `8080` | `HAPI_FHIR_PORT`; FHIR base at <http://localhost:8082/fhir> |
+| FHIR Gateway | core | `8083` maps to container `8080` | `FHIR_GATEWAY_PORT`; gateway entry at <http://localhost:8083> |
+| Web Portal | `--web`, `--proxy` | `8084` maps to container `80` | `OHS_PLAYER_WEB_PORT`; SPA at <http://localhost:8084> |
+| nginx front | `--proxy` | `80` maps to container `80` | `PROXY_PORT`; same-origin front at <http://ohs-player.localhost> |
+| Synth Postgres | `--synth`, `--pipes` | `127.0.0.1:5435` | `POSTGRES_SYNTH_PORT`; isolated from the transactional database |
+| Synth HAPI FHIR | `--synth`, `--pipes` | `8085` maps to container `8080` | `HAPI_SYNTH_PORT`; synthetic-data FHIR base at <http://localhost:8085/fhir> |
+| Analytics Postgres | `--pipes` | `127.0.0.1:5434` | `POSTGRES_ANALYTICS_PORT`; flat tables written by the pipeline |
+| Pipeline controller | `--pipes` | `8090` maps to container `8080` | `PIPELINE_PORT`; control panel at <http://localhost:8090> |
+| Superset | `--pipes` | `8088` maps to container `8088` | `SUPERSET_PORT`; dashboards at <http://localhost:8088> (admin/admin) |
 
 ### Using an external Postgres
 
@@ -125,8 +139,8 @@ before testing (up to 90s for Keycloak, up to 180s for HAPI FHIR).
 
 | Service | URL | What to expect |
 |---|---|---|
-| **Postgres** | `psql -h 127.0.0.1 -p ${POSTGRES_PORT:-5433} -U postgres` | Connection prompt (use `POSTGRES_ADMIN_PASSWORD` from `.env`) |
-| **Keycloak** | <http://localhost:8081> | Admin console login page (use `KEYCLOAK_ADMIN_USERNAME` / `KEYCLOAK_ADMIN_PASSWORD` from `.env`) |
+| **Postgres** | `psql -h 127.0.0.1 -p ${POSTGRES_HOST_PORT:-5433} -U postgres` | Connection prompt (use `POSTGRES_ADMIN_PASSWORD` from `.env`) |
+| **Keycloak** | <http://keycloak.localhost:8081> | Admin console login page (use `KEYCLOAK_ADMIN_USERNAME` / `KEYCLOAK_ADMIN_PASSWORD` from `.env`) |
 | **HAPI FHIR** | <http://localhost:8082/fhir/metadata> | FHIR CapabilityStatement JSON response |
 | **FHIR Gateway** | <http://localhost:8083/fhir/metadata> | Proxied CapabilityStatement via the gateway |
 
@@ -137,7 +151,7 @@ before testing (up to 90s for Keycloak, up to 180s for HAPI FHIR).
 
 ```bash
 # Keycloak is responding
-curl -sf http://localhost:8081/health/ready | grep -q UP && echo "Keycloak: OK"
+curl -sf http://keycloak.localhost:8081/health/ready | grep -q UP && echo "Keycloak: OK"
 
 # HAPI FHIR returns a CapabilityStatement
 curl -sf http://localhost:8082/fhir/metadata | grep -q CapabilityStatement && echo "HAPI FHIR: OK"
@@ -154,20 +168,51 @@ the SPA, the gateway and Keycloak from a single origin, so no CORS is
 involved — which matters for the gateway plugin's `/api/*` endpoints, which
 send no CORS headers of their own.
 
-Three `.env` values must change together, because the first is baked into
-the Keycloak realm import and the other two into the SPA bundle:
+Two `.env` values must change together, because the first is baked into the
+SPA bundle and the second into the Keycloak realm import:
 
 ```dotenv
 KEYCLOAK_PUBLIC_URL=http://ohs-player.localhost
-VITE_FHIR_BASE_URL=http://ohs-player.localhost/fhir
 OHS_PLAYER_APP_HOST=ohs-player.localhost
 ```
+
+`VITE_FHIR_BASE_URL` needs no change — it is the relative `/fhir`, so it
+follows whichever origin serves the SPA.
 
 Then:
 
 ```bash
 ./dev.sh up --web --proxy
 ```
+
+`PROXY_PORT` must stay at `80` for the values above. nginx listens on `80`
+inside the container and containers reach it through the `PUBLIC_HOST`
+network alias on that internal port, while the browser uses the published
+port — the two agree only at `80`. Changing `PROXY_PORT` means appending
+`:<PROXY_PORT>` to the browser-facing values while container-to-container
+traffic still targets `80`, which one variable cannot express.
+
+### Switching an existing stack
+
+If the stack has already run, editing `.env` and re-running `./dev.sh up` is
+**not enough**. Keycloak imports the realm with the `IGNORE_EXISTING`
+strategy, so once the realm is in the Postgres volume the re-rendered
+`keycloak/ohs-player-realm.json` is ignored entirely — the
+`ohs-player-client` redirect URIs and web origins keep their first-boot
+values and login fails on the new hostname.
+
+Reset first:
+
+```bash
+./dev.sh reset
+./dev.sh up --web --proxy
+```
+
+`./dev.sh reset` destroys the Postgres volume. **Everything in it is lost:**
+the whole realm including any users, clients or role changes you made through
+the admin console, and every FHIR resource stored by the HAPI server. The
+import strategy is deliberately not `OVERWRITE_EXISTING` — that would discard
+admin-console realm changes on every single start.
 
 Browsers resolve any `*.localhost` name to `127.0.0.1` with no `/etc/hosts`
 entry. For a different hostname, set `PUBLIC_HOST` and add a matching line
@@ -295,12 +340,12 @@ commands for every subcommand. Run all commands from the repo root.
 
 | `dev.sh` subcommand | Equivalent raw commands |
 |---|---|
-| `./dev.sh up` | `docker compose pull` <br> `docker compose up -d` <br> `docker compose ps` |
-| `./dev.sh up --web` | `docker compose --profile web pull` <br> `docker compose --profile web up -d` |
-| `./dev.sh up --synth` | `docker compose --profile synth pull` <br> `docker compose --profile synth up -d` |
-| `./dev.sh up --pipes` | `docker compose --profile pipes pull` <br> `docker compose --profile pipes up -d` |
-| `./dev.sh up --proxy` | `docker compose --profile proxy pull` <br> `docker compose --profile proxy up -d` |
-| `./dev.sh up --full` | `docker compose --profile full pull` <br> `docker compose --profile full up -d` |
+| `./dev.sh up` | `docker compose pull --ignore-buildable` <br> `docker compose up -d --build` <br> `docker compose ps` |
+| `./dev.sh up --web` | `docker compose --profile web pull --ignore-buildable` <br> `docker compose --profile web up -d --build` |
+| `./dev.sh up --synth` | `docker compose --profile synth pull --ignore-buildable` <br> `docker compose --profile synth up -d --build` |
+| `./dev.sh up --pipes` | `docker compose --profile pipes pull --ignore-buildable` <br> `docker compose --profile pipes up -d --build` |
+| `./dev.sh up --proxy` | `docker compose --profile proxy pull --ignore-buildable` <br> `docker compose --profile proxy up -d --build` |
+| `./dev.sh up --full` | `docker compose --profile full pull --ignore-buildable` <br> `docker compose --profile full up -d --build` |
 | `./dev.sh down` | `docker compose --profile web --profile pipes --profile synth --profile proxy --profile full down` |
 | `./dev.sh reset` | `docker compose --profile web --profile pipes --profile synth --profile proxy --profile full down --volumes` |
 | `./dev.sh logs` | `docker compose logs -f` |
@@ -333,7 +378,7 @@ whenever `.env.example` or any `*.example` template changes:
      < hapi-fhir/application-no-auth.yaml.example \
      > hapi-fhir/application-no-auth.yaml
 
-   envsubst '${HAPI_FHIR_DB_PASSWORD} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET}' \
+   envsubst '${HAPI_FHIR_DB_PASSWORD} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_ID} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET} ${KEYCLOAK_REALM} ${KEYCLOAK_PUBLIC_URL}' \
      < hapi-fhir/application-auth.yaml.example \
      > hapi-fhir/application-auth.yaml
 

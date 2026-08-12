@@ -15,8 +15,8 @@ RUN git clone --depth 1 --branch "${WEB_REF}" \
 RUN pnpm install --frozen-lockfile
 
 # Browser-facing config, baked into the bundle at build time.
-ARG VITE_FHIR_BASE_URL=http://localhost:8083/fhir
-ARG VITE_OIDC_ISSUER=http://localhost:8081/realms/ohs-player
+ARG VITE_FHIR_BASE_URL=/fhir
+ARG VITE_OIDC_ISSUER=http://keycloak.localhost:8081/realms/ohs-player
 ARG VITE_CLIENT_ID=ohs-player-client
 ARG VITE_FHIR_VERSION=R4
 ENV VITE_FHIR_BASE_URL=$VITE_FHIR_BASE_URL \

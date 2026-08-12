@@ -22,10 +22,25 @@ repository is ahead on the synthetic-data stack, the analytics pipeline wiring, 
 | `postgres-synth` / `hapi-synth` services | present | absent |
 | Pipeline FHIR source | `hapi-synth` | `hapi-fhir` |
 | `data-pipes/config/postgres-analytics.json.example` port | `5432` (in-network, correct) | `5434` (host port, wrong for container-to-container) |
-| `hapi-fhir/application-auth.yaml.example` `auth-server-url` | `http://keycloak:8080/` | `${KEYCLOAK_PUBLIC_URL}/` |
-| `fhir-gateway` dependency on `hapi-fhir` | `service_started` | `service_healthy` |
 | `dev.sh` with `[generated]` secret auto-fill | present | absent |
 | README | 296 lines | 111 lines |
+
+**Two rows were removed from this table after implementation — both were wrong.**
+
+- **`fhir-gateway` dependency on `hapi-fhir`.** The table claimed the repository
+  already had `service_healthy` and the server had `service_started`. It was the
+  other way round for the repository: `git show 72a2303:docker-compose.yaml` shows
+  `condition: service_started`. This repository was not ahead here and there is no
+  `service_healthy` condition to "restore". The gateway now additionally depends on
+  `keycloak: service_healthy`, because it resolves `TOKEN_ISSUER` at startup.
+- **`hapi-fhir/application-auth.yaml.example` `auth-server-url`.** The table claimed
+  the repository's `http://keycloak:8080/` was the value to preserve over the
+  server's `${KEYCLOAK_PUBLIC_URL}/`. The server value was right and is now what the
+  template carries. A literal in-network host/port cannot match the issuer of tokens
+  minted through `KEYCLOAK_PUBLIC_URL`, and `8080` is no longer the port Keycloak
+  listens on — it listens on `KEYCLOAK_PORT`, published 1:1, so that
+  `KEYCLOAK_PUBLIC_URL` resolves identically from the browser and from inside the
+  network.
 
 ### Defects this sync exposes
 
@@ -148,13 +163,13 @@ and from inside the gateway and HAPI containers) but substituting local defaults
 | `POSTGRES_HOST` | `postgres` |
 | `POSTGRES_HOST_PORT` | `5433` |
 | `POSTGRES_PORT` | `5432` (changed from `5433`) |
-| `KEYCLOAK_PUBLIC_URL` | `http://localhost:8081` |
+| `KEYCLOAK_PUBLIC_URL` | `http://keycloak.localhost:8081` (corrected; `http://localhost:8081` as specified here is the gateway's own loopback from inside its container, so OIDC discovery could never succeed) |
 | `FHIR_GATEWAY_KEYCLOAK_CLIENT_ID` | `fhir-gateway-admin` |
 | `FHIR_GATEWAY_KEYCLOAK_CLIENT_SECRET` | `[generated]` |
 | `ACCESS_CHECKER` | `permission` |
 | `RUN_MODE` | `PROD` |
 | `GATEWAY_REF` / `PLUGIN_REF` / `WEB_REF` | `main` |
-| `VITE_FHIR_BASE_URL` | `http://localhost:8083/fhir` |
+| `VITE_FHIR_BASE_URL` | `/fhir` (corrected; the absolute URL specified here bypasses `nginx/spa.conf`, which exists to keep the SPA's FHIR calls same-origin) |
 | `VITE_CLIENT_ID` | `ohs-player-client` |
 | `VITE_FHIR_VERSION` | `R4` |
 

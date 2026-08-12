@@ -1,5 +1,16 @@
 # Server Config Sync Implementation Plan
 
+> **Status: executed, then superseded in places.** A whole-branch review after
+> all six tasks landed found integration defects the per-task reviews could not
+> see, and the fixes changed decisions recorded below. Do not copy code
+> verbatim from this plan — read the current file instead. Most notably:
+> Keycloak now listens on `KEYCLOAK_PORT` (8081) inside its container and is
+> published 1:1, so every `keycloak:8080` upstream in the `nginx/ohs-player.conf`
+> listing below is now `keycloak:8081`; `KEYCLOAK_PUBLIC_URL` is
+> `http://keycloak.localhost:8081`, not `http://localhost:8081`; and
+> `VITE_FHIR_BASE_URL` is the relative `/fhir`, so only two values change in
+> proxy mode, not three. See the corrections in the spec.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Bring the improvements from the 2026-07-29 server deployment into this repository without regressing its local-development focus, and fix the defects that comparison exposed.

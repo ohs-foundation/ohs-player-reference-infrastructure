@@ -106,7 +106,7 @@ render_templates() {
 
     render hapi-fhir/application-auth.yaml.example \
            hapi-fhir/application-auth.yaml \
-           '${HAPI_FHIR_DB_PASSWORD} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET}'
+           '${HAPI_FHIR_DB_PASSWORD} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_ID} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET} ${KEYCLOAK_REALM} ${KEYCLOAK_PUBLIC_URL}'
 
     render data-pipes/config/postgres-analytics.json.example \
            data-pipes/config/postgres-analytics.json \
@@ -165,10 +165,15 @@ cmd_up() {
     parse_profiles "$@"
     check_prerequisites
     render_templates
+    # --ignore-buildable: fhir-gateway and ohs-player-web are built from source
+    # (ohs-fhir-gateway:local, ohs-player-web:local) and exist in no registry, so
+    # a plain `pull` fails and set -e would abort before anything starts.
     info "Pulling images..."
-    compose "${PROFILE_ARGS[@]}" pull
+    compose "${PROFILE_ARGS[@]}" pull --ignore-buildable
+    # --build: `up -d` alone only builds when the image is absent, so changed
+    # build args (VITE_*, *_REF) would otherwise never reach a rebuilt image.
     info "Starting stack..."
-    compose "${PROFILE_ARGS[@]}" up -d
+    compose "${PROFILE_ARGS[@]}" up -d --build
     info "Stack started. Container status:"
     compose "${PROFILE_ARGS[@]}" ps
 }
