@@ -6,14 +6,12 @@
 #
 #   ./dev.sh up          # core services only
 #   ./dev.sh up --web    # core + web-portal
-#   ./dev.sh up --pipes  # core + data-pipes
+#   ./dev.sh up --synth  # core + synthetic-data HAPI + postgres
+#   ./dev.sh up --pipes  # core + synth + analytics pipeline + Superset
+#   ./dev.sh up --proxy  # core + same-origin nginx front
 #   ./dev.sh up --full   # everything
 #
 # Auth mode for HAPI FHIR is controlled by the HAPI_CONFIG variable in `.env`.
-#
-# NOTE: A public demo deployment (reverse proxy, VM provisioning, periodic
-# reset job, landing page) is out of scope for this file and will be added
-# later.
 # =============================================================================
 
 services:
@@ -158,6 +156,7 @@ services:
     networks: [fhir_net]
 
   ohs-player-web:
+    profiles: ["web", "full"]
     build:
       context: .
       dockerfile: Dockerfile.web
