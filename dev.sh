@@ -153,8 +153,9 @@ parse_profiles() {
             --web)   PROFILE_ARGS+=(--profile web)   ;;
             --pipes) PROFILE_ARGS+=(--profile pipes) ;;
             --synth) PROFILE_ARGS+=(--profile synth) ;;
+            --proxy) PROFILE_ARGS+=(--profile proxy) ;;
             --full)  PROFILE_ARGS+=(--profile full)  ;;
-            *)       error "Unknown flag: $arg (expected --web, --pipes, --synth, or --full)" ;;
+            *)       error "Unknown flag: $arg (expected --web, --pipes, --synth, --proxy, or --full)" ;;
         esac
     done
 }
@@ -175,14 +176,14 @@ cmd_up() {
 cmd_down() {
     check_prerequisites
     info "Stopping stack..."
-    compose --profile web --profile pipes --profile synth --profile full down
+    compose --profile web --profile pipes --profile synth --profile proxy --profile full down
 }
 
 cmd_reset() {
     check_prerequisites
     warn "This will stop all services and delete named volumes (postgres data will be lost)."
     info "Stopping stack and removing volumes..."
-    compose --profile web --profile pipes --profile synth --profile full down --volumes
+    compose --profile web --profile pipes --profile synth --profile proxy --profile full down --volumes
     info "Reset complete. Run './dev.sh up' to start fresh."
 }
 
@@ -216,10 +217,12 @@ usage() {
 Usage: $0 <command> [options]
 
 Commands:
-  up [--web|--pipes|--synth|--full]   Render configs and start services
-                                (no flag = core only)
-                                --synth  adds synthetic HAPI + postgres
-                                --pipes  adds synth + analytics pipeline + Superset
+  up [--web|--pipes|--synth|--proxy|--full]
+                              Render configs and start services
+                              (no flag = core only)
+                              --synth  adds synthetic HAPI + postgres
+                              --pipes  adds synth + analytics pipeline + Superset
+                              --proxy  adds the same-origin nginx front
   down                        Stop all running services
   reset                       Stop services and wipe named volumes
   logs [service]              Tail logs (all services or one)

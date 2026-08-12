@@ -180,6 +180,34 @@ services:
     networks: [fhir_net]
 
   # ---------------------------------------------------------------------------
+  # reverse proxy (profile: proxy / full)
+  #
+  # Puts the SPA, the gateway and Keycloak on one origin, so the browser makes
+  # no cross-origin requests and the gateway's CORS-less /api/* routes work.
+  #
+  # The network alias is the point: containers resolve PUBLIC_HOST to this
+  # container through Docker DNS, so the gateway's OIDC discovery against
+  # KEYCLOAK_PUBLIC_URL succeeds from inside the network without any host
+  # mapping. Browsers reach it on http://${PUBLIC_HOST}:${PROXY_PORT}.
+  # ---------------------------------------------------------------------------
+  nginx:
+    profiles: ["proxy", "full"]
+    image: nginx:1.27-alpine
+    container_name: ohs-nginx
+    restart: unless-stopped
+    ports:
+      - "${PROXY_PORT:-80}:80"
+    volumes:
+      - ./nginx/ohs-player.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    networks:
+      fhir_net:
+        aliases:
+          - ${PUBLIC_HOST:-ohs-player.localhost}
+
+  # ---------------------------------------------------------------------------
   # synth stack (profile: synth / pipes / full)
   #
   # Isolated HAPI FHIR + PostgreSQL for synthetic/test data generation.
