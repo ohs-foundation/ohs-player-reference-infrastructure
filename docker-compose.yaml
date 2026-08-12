@@ -17,6 +17,38 @@
 # =============================================================================
 
 services:
+  # Local Postgres for Keycloak and the transactional HAPI FHIR server.
+  # postgres/init/01-init.sh runs once on volume creation and provisions the
+  # keycloak and hapi_fhir roles/databases from the passwords below.
+  #
+  # To use an external instance instead, set POSTGRES_HOST in .env to its
+  # hostname (or host.docker.internal for one running on this machine) and
+  # provision the roles yourself — see the README.
+  postgres:
+    image: postgres:18
+    container_name: ohs-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
+      KEYCLOAK_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      HAPI_FHIR_DB_PASSWORD: ${HAPI_FHIR_DB_PASSWORD}
+    volumes:
+      # Mounted at /var/lib/postgresql, not /var/lib/postgresql/data: postgres:18
+      # moved its default PGDATA and refuses to start against a volume at the old
+      # path unless PGDATA is set explicitly. Matches postgres-synth below.
+      - postgres_data:/var/lib/postgresql
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5433}:5432"
+    networks: [fhir_net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   keycloak:
     restart: unless-stopped
     image: quay.io/keycloak/keycloak:26.5.0
@@ -53,6 +85,9 @@ services:
       - "--import-realm"
     ports:
       - "${KEYCLOAK_PORT:-8081}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks: [fhir_net]
     healthcheck:
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/9000 && printf 'GET /health/ready HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && cat <&3 | grep -q UP"]
@@ -78,6 +113,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
+      postgres:
+        condition: service_healthy
       keycloak:
         condition: service_healthy
     networks: [fhir_net]
@@ -296,6 +333,7 @@ networks:
     external: false
 
 volumes:
+  postgres_data:
   postgres_synth_data:
   postgres_analytics_data:
   superset_home:
