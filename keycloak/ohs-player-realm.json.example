@@ -2224,7 +2224,7 @@
       "id": "c3d4e5f6-a7b8-49c0-d1e2-f3a4b5c6d7e8",
       "clientId": "${FHIR_GATEWAY_KEYCLOAK_CLIENT_ID}",
       "name": "FHIR Gateway Admin",
-      "description": "Confidential service-account client used by the FHIR gateway IAM provider for user/group/role management (client_credentials grant). Its service account holds the realm-management roles manage-realm and view-realm in addition to manage-users and view-users: Keycloak gates creating and deleting REALM roles on manage-realm, not on manage-users, so the narrower pair alone cannot cover the gateway's role management. JSON admits no comments, hence this note here.",
+      "description": "Confidential service-account client for the FHIR gateway IAM provider (client_credentials). Holds manage-realm/view-realm as well as manage-users/view-users: Keycloak gates realm-role create and delete on manage-realm.",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,

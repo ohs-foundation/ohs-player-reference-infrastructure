@@ -152,10 +152,11 @@ services:
       - IAM_PROVIDER=keycloak
       - IAM_PROVIDER_CLIENT_ID=${FHIR_GATEWAY_KEYCLOAK_CLIENT_ID}
       - IAM_PROVIDER_CLIENT_SECRET=${FHIR_GATEWAY_KEYCLOAK_CLIENT_SECRET}
-      # ACCESS_CHECKER selects the FHIR proxy access checker. Registered names in
-      # the gateway build: "list", "patient". "permissive" disables access control
-      # but ONLY when RUN_MODE=DEV. Default keeps the server's intended value.
-      - ACCESS_CHECKER=${ACCESS_CHECKER:-permission}
+      # ACCESS_CHECKER selects the FHIR proxy access checker. This build registers
+      # "ohs_player_access" (from the ohs-player plugin) plus "list" and "patient"
+      # (from the gateway itself). "permissive" disables access control, and only
+      # when RUN_MODE=DEV. An unrecognised name makes every request return 500.
+      - ACCESS_CHECKER=${ACCESS_CHECKER:-ohs_player_access}
       - ALLOWED_QUERIES_FILE=resources/hapi_page_url_allowed_queries.json
       - SYNC_FILTER_IGNORE_RESOURCES_FILE=resources/hapi_sync_filter_ignored_queries.json
       - BACKEND_TYPE=HAPI
