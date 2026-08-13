@@ -206,6 +206,11 @@ cmd_render() {
     render_templates
 }
 
+# Deleting .env means the next `up` generates fresh secrets. Existing volumes
+# still hold the roles and admin account created from the OLD ones, and Postgres
+# only runs postgres/init/01-init.sh on an empty data directory — so Keycloak
+# then fails with "password authentication failed for user keycloak" and the
+# admin console rejects the new password. Warn when a volume is present.
 cmd_clean() {
     info "Removing generated files..."
     rm -f "$SCRIPT_DIR/.env"
@@ -213,6 +218,17 @@ cmd_clean() {
     rm -f "$SCRIPT_DIR/hapi-fhir/application-no-auth.yaml"
     rm -f "$SCRIPT_DIR/hapi-fhir/application-auth.yaml"
     rm -f "$SCRIPT_DIR/data-pipes/config/postgres-analytics.json"
+
+    local project
+    project="$(basename "$SCRIPT_DIR")"
+    if docker volume inspect "${project}_postgres_data" >/dev/null 2>&1; then
+        warn "A Postgres volume from a previous run still exists."
+        warn "Its database roles use the OLD secrets, which './dev.sh up' has now"
+        warn "replaced — Keycloak will fail to authenticate against it."
+        warn "Run './dev.sh reset' to wipe the volumes (destroys all data), or keep"
+        warn "your existing .env instead of cleaning it."
+    fi
+
     info "Cleaned. Run './dev.sh render' to regenerate configs, or './dev.sh up' to regenerate and start services."
 }
 
