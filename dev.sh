@@ -33,10 +33,52 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_FILE="$SCRIPT_DIR/.env"
 
 # --- Prerequisites -----------------------------------------------------------
+# The package name differs on every platform, so "install gettext-base" is
+# useless advice on macOS or Windows. Name the package for each instead.
+install_hint() {
+    case "$1" in
+        envsubst)
+            printf '%s\n' \
+                "  Debian / Ubuntu / WSL : sudo apt install gettext-base" \
+                "  Fedora / RHEL         : sudo dnf install gettext" \
+                "  Alpine                : apk add gettext" \
+                "  macOS (Homebrew)      : brew install gettext && brew link --force gettext" \
+                "                          Homebrew keeps gettext keg-only, so without the" \
+                "                          link step envsubst never lands on your PATH" \
+                "  Windows               : run this script from WSL or Git Bash; gettext is" \
+                "                          not available to cmd.exe or PowerShell"
+            ;;
+        secret)
+            printf '%s\n' \
+                "  Secrets come from /dev/urandom via od, which is present on virtually" \
+                "  every system. If you are seeing this, /dev/urandom is unreadable and" \
+                "  neither openssl nor python3 is installed. Any one of these fixes it:" \
+                "" \
+                "  Debian / Ubuntu / WSL : sudo apt install coreutils" \
+                "  Fedora / RHEL         : sudo dnf install coreutils" \
+                "  Alpine                : apk add coreutils" \
+                "  Any platform          : install openssl, or python3"
+            ;;
+    esac
+}
+
+require_tool() {
+    command -v "$1" >/dev/null 2>&1 && return 0
+    error "$(printf '%s is required but was not found on your PATH.\n\n%s' "$1" "$(install_hint "$1")")"
+}
+
 check_prerequisites() {
-    command -v docker    >/dev/null 2>&1 || error "Docker is not installed."
-    docker compose version >/dev/null 2>&1 || error "Docker Compose plugin is not installed."
-    command -v envsubst  >/dev/null 2>&1 || error "envsubst is not installed (install 'gettext-base')."
+    command -v docker >/dev/null 2>&1 || error "Docker is not installed. See 'Before you begin' in the README."
+    docker compose version >/dev/null 2>&1 \
+        || error "The Docker Compose v2 plugin is not installed (v2.29 or newer is required)."
+    # envsubst renders the config templates; openssl generates every secret.
+    # Both are checked here so a missing one stops us now rather than surfacing
+    # later as an unrendered template or a blank password.
+    require_tool envsubst
+    # Functional check rather than a named package: generate_secret has three
+    # possible sources and only needs one of them to work.
+    generate_secret >/dev/null 2>&1 \
+        || error "$(printf 'Cannot generate secrets on this machine.\n\n%s' "$(install_hint secret)")"
 }
 
 # --- Env file ----------------------------------------------------------------
@@ -50,8 +92,24 @@ check_prerequisites() {
 #   - User copies .env.example manually but leaves some [generated] markers:
 #     the remaining markers are filled in automatically on next run.
 #   - User has already set all values: nothing is changed.
+# /dev/urandom read through od is the widest-available combination there is:
+# od is POSIX and ships in GNU coreutils, BSD userland and busybox alike, and
+# /dev/urandom exists on Linux, macOS, WSL and Git Bash. It is the same CSPRNG
+# that openssl seeds itself from, so this is not a weaker source — and it is
+# more available: debian:12-slim, for one, has od but no openssl.
+#
+# The fallbacks cover hardened environments that restrict /dev/urandom.
+# Returns non-zero if no method works; callers must treat that as fatal.
 generate_secret() {
-    openssl rand -hex 24
+    if [[ -r /dev/urandom ]] && command -v od >/dev/null 2>&1; then
+        od -An -N24 -tx1 /dev/urandom | tr -d ' \n'
+    elif command -v openssl >/dev/null 2>&1; then
+        openssl rand -hex 24
+    elif command -v python3 >/dev/null 2>&1; then
+        python3 -c 'import secrets; print(secrets.token_hex(24))'
+    else
+        return 1
+    fi
 }
 
 require_env_file() {
@@ -64,8 +122,16 @@ require_env_file() {
     fi
     if grep -q '=\[generated\]' "$ENV_FILE"; then
         info "Replacing [generated] markers in .env with random secrets..."
+        # Assign first, then substitute. Calling generate_secret inline inside the
+        # sed expression looks equivalent but is not: a command substitution used
+        # as a word does not trip `set -e`, so a failing openssl would leave sed
+        # succeeding with an empty replacement and every credential blank — an
+        # exit status of 0 on a stack booted with no passwords.
+        local secret
         while grep -q '=\[generated\]' "$ENV_FILE"; do
-            sed -i "0,/=\[generated\]/{s/=\[generated\]/=$(generate_secret)/}" "$ENV_FILE"
+            secret="$(generate_secret)"
+            [[ -n "$secret" ]] || error "Generated an empty secret; refusing to write blank credentials to .env."
+            sed -i "0,/=\[generated\]/{s/=\[generated\]/=${secret}/}" "$ENV_FILE"
         done
         info "Secrets generated. Review at: $ENV_FILE"
     fi
