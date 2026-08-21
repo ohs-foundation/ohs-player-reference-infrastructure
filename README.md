@@ -1,78 +1,350 @@
 # OHS Player Reference Infrastructure
 
-The OHS Player Reference Infrastructure repo contains a set of deployment scripts, images and documentation for packaging and deployment of an [OHS based project](https://developers.google.com/open-health-stack/overview). This set of scripts will be useful for quickly spinning up the OHS "back-end" for faster development or deployments.
+Reference Infrastructure brings up the services every other OHS Player component
+depends on: a FHIR server, identity, the gateway in front of them, and the database
+underneath.
 
-Docker Compose stack for running the OHS reference infrastructure locally:
-PostgreSQL, Keycloak, HAPI FHIR Server and FHIR Info Gateway, with optional extension
-services behind profiles — the OHS Player Web Portal (`--web`), an isolated
-synthetic-data HAPI FHIR and Postgres pair (`--synth`), FHIR Data Pipes and
-Superset (`--pipes`), and a same-origin nginx front (`--proxy`).
+It is deployment material rather than an application. Nothing in it is a component you
+use directly, which is why it is the first stage rather than an item in the component
+set. Everything you set up afterwards points at what this creates.
 
-## Prerequisites
+Full guide: [Set up the environment](https://ohs-foundation.github.io/ohs-docs/components/reference-infrastructure/).
 
-Install the following software on your development machine:
+---
 
-- **Docker Engine** (with the Compose v2 plugin, v2.29 or newer — `dev.sh up`
-  runs `docker compose pull --ignore-buildable`, a flag introduced in v2.29
-  and needed because the stack builds two images from source, which `pull`
-  must skip rather than fail on)
-- **GNU gettext** — provides the template rendering used by `dev.sh`
-- **OpenSSL** — used to generate strong random secrets
-- **Bash** (version 4 or newer) — required to run `dev.sh`
+## Before you begin
 
-All four are available on Linux, macOS and Windows. On Windows, run
-`dev.sh` from [WSL](https://learn.microsoft.com/en-us/windows/wsl/install)
-(the recommended option, also required by Docker Desktop) or
-[Git Bash](https://gitforwindows.org/); native `cmd.exe` / PowerShell are
-not supported.
+Install these on your machine:
 
-**Optional:**
+| Tool | Why |
+|---|---|
+| **Docker Engine** with the **Compose v2 plugin** (v2.29 or newer) | Runs the stack. v2.29 added the `pull --ignore-buildable` flag `dev.sh` uses, because two images are built from source rather than pulled |
+| **GNU gettext** (`envsubst`) | Fills your settings into the service config templates |
+| **OpenSSL** | Generates a random secret for each password |
+| **Bash 4 or newer** | Runs `dev.sh` |
 
-- **JDK** (any version with `javac`) — only needed if you modify
-  `hapi-fhir/health/Healthcheck.java`. The committed `Healthcheck.class`
-  is used as-is when no JDK is present, so this is not required for a
-  fresh setup. See [HAPI FHIR Healthcheck](#hapi-fhir-healthcheck).
+**On Windows**, run everything from [WSL](https://learn.microsoft.com/en-us/windows/wsl/install)
+(recommended, and required by Docker Desktop anyway) or [Git Bash](https://gitforwindows.org/).
+The scripts do not run under `cmd.exe` or PowerShell.
 
-## First-Run Setup
+**Optional:** a JDK (any version with `javac`). You only need it if you edit
+`hapi-fhir/health/Healthcheck.java`. The compiled `.class` file is committed, so a fresh
+clone works without one. See [HAPI FHIR healthcheck](#hapi-fhir-healthcheck).
+
+---
+
+## Bring it up
+
+**Step 1 — get the code.**
+
+```bash
+git clone https://github.com/ohs-foundation/ohs-player-reference-infrastructure.git
+cd ohs-player-reference-infrastructure
+```
+
+**Step 2 — start the stack.**
 
 ```bash
 ./dev.sh up
 ```
 
-On first run the script auto-generates `.env` from `.env.example`, replacing
-every `[generated]` marker with a unique random secret. It then renders the
-HAPI FHIR config templates, pulls images and brings up the core services.
+That one command does five things, in order:
 
-`.env` is gitignored. **Never commit it.**
+1. Copies `.env.example` to `.env` if you do not have one yet.
+2. Replaces every `[generated]` placeholder in `.env` with a random secret.
+3. Renders the Keycloak realm and HAPI FHIR config from those values.
+4. Builds the gateway image from source (first run only — this takes several minutes).
+5. Starts the four core services.
 
-To create `.env` manually instead, copy the example and replace the
-`[generated]` values with your own secrets before running `./dev.sh up`.
+Later runs reuse what is already there, so they are much faster.
 
-## Services & Ports
+> **`.env` holds your generated credentials and is deliberately untracked. Never commit it.**
 
-Defaults from `.env.example`; every port is overridable there.
+**Step 3 — wait.** Identity and the FHIR server take appreciably longer to become ready
+than the database. Allow up to **90 seconds for Keycloak** and up to **3 minutes for HAPI
+FHIR** on a first run.
 
-| Service | Profile | Host port | Notes |
+---
+
+## What comes up
+
+| Service | Default port | Role |
+|---|---|---|
+| PostgreSQL | `5433` | Storage for the FHIR server and identity, bound to loopback only |
+| Keycloak | `8081` | Identity: realms, clients, users and roles |
+| HAPI FHIR | `8082` | The FHIR server, unmodified |
+| FHIR Gateway | `8083` | The authenticated, access-controlled entry point |
+
+Every port is overridable in `.env`.
+
+**Clients never reach the FHIR server directly.** Everything routes through the gateway,
+which is why bringing up the gateway is part of standing up the environment rather than a
+later step.
+
+Keycloak's admin console is at <http://keycloak.localhost:8081>. Log in with
+`KEYCLOAK_ADMIN_USERNAME` and `KEYCLOAK_ADMIN_PASSWORD` from your `.env`. Browsers resolve
+any `*.localhost` name to `127.0.0.1` on their own, so there is nothing to add to
+`/etc/hosts`.
+
+---
+
+## Confirm it is healthy
+
+**Step 1 — check the containers.**
+
+```bash
+docker compose ps
+```
+
+All four should show `Up`, and Postgres, Keycloak and HAPI FHIR should show `(healthy)`.
+
+**Step 2 — check each service answers.** Run all three; three silent successes mean
+identity is up, the FHIR server is serving, and the gateway is proxying to it.
+
+```bash
+curl -sf http://localhost:8081/realms/ohs-player/.well-known/openid-configuration | grep -q issuer
+curl -sf http://localhost:8082/fhir/metadata | grep -q CapabilityStatement
+curl -sf http://localhost:8083/fhir/metadata | grep -q CapabilityStatement
+```
+
+If you prefer to see output rather than silence:
+
+```bash
+curl -sf http://localhost:8081/realms/ohs-player/.well-known/openid-configuration | grep -q issuer && echo "Keycloak: OK"
+curl -sf http://localhost:8082/fhir/metadata | grep -q CapabilityStatement && echo "HAPI FHIR: OK"
+curl -sf http://localhost:8083/fhir/metadata | grep -q CapabilityStatement && echo "FHIR Gateway: OK"
+```
+
+> The first command checks the realm rather than `/health/ready`. Keycloak 26 serves its
+> health endpoints on a separate management port (`9000`) that this stack does not publish,
+> so `curl http://localhost:8081/health/ready` returns 404 even on a perfectly healthy
+> Keycloak. The container's own healthcheck probes port 9000 internally, which is what
+> `docker compose ps` reports.
+
+---
+
+## Choose an authentication mode
+
+The FHIR server can run open, or validate tokens issued by identity. One value in `.env`
+selects which:
+
+| Value | Behaviour |
+|---|---|
+| `application-no-auth.yaml` | The FHIR server accepts requests without a token |
+| `application-auth.yaml` | The FHIR server validates tokens issued by identity |
+
+Open is convenient while exploring. Token validation matches how the components are meant
+to fit together, and is the mode to use before running the Portal and the Client App
+against this environment.
+
+To switch:
+
+1. Edit `HAPI_CONFIG` in `.env`.
+2. Run `./dev.sh up` again.
+
+No compose file is edited — the HAPI volume mount reads the variable directly.
+
+When switching **into** auth mode, check that `HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET` in
+`.env` matches the secret on the `hapi-fhir-server-client` client in the `ohs-player`
+realm.
+
+---
+
+## Managing the stack
+
+| Command | Does |
+|---|---|
+| `./dev.sh up` | Render configuration and start services |
+| `./dev.sh down` | Stop services, keeping data |
+| `./dev.sh reset` | Stop services and wipe the volumes |
+| `./dev.sh logs [service]` | Tail logs for everything, or one service |
+| `./dev.sh render` | Regenerate service configuration from `.env` |
+| `./dev.sh clean` | Remove generated files |
+| `./dev.sh help` | Show usage |
+
+`reset` is the one to reach for when the environment has drifted into a state you cannot
+explain. It is faster than diagnosing a local-only problem.
+
+> **`reset` destroys the Postgres volume.** Everything in it is lost: the whole realm,
+> including any users, clients or role changes made through the admin console, and every
+> FHIR resource stored by the HAPI server.
+
+A few everyday tasks:
+
+```bash
+./dev.sh logs keycloak          # follow one service's logs
+./dev.sh render                 # re-render configs after editing .env
+docker compose restart hapi-fhir
+```
+
+---
+
+## Expected result
+
+Four services running and healthy, and the three values every other component needs:
+
+| Value | Default |
+|---|---|
+| FHIR base URL, through the gateway | `http://localhost:8083/fhir` |
+| Gateway URL | `http://localhost:8083` |
+| Identity issuer | `http://keycloak.localhost:8081/realms/ohs-player` |
+
+---
+
+## Next step
+
+Set up the backend, which loads the Player endpoints and access rules into the gateway.
+The Web Portal and the Client App both depend on it.
+
+---
+
+# Beyond the core stack
+
+Everything above is the environment the guide describes. The rest of this file covers the
+optional add-ons, server-oriented configuration, and reference material owned by this
+repository.
+
+## Optional profiles
+
+The core four services start by default. Everything else is opt-in behind a flag:
+
+| Command | Adds |
+|---|---|
+| `./dev.sh up` | Nothing — core only (Postgres, Keycloak, HAPI FHIR, Gateway) |
+| `./dev.sh up --web` | The Web Portal SPA |
+| `./dev.sh up --synth` | An isolated HAPI FHIR + Postgres pair for synthetic test data |
+| `./dev.sh up --pipes` | The synth pair, plus FHIR Data Pipes and Superset |
+| `./dev.sh up --proxy` | A same-origin nginx front, plus the Web Portal |
+| `./dev.sh up --full` | Everything |
+
+Flags combine: `./dev.sh up --web --proxy`.
+
+Ports for the optional services:
+
+| Service | Profile | Host port | Variable |
 |---|---|---|---|
-| Postgres | core | `127.0.0.1:5433` | `POSTGRES_HOST_PORT`; bound to loopback only |
-| Keycloak | core | `8081` maps to container `8081` | `KEYCLOAK_PORT`; published 1:1 so one URL works from browser and containers. Admin console at <http://keycloak.localhost:8081> |
-| HAPI FHIR | core | `8082` maps to container `8080` | `HAPI_FHIR_PORT`; FHIR base at <http://localhost:8082/fhir> |
-| FHIR Gateway | core | `8083` maps to container `8080` | `FHIR_GATEWAY_PORT`; gateway entry at <http://localhost:8083> |
-| Web Portal | `--web`, `--proxy` | `8084` maps to container `80` | `OHS_PLAYER_WEB_PORT`; SPA at <http://localhost:8084> |
-| nginx front | `--proxy` | `80` maps to container `80` | `PROXY_PORT`; same-origin front at <http://ohs-player.localhost> |
-| Synth Postgres | `--synth`, `--pipes` | `127.0.0.1:5435` | `POSTGRES_SYNTH_PORT`; isolated from the transactional database |
-| Synth HAPI FHIR | `--synth`, `--pipes` | `8085` maps to container `8080` | `HAPI_SYNTH_PORT`; synthetic-data FHIR base at <http://localhost:8085/fhir> |
-| Analytics Postgres | `--pipes` | `127.0.0.1:5434` | `POSTGRES_ANALYTICS_PORT`; flat tables written by the pipeline |
-| Pipeline controller | `--pipes` | `8090` maps to container `8080` | `PIPELINE_PORT`; control panel at <http://localhost:8090> |
-| Superset | `--pipes` | `8088` maps to container `8088` | `SUPERSET_PORT`; dashboards at <http://localhost:8088> (admin/admin) |
+| Web Portal | `--web`, `--proxy` | `8084` | `OHS_PLAYER_WEB_PORT` |
+| nginx front | `--proxy` | `80` | `PROXY_PORT` |
+| Synth Postgres | `--synth`, `--pipes` | `127.0.0.1:5435` | `POSTGRES_SYNTH_PORT` |
+| Synth HAPI FHIR | `--synth`, `--pipes` | `8085` | `HAPI_SYNTH_PORT` |
+| Analytics Postgres | `--pipes` | `127.0.0.1:5434` | `POSTGRES_ANALYTICS_PORT` |
+| Pipeline controller | `--pipes` | `8090` | `PIPELINE_PORT` |
+| Superset | `--pipes` | `8088` | `SUPERSET_PORT` |
+
+### Web Portal — `--web`
+
+Builds the SPA from source and serves it at <http://localhost:8084>.
+
+The first build clones the web portal repository and runs a full `pnpm` install and
+build, so it takes several minutes. The browser-facing values are baked into the bundle at
+build time, which is why changing any `VITE_*` value in `.env` requires a rebuild —
+`./dev.sh up --web` does that for you.
+
+### Synthetic data — `--synth`
+
+Adds a **second** HAPI FHIR server and its own Postgres, at
+<http://localhost:8085/fhir>.
+
+It is deliberately separate from the transactional server so generated test data never
+touches real records. Point a data generator at port `8085` rather than `8082`.
+
+### Analytics — `--pipes`
+
+Adds FHIR Data Pipes and Superset on top of the synth pair.
+
+The pipeline reads FHIR resources from the synth server, applies the ViewDefinitions in
+`data-pipes/config/views/`, and writes flat tables into an analytics Postgres. Superset
+then charts those tables.
+
+| What | Where |
+|---|---|
+| Pipeline control panel | <http://localhost:8090> |
+| Superset | <http://localhost:8088> — log in with `admin` / `admin` |
+
+`PIPELINE_FHIR_SOURCE` in `.env` selects which FHIR server the pipeline reads. It defaults
+to the synth server; point it at `http://hapi-fhir:8080/fhir` once you have transactional
+data worth reporting on.
+
+### Same-origin proxy — `--proxy`
+
+By default each service sits on its own port, so the browser makes cross-origin requests.
+`--proxy` puts an nginx container in front that serves the SPA, the gateway and Keycloak
+from a **single origin**, so no CORS is involved at all.
+
+That matters because the gateway plugin's `/api/*` endpoints send no CORS headers of their
+own. A single origin avoids the problem rather than working around it.
+
+**Step 1 — change two values in `.env`.** They must change together: the first is baked
+into the Keycloak realm import, the second into the SPA bundle.
+
+```dotenv
+KEYCLOAK_PUBLIC_URL=http://ohs-player.localhost
+OHS_PLAYER_APP_HOST=ohs-player.localhost
+```
+
+`VITE_FHIR_BASE_URL` needs no change — it is the relative `/fhir`, so it follows whichever
+origin serves the SPA.
+
+**Step 2 — start with both flags.**
+
+```bash
+./dev.sh up --web --proxy
+```
+
+Everything is then served from <http://ohs-player.localhost>.
+
+#### If the stack has already run once
+
+Editing `.env` and re-running `./dev.sh up` is **not enough.**
+
+Keycloak imports the realm with the `IGNORE_EXISTING` strategy. Once the realm is in the
+Postgres volume, the re-rendered `keycloak/ohs-player-realm.json` is ignored entirely, so
+the `ohs-player-client` redirect URIs keep their first-boot values and login fails on the
+new hostname.
+
+Reset first:
+
+```bash
+./dev.sh reset
+./dev.sh up --web --proxy
+```
+
+The import strategy is deliberately not `OVERWRITE_EXISTING` — that would discard
+admin-console realm changes on every single start.
+
+#### Notes on the proxy
+
+`PROXY_PORT` must stay at `80` for the values above. nginx listens on `80` inside the
+container and other containers reach it through the `PUBLIC_HOST` network alias on that
+internal port, while the browser uses the published port. The two agree only at `80`.
+
+For a hostname other than `*.localhost`, set `PUBLIC_HOST` and add a matching line to your
+`/etc/hosts`:
+
+```text
+127.0.0.1  ohs-player.local
+```
+
+Containers do not read your `/etc/hosts` — they resolve `PUBLIC_HOST` through the nginx
+service's Docker network alias, which is why nothing is needed on the container side.
+
+`nginx/ohs-player-subdomains.conf.example` documents the alternative layout, one hostname
+per service. It needs explicit CORS handling for `/api/*`, which is why the same-origin
+config is the default.
+
+---
+
+## Server and advanced configuration
 
 ### Using an external Postgres
 
-The bundled `postgres` service provisions the `keycloak` and `hapi_fhir`
-roles on first boot via `postgres/init/01-init.sh`. To point at an existing
-instance instead, set `POSTGRES_HOST` in `.env` to its hostname — or to
-`host.docker.internal` for one running on this machine — and create the
-roles and databases yourself:
+The bundled `postgres` service creates the `keycloak` and `hapi_fhir` roles on first boot
+via `postgres/init/01-init.sh`. To use a database you already run instead:
+
+**Step 1 — point the stack at it.** Set `POSTGRES_HOST` in `.env` to its hostname, or to
+`host.docker.internal` for one running on this same machine.
+
+**Step 2 — create the roles and databases yourself.**
 
 ```sql
 CREATE USER keycloak WITH PASSWORD '<KEYCLOAK_DB_PASSWORD>';
@@ -89,217 +361,83 @@ GRANT ALL PRIVILEGES ON DATABASE hapi_fhir TO hapi_fhir;
 GRANT ALL ON SCHEMA public TO hapi_fhir;
 ```
 
-The passwords must match `KEYCLOAK_DB_PASSWORD` and `HAPI_FHIR_DB_PASSWORD`
-in `.env`. `POSTGRES_PORT` is the port the containers connect to;
-`POSTGRES_HOST_PORT` only affects the bundled service's host mapping.
+The passwords must match `KEYCLOAK_DB_PASSWORD` and `HAPI_FHIR_DB_PASSWORD` in `.env`.
 
-## `dev.sh` Commands
+**Two different port variables.** `POSTGRES_PORT` is the port the containers connect to.
+`POSTGRES_HOST_PORT` only affects the bundled service's mapping onto your machine. If your
+external database listens on the standard port, leave `POSTGRES_PORT=5432`.
 
-```text
-./dev.sh up [--web|--synth|--pipes|--proxy|--full]   Render configs and start services
-./dev.sh down                        Stop all running services
-./dev.sh reset                       Stop services and wipe named volumes
-./dev.sh logs [service]              Tail logs (all services or one)
-./dev.sh render                      Render service config templates from .env
-./dev.sh clean                       Remove generated files (.env, application-*.yaml)
-./dev.sh help                        Show usage
-```
+### Changing ports
 
-### Run modes (profiles)
+Every port is a variable in `.env`. Change the value and re-run `./dev.sh up`.
 
-| Command | Services started |
+Keycloak is the one exception worth understanding: it is published **1:1**, meaning
+`KEYCLOAK_PORT` sets both the host port and the port inside the container. That is
+deliberate. `keycloak.localhost:8081` then resolves to the same place from your browser and
+from inside the Docker network, so the token issuer matches everywhere. If you change
+`KEYCLOAK_PORT`, update `KEYCLOAK_PUBLIC_URL` to match, and note that
+`nginx/ohs-player.conf` hardcodes `8081` for its Keycloak upstream.
+
+### Running on a server
+
+This repository targets local development. For a server deployment:
+
+- `nginx/ohs-player.conf` is the same-origin front and works unchanged behind a real
+  hostname; set `PUBLIC_HOST` to that hostname.
+- `nginx/ohs-player-subdomains.conf.example` is the one-hostname-per-service alternative,
+  written for an nginx installed on the host rather than the bundled container.
+- Add TLS at whichever nginx terminates traffic, and switch `KEYCLOAK_PUBLIC_URL` and
+  `OHS_PLAYER_APP_HOST` to `https://` values.
+- Keep `RUN_MODE=PROD` and a real `ACCESS_CHECKER`. `RUN_MODE=DEV` with
+  `ACCESS_CHECKER=permissive` disables access control entirely and exists only for local
+  debugging.
+
+---
+
+## Reference
+
+### How `dev.sh` works
+
+`dev.sh` is a thin wrapper around `docker compose` that adds secret generation and
+template rendering. Before it calls compose at all, `./dev.sh up` does three things:
+
+**1. Bootstraps `.env`.** If it does not exist, copies `.env.example` and replaces every
+`[generated]` marker with `openssl rand -hex 24` output.
+
+**2. Renders the config templates.** Each pair below is rendered with `envsubst` and an
+explicit variable list, so Spring's own `${DB_HOST}` placeholders survive untouched while
+your secrets are filled in:
+
+| Template | Rendered to |
 |---|---|
-| `./dev.sh up` | Core only (Postgres, Keycloak, HAPI FHIR, Gateway) |
-| `./dev.sh up --web` | Core + Web Portal |
-| `./dev.sh up --synth` | Core + synthetic-data HAPI FHIR and Postgres |
-| `./dev.sh up --pipes` | Core + synth stack + FHIR Data Pipes + Superset |
-| `./dev.sh up --proxy` | Core + same-origin nginx front |
-| `./dev.sh up --full` | Everything |
+| `keycloak/ohs-player-realm.json.example` | `keycloak/ohs-player-realm.json` |
+| `hapi-fhir/application-no-auth.yaml.example` | `hapi-fhir/application-no-auth.yaml` |
+| `hapi-fhir/application-auth.yaml.example` | `hapi-fhir/application-auth.yaml` |
+| `data-pipes/config/postgres-analytics.json.example` | `data-pipes/config/postgres-analytics.json` |
 
-Extension services are real, profile-gated services in
-`docker-compose.yaml`. `--web` builds and serves the Web Portal SPA;
-`--synth` adds an isolated HAPI FHIR and Postgres pair for synthetic test
-data, kept separate so test records never touch the transactional server;
-`--pipes` adds that synth stack plus FHIR Data Pipes and Superset; `--proxy`
-adds the same-origin nginx front described below.
+All four rendered files are gitignored — they contain secrets.
 
-## Verifying the Stack
+**3. Recompiles the HAPI healthcheck**, if a JDK is present and the source is newer than
+the committed `.class`.
 
-After `./dev.sh up`, check that all containers are running and healthy:
+Then it runs `docker compose pull --ignore-buildable` followed by `up -d --build`.
 
-```bash
-docker compose ps
-```
+### HAPI FHIR healthcheck
 
-All core services should show `Up` with `(healthy)` status. Keycloak and
-HAPI FHIR have longer start-up times — wait for their health checks to pass
-before testing (up to 90s for Keycloak, up to 180s for HAPI FHIR).
+The HAPI FHIR image is distroless: no shell, no `curl`, no `wget`, so ordinary Docker
+`HEALTHCHECK` recipes do not work. The stack ships a small Java program instead and runs it
+with the JRE already inside the container.
 
-### Service endpoints
+| File | Purpose |
+|---|---|
+| `hapi-fhir/health/Healthcheck.java` | Source — readable and reviewable |
+| `hapi-fhir/health/Healthcheck.class` | Compiled bytecode, mounted into the container |
 
-| Service | URL | What to expect |
-|---|---|---|
-| **Postgres** | `psql -h 127.0.0.1 -p ${POSTGRES_HOST_PORT:-5433} -U postgres` | Connection prompt (use `POSTGRES_ADMIN_PASSWORD` from `.env`) |
-| **Keycloak** | <http://keycloak.localhost:8081> | Admin console login page (use `KEYCLOAK_ADMIN_USERNAME` / `KEYCLOAK_ADMIN_PASSWORD` from `.env`) |
-| **HAPI FHIR** | <http://localhost:8082/fhir/metadata> | FHIR CapabilityStatement JSON response |
-| **FHIR Gateway** | <http://localhost:8083/fhir/metadata> | Proxied CapabilityStatement via the gateway |
+Both are committed so a fresh clone works without a JDK. `dev.sh` recompiles the `.class`
+only when `javac` is available **and** the source is newer. If you edit the source on a
+machine without a JDK, compile it elsewhere and commit the updated `.class` alongside.
 
-> Ports above are the defaults. If you changed them in `.env`, substitute
-> your values.
-
-### Quick smoke test
-
-```bash
-# Keycloak is responding
-curl -sf http://keycloak.localhost:8081/health/ready | grep -q UP && echo "Keycloak: OK"
-
-# HAPI FHIR returns a CapabilityStatement
-curl -sf http://localhost:8082/fhir/metadata | grep -q CapabilityStatement && echo "HAPI FHIR: OK"
-
-# FHIR Gateway proxies to HAPI FHIR
-curl -sf http://localhost:8083/fhir/metadata | grep -q CapabilityStatement && echo "FHIR Gateway: OK"
-```
-
-## Reverse Proxy Mode
-
-By default each service is reached on its own port, which means the browser
-makes cross-origin requests. `--proxy` starts an nginx container that serves
-the SPA, the gateway and Keycloak from a single origin, so no CORS is
-involved — which matters for the gateway plugin's `/api/*` endpoints, which
-send no CORS headers of their own.
-
-Two `.env` values must change together, because the first is baked into the
-SPA bundle and the second into the Keycloak realm import:
-
-```dotenv
-KEYCLOAK_PUBLIC_URL=http://ohs-player.localhost
-OHS_PLAYER_APP_HOST=ohs-player.localhost
-```
-
-`VITE_FHIR_BASE_URL` needs no change — it is the relative `/fhir`, so it
-follows whichever origin serves the SPA.
-
-Then:
-
-```bash
-./dev.sh up --web --proxy
-```
-
-`PROXY_PORT` must stay at `80` for the values above. nginx listens on `80`
-inside the container and containers reach it through the `PUBLIC_HOST`
-network alias on that internal port, while the browser uses the published
-port — the two agree only at `80`. Changing `PROXY_PORT` means appending
-`:<PROXY_PORT>` to the browser-facing values while container-to-container
-traffic still targets `80`, which one variable cannot express.
-
-### Switching an existing stack
-
-If the stack has already run, editing `.env` and re-running `./dev.sh up` is
-**not enough**. Keycloak imports the realm with the `IGNORE_EXISTING`
-strategy, so once the realm is in the Postgres volume the re-rendered
-`keycloak/ohs-player-realm.json` is ignored entirely — the
-`ohs-player-client` redirect URIs and web origins keep their first-boot
-values and login fails on the new hostname.
-
-Reset first:
-
-```bash
-./dev.sh reset
-./dev.sh up --web --proxy
-```
-
-`./dev.sh reset` destroys the Postgres volume. **Everything in it is lost:**
-the whole realm including any users, clients or role changes you made through
-the admin console, and every FHIR resource stored by the HAPI server. The
-import strategy is deliberately not `OVERWRITE_EXISTING` — that would discard
-admin-console realm changes on every single start.
-
-Browsers resolve any `*.localhost` name to `127.0.0.1` with no `/etc/hosts`
-entry. For a different hostname, set `PUBLIC_HOST` and add a matching line
-to `/etc/hosts`:
-
-```text
-127.0.0.1  ohs-player.local
-```
-
-Containers do not read your `/etc/hosts` — they resolve `PUBLIC_HOST`
-through the nginx service's Docker network alias, which is why no host
-mapping is needed on the container side.
-
-`nginx/ohs-player-subdomains.conf.example` documents the alternative layout,
-one hostname per service. It needs explicit CORS handling for `/api/*`,
-which is why the same-origin config is the default.
-
-## Auth Mode
-
-HAPI FHIR can run in two modes, controlled by a single variable in `.env`:
-
-```dotenv
-HAPI_CONFIG=application-no-auth.yaml   # open, no token validation
-# or
-HAPI_CONFIG=application-auth.yaml      # Keycloak token validation
-```
-
-To switch modes:
-
-1. Edit `HAPI_CONFIG` in `.env`.
-2. Run `./dev.sh up` again.
-
-No compose files are touched. The HAPI volume mount reads the variable
-directly.
-
-When switching **into** auth mode, make sure
-`HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET` in `.env` matches the client secret
-configured in the `hapi-fhir-server-client` Keycloak client for the `ohs-player` realm.
-
-## HAPI FHIR Healthcheck
-
-The HAPI FHIR image is distroless - it has no shell, no `curl`, no `wget`.
-Standard Docker `HEALTHCHECK` recipes don't work, so the stack ships a tiny
-Java program that uses the JRE already inside the container to probe
-`/fhir/metadata`.
-
-The two files live in `hapi-fhir/health/`:
-
-| File | Purpose | Committed? |
-|---|---|---|
-| `Healthcheck.java` | Source — readable, reviewable | Yes |
-| `Healthcheck.class` | Compiled bytecode — mounted into the HAPI container at `/healthcheck/` | Yes |
-
-Both are committed so a fresh clone works without a host JDK. `dev.sh`
-recompiles `Healthcheck.class` from `Healthcheck.java` automatically when
-all of the following are true:
-
-- A JDK is installed on the host (`javac` is on `PATH`).
-- `Healthcheck.java` has been modified more recently than `Healthcheck.class`.
-
-If `javac` is not installed, the committed `.class` is used as-is. If you
-edit the source on a machine without a JDK, install a JDK or recompile on
-another machine and commit the updated `.class` alongside the source.
-
-## Common Tasks
-
-**Tail logs for one service:**
-
-```bash
-./dev.sh logs keycloak
-```
-
-**Restart a single service after editing its config template:**
-
-```bash
-./dev.sh render
-docker compose restart hapi-fhir
-```
-
-**Wipe all data and start fresh** (destroys the Postgres volume):
-
-```bash
-./dev.sh reset
-./dev.sh up
-```
-
-## Layout
+### Layout
 
 ```text
 ohs-player-reference-infrastructure/
@@ -309,117 +447,63 @@ ohs-player-reference-infrastructure/
 │   └── themes/ohs/                    # OHS-branded Keycloak login theme
 ├── hapi-fhir/
 │   ├── application-no-auth.yaml.example
-│   ├── application-no-auth.yaml     # rendered by dev.sh (gitignored)
 │   ├── application-auth.yaml.example
-│   ├── application-auth.yaml        # rendered by dev.sh (gitignored)
-│   └── health/
-│       ├── Healthcheck.java         # source for the container healthcheck
-│       └── Healthcheck.class        # compiled binary; recompiled by dev.sh if javac is present
+│   └── health/                        # container healthcheck source + class
 ├── postgres/
-│   └── init/01-init.sh              # runs once on volume creation
-├── data-pipes/                      # ViewDefinitions and pipeline config
+│   └── init/01-init.sh                # runs once, on volume creation
+├── data-pipes/                        # ViewDefinitions and pipeline config
 ├── nginx/
-│   ├── spa.conf                     # inside the web image; proxies /fhir and /api
-│   ├── ohs-player.conf              # same-origin front (profile: proxy)
-│   └── ohs-player-subdomains.conf.example  # per-subdomain alternative
-├── Dockerfile                       # fhir-gateway + ohs-player plugin
-├── Dockerfile.web                   # ohs-player-web SPA
-├── .env.example                     # single source of truth for config
-├── .env                             # your local copy (gitignored)
-├── docker-compose.yaml              # all services; extensions behind profiles
-├── dev.sh                           # lifecycle entrypoint
-└── README.md                        # this file
+│   ├── spa.conf                       # inside the web image; proxies /fhir and /api
+│   ├── ohs-player.conf                # same-origin front (--proxy)
+│   └── ohs-player-subdomains.conf.example
+├── Dockerfile                         # fhir-gateway + ohs-player plugin
+├── Dockerfile.web                     # ohs-player-web SPA
+├── docker-compose.yaml                # all services; extras behind profiles
+├── .env.example                       # every setting, documented
+├── dev.sh                             # lifecycle entrypoint
+└── README.md
 ```
 
-## What `dev.sh` Does Under the Hood
-
-`dev.sh` is a thin wrapper around `docker compose` that adds template
-rendering, secrets bootstrapping, and a few convenience flags. If you'd
-rather drive compose directly, the table below shows the equivalent raw
-commands for every subcommand. Run all commands from the repo root.
-
-| `dev.sh` subcommand | Equivalent raw commands |
-|---|---|
-| `./dev.sh up` | `docker compose pull --ignore-buildable` <br> `docker compose up -d --build` <br> `docker compose ps` |
-| `./dev.sh up --web` | `docker compose --profile web pull --ignore-buildable` <br> `docker compose --profile web up -d --build` |
-| `./dev.sh up --synth` | `docker compose --profile synth pull --ignore-buildable` <br> `docker compose --profile synth up -d --build` |
-| `./dev.sh up --pipes` | `docker compose --profile pipes pull --ignore-buildable` <br> `docker compose --profile pipes up -d --build` |
-| `./dev.sh up --proxy` | `docker compose --profile proxy pull --ignore-buildable` <br> `docker compose --profile proxy up -d --build` |
-| `./dev.sh up --full` | `docker compose --profile full pull --ignore-buildable` <br> `docker compose --profile full up -d --build` |
-| `./dev.sh down` | `docker compose --profile web --profile pipes --profile synth --profile proxy --profile full down` |
-| `./dev.sh reset` | `docker compose --profile web --profile pipes --profile synth --profile proxy --profile full down --volumes` |
-| `./dev.sh logs` | `docker compose logs -f` |
-| `./dev.sh logs <service>` | `docker compose logs -f <service>` |
-| `./dev.sh render` | _No compose equivalent._ Renders config templates from `.env`. See [Steps `dev.sh up` performs before compose](#steps-devsh-up-performs-before-compose). |
-| `./dev.sh clean` | _No compose equivalent._ Deletes `.env` and all rendered config files. |
-| `./dev.sh help` | `docker compose --help` _(shows compose's own help, not the wrapper's)_ |
-
-### Steps `dev.sh up` performs before compose
-
-The wrapper runs three things before any `docker compose` invocation. If
-you skip the wrapper, you'll need to do these yourself the first time and
-whenever `.env.example` or any `*.example` template changes:
-
-1. **Bootstrap `.env`** — if it doesn't exist, copy `.env.example` to
-   `.env` and replace every `[generated]` marker with a unique random
-   secret (`openssl rand -hex 24`).
-2. **Render config templates** — for each pair below, run `envsubst` with
-   an explicit variable list so Spring's `${DB_HOST}` placeholders are
-   preserved while application secrets are substituted:
-
-   ```bash
-   set -a && source .env && set +a
-
-   envsubst '${KEYCLOAK_REALM} ${OHS_PLAYER_KEYCLOAK_CLIENT_ID} ${FHIR_GATEWAY_KEYCLOAK_CLIENT_ID} ${FHIR_GATEWAY_KEYCLOAK_CLIENT_SECRET} ...' \
-     < keycloak/ohs-player-realm.json.example \
-     > keycloak/ohs-player-realm.json
-
-   envsubst '${HAPI_FHIR_DB_PASSWORD}' \
-     < hapi-fhir/application-no-auth.yaml.example \
-     > hapi-fhir/application-no-auth.yaml
-
-   envsubst '${HAPI_FHIR_DB_PASSWORD} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_ID} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET} ${KEYCLOAK_REALM} ${KEYCLOAK_PUBLIC_URL}' \
-     < hapi-fhir/application-auth.yaml.example \
-     > hapi-fhir/application-auth.yaml
-
-   envsubst '${POSTGRES_ADMIN_PASSWORD}' \
-     < data-pipes/config/postgres-analytics.json.example \
-     > data-pipes/config/postgres-analytics.json
-   ```
-
-3. **Recompile the HAPI healthcheck** — if `Healthcheck.java` is newer
-   than `Healthcheck.class` (and a JDK is installed):
-
-   ```bash
-   javac hapi-fhir/health/Healthcheck.java
-   ```
-
-After those three steps, plain `docker compose up -d` works.
+---
 
 ## Troubleshooting
 
-**`.env.example not found`** — The repo is missing its template file.
-Re-clone or restore it from version control.
+**Keycloak fails to start with a database error.** Postgres is still initialising. Wait
+about 30 seconds and re-run `./dev.sh up`, or check `./dev.sh logs postgres`.
 
-**Keycloak fails to start with a DB error** — Postgres is still
-initialising. Wait ~30s and re-run `./dev.sh up`, or check
-`./dev.sh logs postgres`.
+**Keycloak fails with `password authentication failed for user "keycloak"`.** You ran
+`./dev.sh clean`, which generated fresh secrets, but the existing Postgres volume still
+holds roles created from the old ones. Postgres only runs `01-init.sh` on an empty data
+directory. Run `./dev.sh reset` to wipe the volumes and start clean. `dev.sh clean` warns
+about this when it detects a volume.
 
-**HAPI FHIR fails to find its config** — Run `./dev.sh render` to
-regenerate `hapi-fhir/application-*.yaml` from the templates, then restart
-the `hapi-fhir` service.
+**Every gateway request returns HTTP 500.** Check `ACCESS_CHECKER` in `.env`. The gateway
+logs the names it actually accepts on its first request:
 
-**I changed `.env` but nothing picked it up** — `.env` values are baked
-into the rendered config files. Re-run `./dev.sh up` (or `./dev.sh render`
-followed by `docker compose restart <service>`) after any `.env` change.
+```bash
+docker compose logs fhir-gateway | grep 'registered access-checker factories'
+```
 
-## Out of Scope
+**`curl http://localhost:8081/health/ready` returns 404.** Expected. Keycloak 26 serves
+health on management port `9000`, which this stack does not publish. Use `docker compose ps`
+or the realm check in [Confirm it is healthy](#confirm-it-is-healthy).
 
-The following are deliberately not covered by this local dev setup and will
-be added later:
+**HAPI FHIR cannot find its config.** Run `./dev.sh render`, then restart the service.
 
-- **Public demo deployment** — VM provisioning, a periodic reset job and a
-  public landing page.
-- **Web Portal dev mode** — whether the Web Portal runs in-container with
-  hot reload or on the host against a backend-only compose is still an
-  open decision.
+**I changed `.env` but nothing picked it up.** Values are baked into the rendered configs
+and, for `VITE_*`, into the SPA bundle. Re-run `./dev.sh up`.
+
+**Login fails after switching to proxy mode.** The realm was imported with the old
+hostname. See [If the stack has already run once](#if-the-stack-has-already-run-once).
+
+**`.env.example not found`.** The repository is missing its template. Re-clone, or restore
+the file from version control.
+
+---
+
+## Not covered here
+
+- **Public demo deployment** — VM provisioning, a periodic reset job, and a public landing
+  page.
+- **Web Portal dev mode** — whether the Portal runs in-container with hot reload, or on the
+  host against a backend-only compose, is still an open decision.
