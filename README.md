@@ -20,12 +20,90 @@ Install these on your machine:
 |---|---|
 | **Docker Engine** with the **Compose v2 plugin** (v2.29 or newer) | Runs the stack. v2.29 added the `pull --ignore-buildable` flag `dev.sh` uses, because two images are built from source rather than pulled |
 | **GNU gettext** (`envsubst`) | Fills your settings into the service config templates |
-| **OpenSSL** | Generates a random secret for each password |
 | **Bash 4 or newer** | Runs `dev.sh` |
 
-**On Windows**, run everything from [WSL](https://learn.microsoft.com/en-us/windows/wsl/install)
-(recommended, and required by Docker Desktop anyway) or [Git Bash](https://gitforwindows.org/).
-The scripts do not run under `cmd.exe` or PowerShell.
+That is the whole list. Secrets are generated from `/dev/urandom`, which every supported
+platform already provides — there is nothing to install for it.
+
+### Installing them
+
+Pick your platform. `dev.sh` checks everything it needs before doing anything, and tells
+you the right command for your system if something is missing.
+
+**Linux (Debian, Ubuntu, or WSL)**
+
+```bash
+sudo apt update
+sudo apt install gettext-base
+```
+
+Docker Engine and the Compose plugin follow
+[Docker's own instructions](https://docs.docker.com/engine/install/).
+
+**Linux (Fedora or RHEL)**
+
+```bash
+sudo dnf install gettext
+```
+
+Note the package is `gettext` here, not `gettext-base`.
+
+**macOS**
+
+Bash ships with the system. You need `envsubst`, which comes from Homebrew's `gettext`:
+
+```bash
+brew install gettext
+brew link --force gettext
+```
+
+The `link` step is not optional. Homebrew keeps `gettext` "keg-only", meaning it installs
+it but deliberately leaves it off your `PATH`, so `envsubst` stays invisible until you
+force the link. Install Docker Desktop separately.
+
+macOS also ships Bash 3.2, which is too old. If `bash --version` reports 3.x:
+
+```bash
+brew install bash
+```
+
+**Windows**
+
+Do not run these scripts from `cmd.exe` or PowerShell — they are Bash scripts and
+`envsubst` has no native Windows build worth using.
+
+1. Install [WSL](https://learn.microsoft.com/en-us/windows/wsl/install):
+   `wsl --install` in an admin PowerShell, then restart.
+2. Install [Docker Desktop](https://docs.docker.com/desktop/install/windows-install/) and
+   enable WSL integration in **Settings → Resources → WSL integration**.
+3. Open your WSL shell and install the rest:
+
+   ```bash
+   sudo apt update
+   sudo apt install gettext-base
+   ```
+
+4. Clone the repository **inside** the WSL filesystem (`~/`), not under `/mnt/c/`. Builds
+   are dramatically slower across the Windows mount.
+
+[Git Bash](https://gitforwindows.org/) also works if you already have it, but WSL is the
+better-supported path.
+
+### Check they are all present
+
+```bash
+docker --version
+docker compose version
+envsubst --version
+bash --version
+head -c 8 /dev/urandom | od -An -tx1
+```
+
+Five answers, no "command not found", Compose reporting v2.29 or newer, and the last
+command printing some hex bytes.
+
+If you would rather let the script tell you, `./dev.sh render` runs the same checks and
+stops with an install command for whatever is missing.
 
 **Optional:** a JDK (any version with `javac`). You only need it if you edit
 `hapi-fhir/health/Healthcheck.java`. The compiled `.class` file is committed, so a fresh
@@ -402,7 +480,7 @@ This repository targets local development. For a server deployment:
 template rendering. Before it calls compose at all, `./dev.sh up` does three things:
 
 **1. Bootstraps `.env`.** If it does not exist, copies `.env.example` and replaces every
-`[generated]` marker with `openssl rand -hex 24` output.
+`[generated]` marker with 24 random bytes read from `/dev/urandom`.
 
 **2. Renders the config templates.** Each pair below is rendered with `envsubst` and an
 explicit variable list, so Spring's own `${DB_HOST}` placeholders survive untouched while
@@ -495,6 +573,11 @@ and, for `VITE_*`, into the SPA bundle. Re-run `./dev.sh up`.
 
 **Login fails after switching to proxy mode.** The realm was imported with the old
 hostname. See [If the stack has already run once](#if-the-stack-has-already-run-once).
+
+**`envsubst is required but was not found on your PATH`, or `Cannot generate secrets`.** A prerequisite is missing.
+`dev.sh` prints the install command for your platform — see [Installing them](#installing-them). On macOS this is nearly always the Homebrew
+keg-only trap: `brew install gettext` alone is not enough, you also need
+`brew link --force gettext`.
 
 **`.env.example not found`.** The repository is missing its template. Re-clone, or restore
 the file from version control.

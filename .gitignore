@@ -40,3 +40,7 @@ logs/
 *.log
 tmp/
 .DS_Store
+
+# --- Agent workspaces (local tooling, never shared) ---
+.claude/
+.superpowers/
