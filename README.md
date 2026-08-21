@@ -412,6 +412,114 @@ config is the default.
 
 ---
 
+## Roles and permissions
+
+The realm carries **two independent role models**, because the backend enforces two. They
+look similar in a token and are checked in completely different places, so it is worth
+knowing which is which before you wonder why a request was refused.
+
+| Role shape | Gates | Enforced by |
+|---|---|---|
+| `GET_PATIENT`, `POST_ENCOUNTER` | Anything the gateway forwards to the FHIR server (`/fhir/*`) | `OhsPlayerAccessChecker` in the gateway |
+| `users.manage`, `roles.view` | The backend's own endpoints (`/api/*`) | `AuthorizationHandler` in the backend |
+| `admin`, `care-team-manager` | Which screens the Web Portal shows | The Portal itself, in the browser |
+
+Granting one does nothing for the others. A user with `admin` and `users.manage` can
+administer the Portal and still be refused every FHIR read.
+
+### FHIR access — `<VERB>_<RESOURCE>`
+
+`ACCESS_CHECKER=ohs_player_access` makes the gateway require one role per HTTP verb and
+FHIR resource type. Reading Encounters needs `GET_ENCOUNTER`; writing Patients needs
+`PUT_PATIENT`. The check is literal — the checker builds the name it wants by joining the
+verb and the upper-cased resource type.
+
+For a Bundle, **every entry** must be individually authorized or the whole Bundle is
+refused.
+
+The realm defines 96 of these, covering 29 resource types:
+
+| Verb | Roles |
+|---|---|
+| `GET` | 28 |
+| `POST` | 26 |
+| `PUT` | 27 |
+| `PATCH` | 15 |
+| `DELETE` | **0** |
+
+> There are no `DELETE_*` roles. Deletion cannot be granted through this realm as it
+> stands — add the roles you need if you want it.
+
+### Backend endpoints — `resource.level`
+
+The backend's `/api/*` servlets use a three-level hierarchy per resource, where a higher
+level satisfies every lower check: **manage ⊇ edit ⊇ view**.
+
+| Role | Grants |
+|---|---|
+| `users.view` | `GET /api/users/*` |
+| `users.edit` | `users.view`, plus create, update, and password reset |
+| `users.manage` | `users.edit`, plus delete |
+| `groups.view` | `GET /api/groups/*` |
+| `groups.edit` | `groups.view`, plus create, update, and add member |
+| `groups.manage` | `groups.edit`, plus delete group and remove member |
+| `bulk-import.manage` | `POST /api/bulk-import/*` |
+| `roles.view` | `GET /api/roles` |
+| `practitioner-details.view` | Looking up **another** user's practitioner record |
+| `location-hierarchy.view` | `GET /api/location-hierarchy/{rootId}` |
+
+The hierarchy is resolved in the backend's code, not through Keycloak composite roles, so
+assigning `users.manage` alone is enough — there is no need to also assign `users.edit`
+and `users.view`.
+
+`GET /api/practitioner-details` with no query parameters resolves the caller's own record
+from their token and needs no role beyond a valid one.
+
+### Portal roles
+
+`admin` and `care-team-manager` are the Web Portal's own, and are what it offers when
+assigning a role to a user. They gate its screens and mean nothing to the gateway or the
+backend.
+
+### Groups
+
+Users get roles by group membership. What each group carries:
+
+| Group | FHIR roles | Backend roles | Portal |
+|---|---|---|---|
+| **Super User** | 94 | `users.manage`, `groups.manage`, `bulk-import.manage`, `roles.view`, `practitioner-details.view`, `location-hierarchy.view` | `admin` |
+| **Provider** | 90 | `location-hierarchy.view` | `care-team-manager` |
+| **Practitioner** | 72 | — | — |
+| **Cam** | 0 | — | — |
+
+> **`Cam` grants nothing.** It exists in the realm with no roles at all, so a user in it
+> is refused everything. Useful as a deliberate negative case; surprising if you assign it
+> expecting access.
+
+**No user shipped in the realm import belongs to any group.** A fresh stack authenticates
+its default user and then denies it every FHIR request — which reads like a broken
+gateway rather than a missing group membership. Assign a group in the admin console
+before testing access.
+
+### Where a refusal comes from
+
+| Symptom | Likely cause |
+|---|---|
+| `401` on any request | No token, or an expired or malformed one |
+| `403` from `/fhir/*` | Missing the `<VERB>_<RESOURCE>` role for that exact call |
+| `403` from `/api/*` | Missing the `resource.level` role |
+| `500` from every `/fhir/*` request | Not a role problem — `ACCESS_CHECKER` names a checker the gateway does not register. See [Troubleshooting](#troubleshooting) |
+| Portal hides a screen | Missing `admin` or `care-team-manager` |
+
+### Legacy roles
+
+`VIEW_KEYCLOAK_USERS` and `EDIT_KEYCLOAK_USERS` predate the `users.*` roles and do the
+same job by a different route: they are composite roles granting `realm-management`
+client roles straight to the end user, rather than going through the backend with its
+service account. They are still assigned to Practitioner, Provider and Super User.
+
+Prefer `users.view` / `users.edit` / `users.manage` for anything new.
+
 ## Server and advanced configuration
 
 ### Using an external Postgres

@@ -981,6 +981,114 @@
         "clientRole": false,
         "containerId": "ohs-player",
         "attributes": {}
+      },
+      {
+        "id": "ohs-role-users.view",
+        "name": "users.view",
+        "description": "GET /api/users/*",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "ohs-player",
+        "attributes": {}
+      },
+      {
+        "id": "ohs-role-users.edit",
+        "name": "users.edit",
+        "description": "users.view plus create, update and password reset",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "ohs-player",
+        "attributes": {}
+      },
+      {
+        "id": "ohs-role-users.manage",
+        "name": "users.manage",
+        "description": "users.edit plus delete",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "ohs-player",
+        "attributes": {}
+      },
+      {
+        "id": "ohs-role-groups.view",
+        "name": "groups.view",
+        "description": "GET /api/groups/*",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "ohs-player",
+        "attributes": {}
+      },
+      {
+        "id": "ohs-role-groups.edit",
+        "name": "groups.edit",
+        "description": "groups.view plus create, update and add member",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "ohs-player",
+        "attributes": {}
+      },
+      {
+        "id": "ohs-role-groups.manage",
+        "name": "groups.manage",
+        "description": "groups.edit plus delete group and remove member",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "ohs-player",
+        "attributes": {}
+      },
+      {
+        "id": "ohs-role-bulk-import.manage",
+        "name": "bulk-import.manage",
+        "description": "POST /api/bulk-import/*",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "ohs-player",
+        "attributes": {}
+      },
+      {
+        "id": "ohs-role-roles.view",
+        "name": "roles.view",
+        "description": "GET /api/roles",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "ohs-player",
+        "attributes": {}
+      },
+      {
+        "id": "ohs-role-practitioner-details.view",
+        "name": "practitioner-details.view",
+        "description": "Look up another user's practitioner record",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "ohs-player",
+        "attributes": {}
+      },
+      {
+        "id": "ohs-role-location-hierarchy.view",
+        "name": "location-hierarchy.view",
+        "description": "GET /api/location-hierarchy/{rootId}",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "ohs-player",
+        "attributes": {}
+      },
+      {
+        "id": "ohs-role-admin",
+        "name": "admin",
+        "description": "Administrator",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "ohs-player",
+        "attributes": {}
+      },
+      {
+        "id": "ohs-role-care-team-manager",
+        "name": "care-team-manager",
+        "description": "Care team manager",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "ohs-player",
+        "attributes": {}
       }
     ],
     "client": {
@@ -1498,7 +1606,9 @@
         "PUT_CARETEAM",
         "PATCH_ENCOUNTER",
         "uma_authorization",
-        "GET_BINARY"
+        "GET_BINARY",
+        "care-team-manager",
+        "location-hierarchy.view"
       ],
       "clientRoles": {}
     },
@@ -1607,7 +1717,14 @@
         "GET_GROUP",
         "GET_ORGANIZATION",
         "PUT_CARETEAM",
-        "GET_BINARY"
+        "GET_BINARY",
+        "admin",
+        "bulk-import.manage",
+        "groups.manage",
+        "location-hierarchy.view",
+        "practitioner-details.view",
+        "roles.view",
+        "users.manage"
       ],
       "clientRoles": {}
     }
