@@ -1835,6 +1835,53 @@
       },
       "notBefore": 0,
       "groups": []
+    },
+    {
+      "username": "admin-user",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "admin@example.com",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "default-roles-ohs-player",
+        "admin",
+        "location-hierarchy.view",
+        "bulk-import.manage",
+        "users.manage",
+        "groups.manage",
+        "roles.view",
+        "practitioner-details.view"
+      ],
+      "groups": [
+        "/Super User"
+      ]
+    },
+    {
+      "username": "manager-user",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "manager@example.com",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "manager",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "default-roles-ohs-player",
+        "care-team-manager",
+        "location-hierarchy.view"
+      ],
+      "groups": [
+        "/Provider"
+      ]
     }
   ],
   "scopeMappings": [
