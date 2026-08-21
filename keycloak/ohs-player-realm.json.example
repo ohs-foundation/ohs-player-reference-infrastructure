@@ -1803,7 +1803,7 @@
       "createdTimestamp": 1700582591403,
       "enabled": true,
       "totp": false,
-      "serviceAccountClientId": "${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_ID}",
+      "serviceAccountClientId": "hapi-fhir-server-client",
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "realmRoles": [
@@ -1814,12 +1814,12 @@
     },
     {
       "id": "b7c8d9e0-f1a2-4b3c-8d4e-5f6a7b8c9d0e",
-      "username": "service-account-${FHIR_GATEWAY_KEYCLOAK_CLIENT_ID}",
+      "username": "service-account-fhir-gateway-admin",
       "emailVerified": false,
       "createdTimestamp": 1700582591403,
       "enabled": true,
       "totp": false,
-      "serviceAccountClientId": "${FHIR_GATEWAY_KEYCLOAK_CLIENT_ID}",
+      "serviceAccountClientId": "fhir-gateway-admin",
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "realmRoles": [
@@ -2301,7 +2301,7 @@
     },
     {
       "id": "f7a1b2c3-d4e5-6f78-9a0b-c1d2e3f4a5b6",
-      "clientId": "${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_ID}",
+      "clientId": "hapi-fhir-server-client",
       "name": "HAPI FHIR Server",
       "description": "Confidential bearer-only client for HAPI FHIR token validation",
       "surrogateAuthRequired": false,
@@ -2339,7 +2339,7 @@
     },
     {
       "id": "c3d4e5f6-a7b8-49c0-d1e2-f3a4b5c6d7e8",
-      "clientId": "${FHIR_GATEWAY_KEYCLOAK_CLIENT_ID}",
+      "clientId": "fhir-gateway-admin",
       "name": "FHIR Gateway Admin",
       "description": "Confidential service-account client for the FHIR gateway IAM provider (client_credentials). Holds manage-realm/view-realm as well as manage-users/view-users: Keycloak gates realm-role create and delete on manage-realm.",
       "surrogateAuthRequired": false,

@@ -150,7 +150,7 @@ services:
       - TOKEN_ISSUER=${KEYCLOAK_PUBLIC_URL}/realms/ohs-player
       # IAM admin client (client_credentials) for user/group/role management.
       - IAM_PROVIDER=keycloak
-      - IAM_PROVIDER_CLIENT_ID=${FHIR_GATEWAY_KEYCLOAK_CLIENT_ID}
+      - IAM_PROVIDER_CLIENT_ID=fhir-gateway-admin
       - IAM_PROVIDER_CLIENT_SECRET=${FHIR_GATEWAY_KEYCLOAK_CLIENT_SECRET}
       # ACCESS_CHECKER selects the FHIR proxy access checker. This build registers
       # "ohs_player_access" (from the ohs-player plugin) plus "list" and "patient"

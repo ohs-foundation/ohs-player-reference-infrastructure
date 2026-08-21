@@ -786,7 +786,7 @@ survive into the rendered file for the container to expand at runtime.
 ```bash
 set -a; . ./.env; set +a
 
-envsubst '${OHS_PLAYER_KEYCLOAK_CLIENT_SECRET} ${OHS_PLAYER_APP_HOST} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_ID} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET} ${FHIR_GATEWAY_KEYCLOAK_CLIENT_ID} ${FHIR_GATEWAY_KEYCLOAK_CLIENT_SECRET}' \
+envsubst '${OHS_PLAYER_KEYCLOAK_CLIENT_SECRET} ${OHS_PLAYER_APP_HOST} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET} ${FHIR_GATEWAY_KEYCLOAK_CLIENT_SECRET}' \
   < keycloak/ohs-player-realm.json.example \
   > keycloak/ohs-player-realm.json
 
@@ -794,7 +794,7 @@ envsubst '${HAPI_FHIR_DB_PASSWORD}' \
   < hapi-fhir/application-no-auth.yaml.example \
   > hapi-fhir/application-no-auth.yaml
 
-envsubst '${HAPI_FHIR_DB_PASSWORD} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_ID} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET} ${KEYCLOAK_PUBLIC_URL}' \
+envsubst '${HAPI_FHIR_DB_PASSWORD} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET} ${KEYCLOAK_PUBLIC_URL}' \
   < hapi-fhir/application-auth.yaml.example \
   > hapi-fhir/application-auth.yaml
 
