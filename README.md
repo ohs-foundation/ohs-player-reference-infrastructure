@@ -500,6 +500,168 @@ the committed `.class`.
 
 Then it runs `docker compose pull --ignore-buildable` followed by `up -d --build`.
 
+### Running without `dev.sh`
+
+`dev.sh` is a thin wrapper around `docker compose`. Everything it does can be done by
+hand, which is what you want if your environment forbids running scripts, you are folding
+these steps into your own automation, or you simply want to see exactly what happens.
+
+Run all of these from the repository root.
+
+#### Step 1 — create your `.env`
+
+```bash
+cp .env.example .env
+chmod 600 .env
+```
+
+`docker compose` reads `.env` from the project directory automatically, which is why none
+of the commands below pass `--env-file`.
+
+#### Step 2 — fill in the eight secrets
+
+`.env` ships with the literal placeholder `[generated]` on eight settings:
+
+| Variable | Used for |
+|---|---|
+| `POSTGRES_ADMIN_PASSWORD` | Postgres superuser |
+| `KEYCLOAK_DB_PASSWORD` | The `keycloak` database role |
+| `KEYCLOAK_ADMIN_PASSWORD` | Keycloak admin console login |
+| `HAPI_FHIR_DB_PASSWORD` | The `hapi_fhir` database role |
+| `FHIR_GATEWAY_KEYCLOAK_CLIENT_SECRET` | Gateway's Keycloak service-account client |
+| `HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET` | HAPI's Keycloak client (auth mode only) |
+| `OHS_PLAYER_KEYCLOAK_CLIENT_SECRET` | The `ohs-player-client` Keycloak client |
+| `SUPERSET_SECRET_KEY` | Superset session encryption (`--pipes` only) |
+
+Replace each one with its own distinct value. To generate one:
+
+```bash
+od -An -N24 -tx1 /dev/urandom | tr -d ' \n'; echo
+```
+
+Or replace them all at once:
+
+```bash
+while grep -q '=\[generated\]' .env; do
+  secret="$(od -An -N24 -tx1 /dev/urandom | tr -d ' \n')"
+  [ -n "$secret" ] || { echo "empty secret, aborting"; break; }
+  sed -i "0,/=\[generated\]/{s/=\[generated\]/=$secret/}" .env
+done
+```
+
+On macOS, `sed -i` needs an argument: use `sed -i ''` in place of `sed -i`.
+
+Confirm none were missed. Both commands should print `0`:
+
+```bash
+grep -cE '^[A-Z_]+=\[generated\]$' .env    # unfilled placeholders
+grep -cE '^[A-Z_]+=$' .env                 # accidentally blank values
+```
+
+> A blank secret is the failure worth guarding against: the stack will start, and Postgres
+> will accept an empty password, leaving you with a database whose credentials are nothing
+> at all.
+
+#### Step 3 — render the four config templates
+
+The services read plain config files, not templates. Each is produced with `envsubst`
+given an **explicit list of variables**. The list matters: it is what stops `envsubst`
+from also eating Spring's own `${DB_HOST}` and `${DB_PORT}` placeholders, which must
+survive into the rendered file for the container to expand at runtime.
+
+```bash
+set -a; . ./.env; set +a
+
+envsubst '${KEYCLOAK_REALM} ${OHS_PLAYER_KEYCLOAK_CLIENT_ID} ${OHS_PLAYER_KEYCLOAK_CLIENT_SECRET} ${OHS_PLAYER_DEFAULT_KEYCLOAK_USERNAME} ${OHS_PLAYER_APP_HOST} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_ID} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET} ${HAPI_FHIR_SERVER_DEFAULT_KEYCLOAK_USERNAME} ${FHIR_GATEWAY_KEYCLOAK_CLIENT_ID} ${FHIR_GATEWAY_KEYCLOAK_CLIENT_SECRET}' \
+  < keycloak/ohs-player-realm.json.example \
+  > keycloak/ohs-player-realm.json
+
+envsubst '${HAPI_FHIR_DB_PASSWORD}' \
+  < hapi-fhir/application-no-auth.yaml.example \
+  > hapi-fhir/application-no-auth.yaml
+
+envsubst '${HAPI_FHIR_DB_PASSWORD} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_ID} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET} ${KEYCLOAK_REALM} ${KEYCLOAK_PUBLIC_URL}' \
+  < hapi-fhir/application-auth.yaml.example \
+  > hapi-fhir/application-auth.yaml
+
+envsubst '${POSTGRES_ADMIN_PASSWORD}' \
+  < data-pipes/config/postgres-analytics.json.example \
+  > data-pipes/config/postgres-analytics.json
+```
+
+Check the realm rendered cleanly — this should print `0`:
+
+```bash
+grep -c '\${[A-Z_]*}' keycloak/ohs-player-realm.json
+```
+
+All four outputs contain secrets and are gitignored. Never commit them.
+
+> The realm file's name is not arbitrary. Keycloak 26 requires the import file to be
+> named `<realm>-realm.json`. If you change `KEYCLOAK_REALM`, rename the output and the
+> volume mount in `docker-compose.yaml` to match.
+
+#### Step 4 — the HAPI healthcheck (usually nothing to do)
+
+`hapi-fhir/health/Healthcheck.class` is committed, so there is nothing to build. Only if
+you edited the `.java` source:
+
+```bash
+cd hapi-fhir/health && javac Healthcheck.java && cd ../..
+```
+
+#### Step 5 — start the stack
+
+```bash
+docker compose pull --ignore-buildable
+docker compose up -d --build
+docker compose ps
+```
+
+`--ignore-buildable` matters: the gateway and the web portal are built from source and
+exist in no registry, so a plain `docker compose pull` exits non-zero on them. `--build`
+matters because `up -d` alone only builds an image when it is *absent* — without it, a
+changed `.env` value never reaches an already-built SPA bundle.
+
+To include optional services, add profiles:
+
+```bash
+docker compose --profile web up -d --build         # + Web Portal
+docker compose --profile synth up -d --build       # + synthetic-data HAPI and Postgres
+docker compose --profile pipes up -d --build       # + synth, Data Pipes and Superset
+docker compose --profile proxy up -d --build       # + nginx front (and the Web Portal)
+docker compose --profile full up -d --build        # everything
+```
+
+#### Stopping and resetting
+
+Profiles must be repeated when stopping, or containers from those profiles are left
+running:
+
+```bash
+# stop, keeping data
+docker compose --profile web --profile pipes --profile synth --profile proxy --profile full down
+
+# stop and delete all volumes — destroys the realm and every FHIR resource
+docker compose --profile web --profile pipes --profile synth --profile proxy --profile full down --volumes
+```
+
+#### Command equivalents
+
+| `dev.sh` | By hand |
+|---|---|
+| `./dev.sh up` | Steps 1–3, then `docker compose pull --ignore-buildable && docker compose up -d --build` |
+| `./dev.sh up --web` | Same, with `--profile web` on the compose commands |
+| `./dev.sh down` | `docker compose --profile … down` (all profiles, as above) |
+| `./dev.sh reset` | The same `down` with `--volumes` |
+| `./dev.sh logs [service]` | `docker compose logs -f [service]` |
+| `./dev.sh render` | Step 3 |
+| `./dev.sh clean` | `rm -f .env keycloak/ohs-player-realm.json hapi-fhir/application-*.yaml data-pipes/config/postgres-analytics.json` |
+
+After `clean`, remember that any existing Postgres volume still holds roles created from
+the **old** secrets. Regenerating `.env` without also removing the volumes gives you a
+Keycloak that cannot authenticate against its own database.
+
 ### HAPI FHIR healthcheck
 
 The HAPI FHIR image is distroless: no shell, no `curl`, no `wget`, so ordinary Docker
