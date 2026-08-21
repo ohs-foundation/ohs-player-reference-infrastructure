@@ -520,6 +520,112 @@ service account. They are still assigned to Practitioner, Provider and Super Use
 
 Prefer `users.view` / `users.edit` / `users.manage` for anything new.
 
+## Secrets and exposure
+
+`./dev.sh up` generates a unique random value for every `[generated]` marker in `.env`, so
+no two installs share a password. Three things it does **not** cover are listed below —
+read this before putting the stack anywhere other people can reach.
+
+### What is generated for you
+
+Eight values, each 24 random bytes from `/dev/urandom`, written into `.env` on first run:
+
+| Variable | Protects |
+|---|---|
+| `POSTGRES_ADMIN_PASSWORD` | The Postgres superuser |
+| `KEYCLOAK_DB_PASSWORD` | Keycloak's database role |
+| `HAPI_FHIR_DB_PASSWORD` | HAPI FHIR's database role |
+| `KEYCLOAK_ADMIN_PASSWORD` | The Keycloak admin console |
+| `OHS_PLAYER_KEYCLOAK_CLIENT_SECRET` | The `ohs-player-client` client |
+| `HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET` | The `hapi-fhir-server-client` client |
+| `FHIR_GATEWAY_KEYCLOAK_CLIENT_SECRET` | The gateway's service-account client |
+| `SUPERSET_SECRET_KEY` | Superset session encryption |
+
+`.env` is gitignored and created `chmod 600`. Never commit it.
+
+### What ships with a fixed value — change these
+
+**1. Superset's login is `admin` / `admin`.**
+
+This one is not in `.env` at all — it is written into `docker-compose.yaml`'s Superset
+start-up command, so nothing randomises it. Superset publishes on **all interfaces** on
+port `8088`, which means on any networked machine that dashboard is one guess away.
+
+Change it as soon as Superset is up:
+
+```bash
+docker compose exec superset superset fab reset-password \
+  --username admin --password '<a new password>'
+```
+
+**2. The Keycloak admin username is `admin`.**
+
+The password is generated, but the username is predictable. Change `KEYCLOAK_ADMIN_USERNAME`
+in `.env` before the first start, or create a new admin account and delete `admin`
+afterwards — Keycloak only reads the bootstrap credentials when the realm database is
+empty.
+
+**3. The Postgres superuser is `postgres`.**
+
+Conventional, and its password is generated, but worth knowing it is not a secret.
+
+### What is exposed, and where
+
+Only the databases are restricted to your own machine. Everything else publishes on **all
+interfaces**:
+
+| Service | Port | Bound to |
+|---|---|---|
+| Postgres, synth Postgres, analytics Postgres | `5433`, `5435`, `5434` | Loopback only |
+| Keycloak | `8081` | All interfaces |
+| HAPI FHIR | `8082` | All interfaces |
+| FHIR Gateway | `8083` | All interfaces |
+| Web Portal | `8084` | All interfaces |
+| Synth HAPI FHIR | `8085` | All interfaces |
+| Pipeline controller | `8090` | All interfaces |
+| Superset | `8088` | All interfaces |
+
+> **Two defaults combine badly.** `HAPI_CONFIG=application-no-auth.yaml` is the default, and
+> HAPI FHIR publishes on all interfaces — so on a networked machine the FHIR server accepts
+> unauthenticated reads and writes directly on `8082`, bypassing the gateway entirely.
+> That is fine on a laptop and wrong anywhere else. Switch to `application-auth.yaml`, or
+> keep the machine off untrusted networks.
+
+The pipeline controller on `8090` has no authentication of its own either.
+
+### Rotating a secret after setup
+
+Editing `.env` is not enough on its own, because most of these values were already written
+somewhere on first start.
+
+| Secret | To rotate |
+|---|---|
+| Database passwords | Change `.env`, then `ALTER USER <role> WITH PASSWORD '<new>'` in Postgres. Changing only `.env` leaves the database on the old password and Keycloak or HAPI then fails to connect |
+| Keycloak client secrets | Change `.env`, then update the same secret on the client in the Keycloak admin console. The realm import will not overwrite an existing realm |
+| Keycloak admin password | Change it in the admin console. `KEYCLOAK_ADMIN_PASSWORD` only applies to a database that has never been initialised |
+| Superset login | The `reset-password` command above |
+| `SUPERSET_SECRET_KEY` | Change `.env` and restart Superset; existing sessions are invalidated |
+
+The blunt alternative, on a machine with nothing worth keeping:
+
+```bash
+./dev.sh reset && ./dev.sh up
+```
+
+That wipes every volume and regenerates the lot from a clean slate — realm, users, and all
+FHIR data included.
+
+### Before any shared or public deployment
+
+- Change the Superset login, and consider whether Superset and the pipeline controller
+  should be published at all.
+- Switch `HAPI_CONFIG` to `application-auth.yaml`.
+- Keep `RUN_MODE=PROD` and a real `ACCESS_CHECKER`. `RUN_MODE=DEV` with
+  `ACCESS_CHECKER=permissive` disables FHIR access control completely.
+- Put the stack behind TLS — see [Running on a server](#running-on-a-server).
+- Treat `.env` as a credential file: `chmod 600`, never in version control, never in an
+  image layer.
+
 ## Server and advanced configuration
 
 ### Using an external Postgres
