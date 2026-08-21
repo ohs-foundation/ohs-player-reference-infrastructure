@@ -152,8 +152,12 @@ FHIR** on a first run.
 | Keycloak | `8081` | Identity: realms, clients, users and roles |
 | HAPI FHIR | `8082` | The FHIR server, unmodified |
 | FHIR Gateway | `8083` | The authenticated, access-controlled entry point |
+| Web Portal | `8084` | The reference SPA, served over the gateway |
 
 Every port is overridable in `.env`.
+
+> The upstream setup guide describes four services. This repository starts the Web Portal
+> as well, so the first build also compiles the SPA — several minutes on a cold cache.
 
 **Clients never reach the FHIR server directly.** Everything routes through the gateway,
 which is why bringing up the gateway is part of standing up the environment rather than a
@@ -174,7 +178,7 @@ any `*.localhost` name to `127.0.0.1` on their own, so there is nothing to add t
 docker compose ps
 ```
 
-All four should show `Up`, and Postgres, Keycloak and HAPI FHIR should show `(healthy)`.
+All five should show `Up`, and Postgres, Keycloak and HAPI FHIR should show `(healthy)`.
 
 **Step 2 — check each service answers.** Run all three; three silent successes mean
 identity is up, the FHIR server is serving, and the gateway is proxying to it.
@@ -259,7 +263,7 @@ docker compose restart hapi-fhir
 
 ## Expected result
 
-Four services running and healthy, and the three values every other component needs:
+Five services running, and the three values every other component needs:
 
 | Value | Default |
 |---|---|
@@ -284,24 +288,26 @@ repository.
 
 ## Optional profiles
 
-The core four services start by default. Everything else is opt-in behind a flag:
+Postgres, Keycloak, HAPI FHIR, the Gateway and the Web Portal all start by default.
+Everything else is opt-in behind a flag:
 
 | Command | Adds |
 |---|---|
-| `./dev.sh up` | Nothing — core only (Postgres, Keycloak, HAPI FHIR, Gateway) |
-| `./dev.sh up --web` | The Web Portal SPA |
+| `./dev.sh up` | Nothing — the five default services |
 | `./dev.sh up --synth` | An isolated HAPI FHIR + Postgres pair for synthetic test data |
 | `./dev.sh up --pipes` | The synth pair, plus FHIR Data Pipes and Superset |
-| `./dev.sh up --proxy` | A same-origin nginx front, plus the Web Portal |
+| `./dev.sh up --proxy` | A same-origin nginx front |
 | `./dev.sh up --full` | Everything |
 
-Flags combine: `./dev.sh up --web --proxy`.
+Flags combine: `./dev.sh up --synth --proxy`.
+
+`--web` is still accepted so existing commands keep working, but it now selects nothing —
+the Web Portal is always started.
 
 Ports for the optional services:
 
 | Service | Profile | Host port | Variable |
 |---|---|---|---|
-| Web Portal | `--web`, `--proxy` | `8084` | `OHS_PLAYER_WEB_PORT` |
 | nginx front | `--proxy` | `80` | `PROXY_PORT` |
 | Synth Postgres | `--synth`, `--pipes` | `127.0.0.1:5435` | `POSTGRES_SYNTH_PORT` |
 | Synth HAPI FHIR | `--synth`, `--pipes` | `8085` | `HAPI_SYNTH_PORT` |
@@ -309,14 +315,14 @@ Ports for the optional services:
 | Pipeline controller | `--pipes` | `8090` | `PIPELINE_PORT` |
 | Superset | `--pipes` | `8088` | `SUPERSET_PORT` |
 
-### Web Portal — `--web`
+### Web Portal
 
-Builds the SPA from source and serves it at <http://localhost:8084>.
+Starts by default. Builds the SPA from source and serves it at <http://localhost:8084>.
 
 The first build clones the web portal repository and runs a full `pnpm` install and
 build, so it takes several minutes. The browser-facing values are baked into the bundle at
 build time, which is why changing any `VITE_*` value in `.env` requires a rebuild —
-`./dev.sh up --web` does that for you.
+`./dev.sh up` does that for you.
 
 ### Synthetic data — `--synth`
 
@@ -366,7 +372,7 @@ origin serves the SPA.
 **Step 2 — start with both flags.**
 
 ```bash
-./dev.sh up --web --proxy
+./dev.sh up --proxy
 ```
 
 Everything is then served from <http://ohs-player.localhost>.
@@ -384,7 +390,7 @@ Reset first:
 
 ```bash
 ./dev.sh reset
-./dev.sh up --web --proxy
+./dev.sh up --proxy
 ```
 
 The import strategy is deliberately not `OVERWRITE_EXISTING` — that would discard
@@ -866,7 +872,6 @@ docker compose --profile web --profile pipes --profile synth --profile proxy --p
 | `dev.sh` | By hand |
 |---|---|
 | `./dev.sh up` | Steps 1–3, then `docker compose pull --ignore-buildable && docker compose up -d --build` |
-| `./dev.sh up --web` | Same, with `--profile web` on the compose commands |
 | `./dev.sh down` | `docker compose --profile … down` (all profiles, as above) |
 | `./dev.sh reset` | The same `down` with `--volumes` |
 | `./dev.sh logs [service]` | `docker compose logs -f [service]` |
