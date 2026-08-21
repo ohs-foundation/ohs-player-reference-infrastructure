@@ -1782,7 +1782,7 @@
   "users": [
     {
       "id": "1312cb52-5af1-4161-9728-a661843f6e7b",
-      "username": "${OHS_PLAYER_DEFAULT_KEYCLOAK_USERNAME}",
+      "username": "ohs-player-user",
       "emailVerified": false,
       "createdTimestamp": 1700582591403,
       "enabled": true,
@@ -1798,7 +1798,7 @@
     },
     {
       "id": "a4e2c9f1-7b3d-4e8a-9c1f-2d5b6e8f0a3c",
-      "username": "${HAPI_FHIR_SERVER_DEFAULT_KEYCLOAK_USERNAME}",
+      "username": "hapi-fhir-server-user",
       "emailVerified": false,
       "createdTimestamp": 1700582591403,
       "enabled": true,
