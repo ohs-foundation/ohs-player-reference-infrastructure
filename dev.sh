@@ -164,7 +164,7 @@ render_templates() {
 
     render keycloak/ohs-player-realm.json.example \
            keycloak/ohs-player-realm.json \
-           '${KEYCLOAK_REALM} ${OHS_PLAYER_KEYCLOAK_CLIENT_ID} ${OHS_PLAYER_KEYCLOAK_CLIENT_SECRET} ${OHS_PLAYER_DEFAULT_KEYCLOAK_USERNAME} ${OHS_PLAYER_APP_HOST} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_ID} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET} ${HAPI_FHIR_SERVER_DEFAULT_KEYCLOAK_USERNAME} ${FHIR_GATEWAY_KEYCLOAK_CLIENT_ID} ${FHIR_GATEWAY_KEYCLOAK_CLIENT_SECRET}'
+           '${OHS_PLAYER_KEYCLOAK_CLIENT_SECRET} ${OHS_PLAYER_DEFAULT_KEYCLOAK_USERNAME} ${OHS_PLAYER_APP_HOST} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_ID} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET} ${HAPI_FHIR_SERVER_DEFAULT_KEYCLOAK_USERNAME} ${FHIR_GATEWAY_KEYCLOAK_CLIENT_ID} ${FHIR_GATEWAY_KEYCLOAK_CLIENT_SECRET}'
 
     render hapi-fhir/application-no-auth.yaml.example \
            hapi-fhir/application-no-auth.yaml \
@@ -172,7 +172,7 @@ render_templates() {
 
     render hapi-fhir/application-auth.yaml.example \
            hapi-fhir/application-auth.yaml \
-           '${HAPI_FHIR_DB_PASSWORD} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_ID} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET} ${KEYCLOAK_REALM} ${KEYCLOAK_PUBLIC_URL}'
+           '${HAPI_FHIR_DB_PASSWORD} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_ID} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET} ${KEYCLOAK_PUBLIC_URL}'
 
     render data-pipes/config/postgres-analytics.json.example \
            data-pipes/config/postgres-analytics.json \
