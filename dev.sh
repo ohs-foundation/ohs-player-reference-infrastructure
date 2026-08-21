@@ -5,7 +5,7 @@ set -euo pipefail
 # dev.sh — local development lifecycle
 #
 # Subcommands:
-#   up [--web|--pipes|--full]   Render configs and start services
+#   up [--pipes|--synth|--proxy|--full]   Render configs and start services
 #   down                        Stop all running services
 #   reset                       Stop services and wipe named volumes
 #   logs [service]              Tail logs (all services or one)
@@ -216,7 +216,9 @@ parse_profiles() {
     PROFILE_ARGS=()
     for arg in "$@"; do
         case "$arg" in
-            --web)   PROFILE_ARGS+=(--profile web)   ;;
+            # The web portal is part of the default set; --web is kept so existing
+            # commands and docs keep working, and selects nothing.
+            --web)   ;;
             --pipes) PROFILE_ARGS+=(--profile pipes) ;;
             --synth) PROFILE_ARGS+=(--profile synth) ;;
             --proxy) PROFILE_ARGS+=(--profile proxy) ;;
@@ -304,9 +306,10 @@ usage() {
 Usage: $0 <command> [options]
 
 Commands:
-  up [--web|--pipes|--synth|--proxy|--full]
+  up [--pipes|--synth|--proxy|--full]
                               Render configs and start services
-                              (no flag = core only)
+                              (no flag = postgres, keycloak, hapi-fhir,
+                               fhir-gateway and the web portal)
                               --synth  adds synthetic HAPI + postgres
                               --pipes  adds synth + analytics pipeline + Superset
                               --proxy  adds the same-origin nginx front
