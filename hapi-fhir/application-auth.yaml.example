@@ -68,7 +68,7 @@ keycloak:
   # resolvable from inside this container — KEYCLOAK_PUBLIC_URL is both.
   auth-server-url: ${KEYCLOAK_PUBLIC_URL}/
   realm: ohs-player
-  resource: ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_ID}
+  resource: hapi-fhir-server-client
   ssl-required: none
   credentials:
     secret: ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET}
