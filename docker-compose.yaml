@@ -147,7 +147,7 @@ services:
     restart: unless-stopped
     environment:
       - PROXY_TO=http://hapi-fhir:8080/fhir
-      - TOKEN_ISSUER=${KEYCLOAK_PUBLIC_URL}/realms/${KEYCLOAK_REALM:-ohs-player}
+      - TOKEN_ISSUER=${KEYCLOAK_PUBLIC_URL}/realms/ohs-player
       # IAM admin client (client_credentials) for user/group/role management.
       - IAM_PROVIDER=keycloak
       - IAM_PROVIDER_CLIENT_ID=${FHIR_GATEWAY_KEYCLOAK_CLIENT_ID}
@@ -184,8 +184,8 @@ services:
       args:
         WEB_REF: ${WEB_REF:-main}
         VITE_FHIR_BASE_URL: ${VITE_FHIR_BASE_URL}
-        VITE_OIDC_ISSUER: ${KEYCLOAK_PUBLIC_URL}/realms/${KEYCLOAK_REALM:-ohs-player}
-        VITE_CLIENT_ID: ${VITE_CLIENT_ID:-ohs-player-client}
+        VITE_OIDC_ISSUER: ${KEYCLOAK_PUBLIC_URL}/realms/ohs-player
+        VITE_CLIENT_ID: ohs-player-client
         VITE_FHIR_VERSION: ${VITE_FHIR_VERSION:-R4}
     image: ohs-player-web:local
     container_name: ohs-player-web

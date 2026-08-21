@@ -1,6 +1,6 @@
 {
-  "id": "${KEYCLOAK_REALM}",
-  "realm": "${KEYCLOAK_REALM}",
+  "id": "ohs-player",
+  "realm": "ohs-player",
   "loginTheme": "ohs",
   "notBefore": 0,
   "defaultSignatureAlgorithm": "RS256",
@@ -53,7 +53,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -62,7 +62,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -71,7 +71,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -80,7 +80,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -89,7 +89,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -98,7 +98,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -107,7 +107,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -116,7 +116,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -125,7 +125,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -134,7 +134,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -143,7 +143,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -152,7 +152,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -161,7 +161,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -170,7 +170,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -179,7 +179,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -188,7 +188,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -197,7 +197,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -206,7 +206,7 @@
         "description": "${role_offline-access}",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -215,7 +215,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -224,7 +224,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -233,7 +233,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -242,7 +242,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -251,7 +251,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -266,7 +266,7 @@
           }
         },
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -275,7 +275,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -284,7 +284,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -293,7 +293,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -302,7 +302,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -311,7 +311,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -320,7 +320,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -329,7 +329,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -338,7 +338,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -347,7 +347,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -356,7 +356,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -365,7 +365,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -374,7 +374,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -383,7 +383,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -392,7 +392,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -401,7 +401,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -410,7 +410,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -419,7 +419,7 @@
         "description": "${role_uma_authorization}",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -428,7 +428,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -437,7 +437,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -446,7 +446,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -455,7 +455,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -464,7 +464,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -473,7 +473,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -482,7 +482,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -491,7 +491,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -500,7 +500,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -509,7 +509,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -518,7 +518,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -527,7 +527,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -536,7 +536,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -545,7 +545,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -554,7 +554,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -563,7 +563,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -572,7 +572,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -581,7 +581,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -590,7 +590,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -599,7 +599,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -608,7 +608,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -617,7 +617,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -626,7 +626,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -635,7 +635,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -644,7 +644,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -653,7 +653,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -662,7 +662,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -671,7 +671,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -680,7 +680,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -689,7 +689,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -698,7 +698,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -715,7 +715,7 @@
           }
         },
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -724,7 +724,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -733,7 +733,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -742,7 +742,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -751,7 +751,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -760,7 +760,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -769,7 +769,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -778,7 +778,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -787,7 +787,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -796,7 +796,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -805,7 +805,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -814,7 +814,7 @@
         "description": "Ability to add locations",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -823,7 +823,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -832,7 +832,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -841,7 +841,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -850,7 +850,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -859,7 +859,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -868,7 +868,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -877,7 +877,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -886,7 +886,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -895,7 +895,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -904,7 +904,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -913,12 +913,12 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
         "id": "08071035-4ee8-4d34-bb1b-bfb8587c5245",
-        "name": "default-roles-${KEYCLOAK_REALM}",
+        "name": "default-roles-ohs-player",
         "description": "${role_default-roles}",
         "composite": true,
         "composites": {
@@ -934,7 +934,7 @@
           }
         },
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -943,7 +943,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -952,7 +952,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -961,7 +961,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -970,7 +970,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       },
       {
@@ -979,7 +979,7 @@
         "description": "",
         "composite": false,
         "clientRole": false,
-        "containerId": "${KEYCLOAK_REALM}",
+        "containerId": "ohs-player",
         "attributes": {}
       }
     ],
@@ -1199,7 +1199,7 @@
       "security-admin-console": [],
       "admin-cli": [],
       "account-console": [],
-      "${OHS_PLAYER_KEYCLOAK_CLIENT_ID}": [],
+      "ohs-player-client": [],
       "broker": [
         {
           "id": "5e555a70-f80e-45e8-a4c6-813ed4ec2033",
@@ -1388,7 +1388,7 @@
         "PUT_RELATEDPERSON",
         "PUT_QUESTIONNAIRERESPONSE",
         "GET_QUESTIONNAIRERESPONSE",
-        "default-roles-${KEYCLOAK_REALM}",
+        "default-roles-ohs-player",
         "GET_CAREPLAN",
         "GET_GROUP",
         "GET_ORGANIZATION",
@@ -1490,7 +1490,7 @@
         "GET_QUESTIONNAIRERESPONSE",
         "POST_PLANDEFINITION",
         "POST_ORGANIZATIONAFFILIATION",
-        "default-roles-${KEYCLOAK_REALM}",
+        "default-roles-ohs-player",
         "GET_CAREPLAN",
         "GET_GROUP",
         "PUT_QUESTIONNAIRE",
@@ -1602,7 +1602,7 @@
         "PUT_QUESTIONNAIRERESPONSE",
         "GET_QUESTIONNAIRERESPONSE",
         "POST_PLANDEFINITION",
-        "default-roles-${KEYCLOAK_REALM}",
+        "default-roles-ohs-player",
         "GET_CAREPLAN",
         "GET_GROUP",
         "GET_ORGANIZATION",
@@ -1614,11 +1614,11 @@
   ],
   "defaultRole": {
     "id": "08071035-4ee8-4d34-bb1b-bfb8587c5245",
-    "name": "default-roles-${KEYCLOAK_REALM}",
+    "name": "default-roles-ohs-player",
     "description": "${role_default-roles}",
     "composite": true,
     "clientRole": false,
-    "containerId": "${KEYCLOAK_REALM}"
+    "containerId": "ohs-player"
   },
   "requiredCredentials": [
     "password"
@@ -1670,11 +1670,11 @@
       "createdTimestamp": 1700582591403,
       "enabled": true,
       "totp": false,
-      "serviceAccountClientId": "${OHS_PLAYER_KEYCLOAK_CLIENT_ID}",
+      "serviceAccountClientId": "ohs-player-client",
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "realmRoles": [
-        "default-roles-${KEYCLOAK_REALM}"
+        "default-roles-ohs-player"
       ],
       "notBefore": 0,
       "groups": []
@@ -1690,7 +1690,7 @@
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "realmRoles": [
-        "default-roles-${KEYCLOAK_REALM}"
+        "default-roles-ohs-player"
       ],
       "notBefore": 0,
       "groups": []
@@ -1706,7 +1706,7 @@
       "disableableCredentialTypes": [],
       "requiredActions": [],
       "realmRoles": [
-        "default-roles-${KEYCLOAK_REALM}"
+        "default-roles-ohs-player"
       ],
       "clientRoles": {
         "realm-management": [
@@ -1745,13 +1745,13 @@
       "clientId": "account",
       "name": "${client_account}",
       "rootUrl": "${authBaseUrl}",
-      "baseUrl": "/realms/${KEYCLOAK_REALM}/account/",
+      "baseUrl": "/realms/ohs-player/account/",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
-        "/realms/${KEYCLOAK_REALM}/account/*"
+        "/realms/ohs-player/account/*"
       ],
       "webOrigins": [],
       "notBefore": 0,
@@ -1792,13 +1792,13 @@
       "clientId": "account-console",
       "name": "${client_account-console}",
       "rootUrl": "${authBaseUrl}",
-      "baseUrl": "/realms/${KEYCLOAK_REALM}/account/",
+      "baseUrl": "/realms/ohs-player/account/",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
-        "/realms/${KEYCLOAK_REALM}/account/*"
+        "/realms/ohs-player/account/*"
       ],
       "webOrigins": [],
       "notBefore": 0,
@@ -1977,13 +1977,13 @@
       "clientId": "security-admin-console",
       "name": "${client_security-admin-console}",
       "rootUrl": "${authAdminUrl}",
-      "baseUrl": "/admin/${KEYCLOAK_REALM}/console/",
+      "baseUrl": "/admin/ohs-player/console/",
       "surrogateAuthRequired": false,
       "enabled": true,
       "alwaysDisplayInConsole": false,
       "clientAuthenticatorType": "client-secret",
       "redirectUris": [
-        "/admin/${KEYCLOAK_REALM}/console/*"
+        "/admin/ohs-player/console/*"
       ],
       "webOrigins": [
         "+"
@@ -2043,7 +2043,7 @@
     },
     {
       "id": "cbe40899-bc41-4c23-9bdf-0f6556c5811b",
-      "clientId": "${OHS_PLAYER_KEYCLOAK_CLIENT_ID}",
+      "clientId": "ohs-player-client",
       "name": "OHS Player Client",
       "description": "",
       "rootUrl": "http://${OHS_PLAYER_APP_HOST}/",
