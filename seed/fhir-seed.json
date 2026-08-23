@@ -8,7 +8,7 @@
         "resourceType": "Organization",
         "id": "seed-org-zamara-health",
         "active": true,
-        "name": "Zamara Health Services",
+        "name": "Ndumberi Health Services",
         "identifier": [
           {
             "system": "http://ohs.dev/identifiers/organization",
@@ -29,7 +29,7 @@
         "status": "active",
         "mode": "instance",
         "name": "Zamara",
-        "description": "Country level of the sample location hierarchy",
+        "description": "Country in the sample location hierarchy",
         "physicalType": {
           "coding": [
             {
@@ -46,14 +46,14 @@
       }
     },
     {
-      "fullUrl": "urn:uuid:seed-loc-region-highland",
+      "fullUrl": "urn:uuid:seed-loc-region-central",
       "resource": {
         "resourceType": "Location",
-        "id": "seed-loc-region-highland",
+        "id": "seed-loc-region-central",
         "status": "active",
         "mode": "instance",
-        "name": "Highland Region",
-        "description": "Region level of the sample location hierarchy",
+        "name": "Central",
+        "description": "Region in the sample location hierarchy",
         "physicalType": {
           "coding": [
             {
@@ -69,436 +69,7 @@
       },
       "request": {
         "method": "PUT",
-        "url": "Location/seed-loc-region-highland"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-district-ashford",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-district-ashford",
-        "status": "active",
-        "mode": "instance",
-        "name": "Ashford District",
-        "description": "District level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "jdn",
-              "display": "Jurisdiction"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-region-highland"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-district-ashford"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-constituency-ashford-east",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-constituency-ashford-east",
-        "status": "active",
-        "mode": "instance",
-        "name": "Ashford East Constituency",
-        "description": "Constituency level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "jdn",
-              "display": "Jurisdiction"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-district-ashford"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-constituency-ashford-east"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-ward-ashford-east-a",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-ward-ashford-east-a",
-        "status": "active",
-        "mode": "instance",
-        "name": "Ashford East Ward A",
-        "description": "Ward level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "jdn",
-              "display": "Jurisdiction"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-constituency-ashford-east"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-ward-ashford-east-a"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-ashford-east-a-hc",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-ashford-east-a-hc",
-        "status": "active",
-        "mode": "instance",
-        "name": "Ashford East Ward A Health Centre",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-ashford-east-a"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-ashford-east-a-hc"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-ashford-east-a-disp",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-ashford-east-a-disp",
-        "status": "active",
-        "mode": "instance",
-        "name": "Ashford East Ward A Dispensary",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-ashford-east-a"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-ashford-east-a-disp"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-ward-ashford-east-b",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-ward-ashford-east-b",
-        "status": "active",
-        "mode": "instance",
-        "name": "Ashford East Ward B",
-        "description": "Ward level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "jdn",
-              "display": "Jurisdiction"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-constituency-ashford-east"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-ward-ashford-east-b"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-ashford-east-b-hc",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-ashford-east-b-hc",
-        "status": "active",
-        "mode": "instance",
-        "name": "Ashford East Ward B Health Centre",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-ashford-east-b"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-ashford-east-b-hc"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-ashford-east-b-disp",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-ashford-east-b-disp",
-        "status": "active",
-        "mode": "instance",
-        "name": "Ashford East Ward B Dispensary",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-ashford-east-b"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-ashford-east-b-disp"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-constituency-ashford-west",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-constituency-ashford-west",
-        "status": "active",
-        "mode": "instance",
-        "name": "Ashford West Constituency",
-        "description": "Constituency level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "jdn",
-              "display": "Jurisdiction"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-district-ashford"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-constituency-ashford-west"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-ward-ashford-west-a",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-ward-ashford-west-a",
-        "status": "active",
-        "mode": "instance",
-        "name": "Ashford West Ward A",
-        "description": "Ward level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "jdn",
-              "display": "Jurisdiction"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-constituency-ashford-west"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-ward-ashford-west-a"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-ashford-west-a-hc",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-ashford-west-a-hc",
-        "status": "active",
-        "mode": "instance",
-        "name": "Ashford West Ward A Health Centre",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-ashford-west-a"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-ashford-west-a-hc"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-ashford-west-a-disp",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-ashford-west-a-disp",
-        "status": "active",
-        "mode": "instance",
-        "name": "Ashford West Ward A Dispensary",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-ashford-west-a"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-ashford-west-a-disp"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-ward-ashford-west-b",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-ward-ashford-west-b",
-        "status": "active",
-        "mode": "instance",
-        "name": "Ashford West Ward B",
-        "description": "Ward level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "jdn",
-              "display": "Jurisdiction"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-constituency-ashford-west"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-ward-ashford-west-b"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-ashford-west-b-hc",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-ashford-west-b-hc",
-        "status": "active",
-        "mode": "instance",
-        "name": "Ashford West Ward B Health Centre",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-ashford-west-b"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-ashford-west-b-hc"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-ashford-west-b-disp",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-ashford-west-b-disp",
-        "status": "active",
-        "mode": "instance",
-        "name": "Ashford West Ward B Dispensary",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-ashford-west-b"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-ashford-west-b-disp"
+        "url": "Location/seed-loc-region-central"
       }
     },
     {
@@ -508,8 +79,8 @@
         "id": "seed-loc-district-brookdale",
         "status": "active",
         "mode": "instance",
-        "name": "Brookdale District",
-        "description": "District level of the sample location hierarchy",
+        "name": "Brookdale",
+        "description": "District in the sample location hierarchy",
         "physicalType": {
           "coding": [
             {
@@ -520,7 +91,7 @@
           ]
         },
         "partOf": {
-          "reference": "Location/seed-loc-region-highland"
+          "reference": "Location/seed-loc-region-central"
         }
       },
       "request": {
@@ -529,14 +100,14 @@
       }
     },
     {
-      "fullUrl": "urn:uuid:seed-loc-constituency-brookdale-east",
+      "fullUrl": "urn:uuid:seed-loc-constituency-kiambu",
       "resource": {
         "resourceType": "Location",
-        "id": "seed-loc-constituency-brookdale-east",
+        "id": "seed-loc-constituency-kiambu",
         "status": "active",
         "mode": "instance",
-        "name": "Brookdale East Constituency",
-        "description": "Constituency level of the sample location hierarchy",
+        "name": "Kiambu",
+        "description": "Constituency in the sample location hierarchy",
         "physicalType": {
           "coding": [
             {
@@ -552,18 +123,18 @@
       },
       "request": {
         "method": "PUT",
-        "url": "Location/seed-loc-constituency-brookdale-east"
+        "url": "Location/seed-loc-constituency-kiambu"
       }
     },
     {
-      "fullUrl": "urn:uuid:seed-loc-ward-brookdale-east-a",
+      "fullUrl": "urn:uuid:seed-loc-ward-ndumberi",
       "resource": {
         "resourceType": "Location",
-        "id": "seed-loc-ward-brookdale-east-a",
+        "id": "seed-loc-ward-ndumberi",
         "status": "active",
         "mode": "instance",
-        "name": "Brookdale East Ward A",
-        "description": "Ward level of the sample location hierarchy",
+        "name": "Ndumberi",
+        "description": "Ward in the sample location hierarchy",
         "physicalType": {
           "coding": [
             {
@@ -574,23 +145,23 @@
           ]
         },
         "partOf": {
-          "reference": "Location/seed-loc-constituency-brookdale-east"
+          "reference": "Location/seed-loc-constituency-kiambu"
         }
       },
       "request": {
         "method": "PUT",
-        "url": "Location/seed-loc-ward-brookdale-east-a"
+        "url": "Location/seed-loc-ward-ndumberi"
       }
     },
     {
-      "fullUrl": "urn:uuid:seed-loc-facility-brookdale-east-a-hc",
+      "fullUrl": "urn:uuid:seed-loc-facility-ndumberi-hc",
       "resource": {
         "resourceType": "Location",
-        "id": "seed-loc-facility-brookdale-east-a-hc",
+        "id": "seed-loc-facility-ndumberi-hc",
         "status": "active",
         "mode": "instance",
-        "name": "Brookdale East Ward A Health Centre",
-        "description": "Facility level of the sample location hierarchy",
+        "name": "Ndumberi Health Centre",
+        "description": "Facility in the sample location hierarchy",
         "physicalType": {
           "coding": [
             {
@@ -601,7 +172,7 @@
           ]
         },
         "partOf": {
-          "reference": "Location/seed-loc-ward-brookdale-east-a"
+          "reference": "Location/seed-loc-ward-ndumberi"
         },
         "managingOrganization": {
           "reference": "Organization/seed-org-zamara-health"
@@ -609,18 +180,18 @@
       },
       "request": {
         "method": "PUT",
-        "url": "Location/seed-loc-facility-brookdale-east-a-hc"
+        "url": "Location/seed-loc-facility-ndumberi-hc"
       }
     },
     {
-      "fullUrl": "urn:uuid:seed-loc-facility-brookdale-east-a-disp",
+      "fullUrl": "urn:uuid:seed-loc-facility-ndumberi-disp",
       "resource": {
         "resourceType": "Location",
-        "id": "seed-loc-facility-brookdale-east-a-disp",
+        "id": "seed-loc-facility-ndumberi-disp",
         "status": "active",
         "mode": "instance",
-        "name": "Brookdale East Ward A Dispensary",
-        "description": "Facility level of the sample location hierarchy",
+        "name": "Ndumberi Dispensary",
+        "description": "Facility in the sample location hierarchy",
         "physicalType": {
           "coding": [
             {
@@ -631,7 +202,7 @@
           ]
         },
         "partOf": {
-          "reference": "Location/seed-loc-ward-brookdale-east-a"
+          "reference": "Location/seed-loc-ward-ndumberi"
         },
         "managingOrganization": {
           "reference": "Organization/seed-org-zamara-health"
@@ -639,18 +210,18 @@
       },
       "request": {
         "method": "PUT",
-        "url": "Location/seed-loc-facility-brookdale-east-a-disp"
+        "url": "Location/seed-loc-facility-ndumberi-disp"
       }
     },
     {
-      "fullUrl": "urn:uuid:seed-loc-ward-brookdale-east-b",
+      "fullUrl": "urn:uuid:seed-loc-ward-riabai",
       "resource": {
         "resourceType": "Location",
-        "id": "seed-loc-ward-brookdale-east-b",
+        "id": "seed-loc-ward-riabai",
         "status": "active",
         "mode": "instance",
-        "name": "Brookdale East Ward B",
-        "description": "Ward level of the sample location hierarchy",
+        "name": "Riabai",
+        "description": "Ward in the sample location hierarchy",
         "physicalType": {
           "coding": [
             {
@@ -661,23 +232,23 @@
           ]
         },
         "partOf": {
-          "reference": "Location/seed-loc-constituency-brookdale-east"
+          "reference": "Location/seed-loc-constituency-kiambu"
         }
       },
       "request": {
         "method": "PUT",
-        "url": "Location/seed-loc-ward-brookdale-east-b"
+        "url": "Location/seed-loc-ward-riabai"
       }
     },
     {
-      "fullUrl": "urn:uuid:seed-loc-facility-brookdale-east-b-hc",
+      "fullUrl": "urn:uuid:seed-loc-facility-riabai-hc",
       "resource": {
         "resourceType": "Location",
-        "id": "seed-loc-facility-brookdale-east-b-hc",
+        "id": "seed-loc-facility-riabai-hc",
         "status": "active",
         "mode": "instance",
-        "name": "Brookdale East Ward B Health Centre",
-        "description": "Facility level of the sample location hierarchy",
+        "name": "Riabai Health Centre",
+        "description": "Facility in the sample location hierarchy",
         "physicalType": {
           "coding": [
             {
@@ -688,7 +259,7 @@
           ]
         },
         "partOf": {
-          "reference": "Location/seed-loc-ward-brookdale-east-b"
+          "reference": "Location/seed-loc-ward-riabai"
         },
         "managingOrganization": {
           "reference": "Organization/seed-org-zamara-health"
@@ -696,18 +267,18 @@
       },
       "request": {
         "method": "PUT",
-        "url": "Location/seed-loc-facility-brookdale-east-b-hc"
+        "url": "Location/seed-loc-facility-riabai-hc"
       }
     },
     {
-      "fullUrl": "urn:uuid:seed-loc-facility-brookdale-east-b-disp",
+      "fullUrl": "urn:uuid:seed-loc-facility-riabai-disp",
       "resource": {
         "resourceType": "Location",
-        "id": "seed-loc-facility-brookdale-east-b-disp",
+        "id": "seed-loc-facility-riabai-disp",
         "status": "active",
         "mode": "instance",
-        "name": "Brookdale East Ward B Dispensary",
-        "description": "Facility level of the sample location hierarchy",
+        "name": "Riabai Dispensary",
+        "description": "Facility in the sample location hierarchy",
         "physicalType": {
           "coding": [
             {
@@ -718,7 +289,7 @@
           ]
         },
         "partOf": {
-          "reference": "Location/seed-loc-ward-brookdale-east-b"
+          "reference": "Location/seed-loc-ward-riabai"
         },
         "managingOrganization": {
           "reference": "Organization/seed-org-zamara-health"
@@ -726,18 +297,18 @@
       },
       "request": {
         "method": "PUT",
-        "url": "Location/seed-loc-facility-brookdale-east-b-disp"
+        "url": "Location/seed-loc-facility-riabai-disp"
       }
     },
     {
-      "fullUrl": "urn:uuid:seed-loc-constituency-brookdale-west",
+      "fullUrl": "urn:uuid:seed-loc-constituency-limuru",
       "resource": {
         "resourceType": "Location",
-        "id": "seed-loc-constituency-brookdale-west",
+        "id": "seed-loc-constituency-limuru",
         "status": "active",
         "mode": "instance",
-        "name": "Brookdale West Constituency",
-        "description": "Constituency level of the sample location hierarchy",
+        "name": "Limuru",
+        "description": "Constituency in the sample location hierarchy",
         "physicalType": {
           "coding": [
             {
@@ -753,18 +324,18 @@
       },
       "request": {
         "method": "PUT",
-        "url": "Location/seed-loc-constituency-brookdale-west"
+        "url": "Location/seed-loc-constituency-limuru"
       }
     },
     {
-      "fullUrl": "urn:uuid:seed-loc-ward-brookdale-west-a",
+      "fullUrl": "urn:uuid:seed-loc-ward-ngecha",
       "resource": {
         "resourceType": "Location",
-        "id": "seed-loc-ward-brookdale-west-a",
+        "id": "seed-loc-ward-ngecha",
         "status": "active",
         "mode": "instance",
-        "name": "Brookdale West Ward A",
-        "description": "Ward level of the sample location hierarchy",
+        "name": "Ngecha Tigoni",
+        "description": "Ward in the sample location hierarchy",
         "physicalType": {
           "coding": [
             {
@@ -775,23 +346,23 @@
           ]
         },
         "partOf": {
-          "reference": "Location/seed-loc-constituency-brookdale-west"
+          "reference": "Location/seed-loc-constituency-limuru"
         }
       },
       "request": {
         "method": "PUT",
-        "url": "Location/seed-loc-ward-brookdale-west-a"
+        "url": "Location/seed-loc-ward-ngecha"
       }
     },
     {
-      "fullUrl": "urn:uuid:seed-loc-facility-brookdale-west-a-hc",
+      "fullUrl": "urn:uuid:seed-loc-facility-ngecha-hc",
       "resource": {
         "resourceType": "Location",
-        "id": "seed-loc-facility-brookdale-west-a-hc",
+        "id": "seed-loc-facility-ngecha-hc",
         "status": "active",
         "mode": "instance",
-        "name": "Brookdale West Ward A Health Centre",
-        "description": "Facility level of the sample location hierarchy",
+        "name": "Ngecha Tigoni Health Centre",
+        "description": "Facility in the sample location hierarchy",
         "physicalType": {
           "coding": [
             {
@@ -802,7 +373,7 @@
           ]
         },
         "partOf": {
-          "reference": "Location/seed-loc-ward-brookdale-west-a"
+          "reference": "Location/seed-loc-ward-ngecha"
         },
         "managingOrganization": {
           "reference": "Organization/seed-org-zamara-health"
@@ -810,18 +381,18 @@
       },
       "request": {
         "method": "PUT",
-        "url": "Location/seed-loc-facility-brookdale-west-a-hc"
+        "url": "Location/seed-loc-facility-ngecha-hc"
       }
     },
     {
-      "fullUrl": "urn:uuid:seed-loc-facility-brookdale-west-a-disp",
+      "fullUrl": "urn:uuid:seed-loc-facility-ngecha-disp",
       "resource": {
         "resourceType": "Location",
-        "id": "seed-loc-facility-brookdale-west-a-disp",
+        "id": "seed-loc-facility-ngecha-disp",
         "status": "active",
         "mode": "instance",
-        "name": "Brookdale West Ward A Dispensary",
-        "description": "Facility level of the sample location hierarchy",
+        "name": "Ngecha Tigoni Dispensary",
+        "description": "Facility in the sample location hierarchy",
         "physicalType": {
           "coding": [
             {
@@ -832,7 +403,7 @@
           ]
         },
         "partOf": {
-          "reference": "Location/seed-loc-ward-brookdale-west-a"
+          "reference": "Location/seed-loc-ward-ngecha"
         },
         "managingOrganization": {
           "reference": "Organization/seed-org-zamara-health"
@@ -840,18 +411,18 @@
       },
       "request": {
         "method": "PUT",
-        "url": "Location/seed-loc-facility-brookdale-west-a-disp"
+        "url": "Location/seed-loc-facility-ngecha-disp"
       }
     },
     {
-      "fullUrl": "urn:uuid:seed-loc-ward-brookdale-west-b",
+      "fullUrl": "urn:uuid:seed-loc-ward-limuru-central",
       "resource": {
         "resourceType": "Location",
-        "id": "seed-loc-ward-brookdale-west-b",
+        "id": "seed-loc-ward-limuru-central",
         "status": "active",
         "mode": "instance",
-        "name": "Brookdale West Ward B",
-        "description": "Ward level of the sample location hierarchy",
+        "name": "Limuru Central",
+        "description": "Ward in the sample location hierarchy",
         "physicalType": {
           "coding": [
             {
@@ -862,23 +433,23 @@
           ]
         },
         "partOf": {
-          "reference": "Location/seed-loc-constituency-brookdale-west"
+          "reference": "Location/seed-loc-constituency-limuru"
         }
       },
       "request": {
         "method": "PUT",
-        "url": "Location/seed-loc-ward-brookdale-west-b"
+        "url": "Location/seed-loc-ward-limuru-central"
       }
     },
     {
-      "fullUrl": "urn:uuid:seed-loc-facility-brookdale-west-b-hc",
+      "fullUrl": "urn:uuid:seed-loc-facility-limuru-central-hc",
       "resource": {
         "resourceType": "Location",
-        "id": "seed-loc-facility-brookdale-west-b-hc",
+        "id": "seed-loc-facility-limuru-central-hc",
         "status": "active",
         "mode": "instance",
-        "name": "Brookdale West Ward B Health Centre",
-        "description": "Facility level of the sample location hierarchy",
+        "name": "Limuru Central Health Centre",
+        "description": "Facility in the sample location hierarchy",
         "physicalType": {
           "coding": [
             {
@@ -889,7 +460,7 @@
           ]
         },
         "partOf": {
-          "reference": "Location/seed-loc-ward-brookdale-west-b"
+          "reference": "Location/seed-loc-ward-limuru-central"
         },
         "managingOrganization": {
           "reference": "Organization/seed-org-zamara-health"
@@ -897,18 +468,18 @@
       },
       "request": {
         "method": "PUT",
-        "url": "Location/seed-loc-facility-brookdale-west-b-hc"
+        "url": "Location/seed-loc-facility-limuru-central-hc"
       }
     },
     {
-      "fullUrl": "urn:uuid:seed-loc-facility-brookdale-west-b-disp",
+      "fullUrl": "urn:uuid:seed-loc-facility-limuru-central-disp",
       "resource": {
         "resourceType": "Location",
-        "id": "seed-loc-facility-brookdale-west-b-disp",
+        "id": "seed-loc-facility-limuru-central-disp",
         "status": "active",
         "mode": "instance",
-        "name": "Brookdale West Ward B Dispensary",
-        "description": "Facility level of the sample location hierarchy",
+        "name": "Limuru Central Dispensary",
+        "description": "Facility in the sample location hierarchy",
         "physicalType": {
           "coding": [
             {
@@ -919,7 +490,7 @@
           ]
         },
         "partOf": {
-          "reference": "Location/seed-loc-ward-brookdale-west-b"
+          "reference": "Location/seed-loc-ward-limuru-central"
         },
         "managingOrganization": {
           "reference": "Organization/seed-org-zamara-health"
@@ -927,1123 +498,7 @@
       },
       "request": {
         "method": "PUT",
-        "url": "Location/seed-loc-facility-brookdale-west-b-disp"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-region-lakeside",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-region-lakeside",
-        "status": "active",
-        "mode": "instance",
-        "name": "Lakeside Region",
-        "description": "Region level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "jdn",
-              "display": "Jurisdiction"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-country"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-region-lakeside"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-district-clearwater",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-district-clearwater",
-        "status": "active",
-        "mode": "instance",
-        "name": "Clearwater District",
-        "description": "District level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "jdn",
-              "display": "Jurisdiction"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-region-lakeside"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-district-clearwater"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-constituency-clearwater-east",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-constituency-clearwater-east",
-        "status": "active",
-        "mode": "instance",
-        "name": "Clearwater East Constituency",
-        "description": "Constituency level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "jdn",
-              "display": "Jurisdiction"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-district-clearwater"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-constituency-clearwater-east"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-ward-clearwater-east-a",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-ward-clearwater-east-a",
-        "status": "active",
-        "mode": "instance",
-        "name": "Clearwater East Ward A",
-        "description": "Ward level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "jdn",
-              "display": "Jurisdiction"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-constituency-clearwater-east"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-ward-clearwater-east-a"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-clearwater-east-a-hc",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-clearwater-east-a-hc",
-        "status": "active",
-        "mode": "instance",
-        "name": "Clearwater East Ward A Health Centre",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-clearwater-east-a"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-clearwater-east-a-hc"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-clearwater-east-a-disp",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-clearwater-east-a-disp",
-        "status": "active",
-        "mode": "instance",
-        "name": "Clearwater East Ward A Dispensary",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-clearwater-east-a"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-clearwater-east-a-disp"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-ward-clearwater-east-b",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-ward-clearwater-east-b",
-        "status": "active",
-        "mode": "instance",
-        "name": "Clearwater East Ward B",
-        "description": "Ward level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "jdn",
-              "display": "Jurisdiction"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-constituency-clearwater-east"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-ward-clearwater-east-b"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-clearwater-east-b-hc",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-clearwater-east-b-hc",
-        "status": "active",
-        "mode": "instance",
-        "name": "Clearwater East Ward B Health Centre",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-clearwater-east-b"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-clearwater-east-b-hc"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-clearwater-east-b-disp",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-clearwater-east-b-disp",
-        "status": "active",
-        "mode": "instance",
-        "name": "Clearwater East Ward B Dispensary",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-clearwater-east-b"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-clearwater-east-b-disp"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-constituency-clearwater-west",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-constituency-clearwater-west",
-        "status": "active",
-        "mode": "instance",
-        "name": "Clearwater West Constituency",
-        "description": "Constituency level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "jdn",
-              "display": "Jurisdiction"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-district-clearwater"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-constituency-clearwater-west"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-ward-clearwater-west-a",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-ward-clearwater-west-a",
-        "status": "active",
-        "mode": "instance",
-        "name": "Clearwater West Ward A",
-        "description": "Ward level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "jdn",
-              "display": "Jurisdiction"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-constituency-clearwater-west"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-ward-clearwater-west-a"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-clearwater-west-a-hc",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-clearwater-west-a-hc",
-        "status": "active",
-        "mode": "instance",
-        "name": "Clearwater West Ward A Health Centre",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-clearwater-west-a"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-clearwater-west-a-hc"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-clearwater-west-a-disp",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-clearwater-west-a-disp",
-        "status": "active",
-        "mode": "instance",
-        "name": "Clearwater West Ward A Dispensary",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-clearwater-west-a"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-clearwater-west-a-disp"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-ward-clearwater-west-b",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-ward-clearwater-west-b",
-        "status": "active",
-        "mode": "instance",
-        "name": "Clearwater West Ward B",
-        "description": "Ward level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "jdn",
-              "display": "Jurisdiction"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-constituency-clearwater-west"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-ward-clearwater-west-b"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-clearwater-west-b-hc",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-clearwater-west-b-hc",
-        "status": "active",
-        "mode": "instance",
-        "name": "Clearwater West Ward B Health Centre",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-clearwater-west-b"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-clearwater-west-b-hc"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-clearwater-west-b-disp",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-clearwater-west-b-disp",
-        "status": "active",
-        "mode": "instance",
-        "name": "Clearwater West Ward B Dispensary",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-clearwater-west-b"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-clearwater-west-b-disp"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-district-draymoor",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-district-draymoor",
-        "status": "active",
-        "mode": "instance",
-        "name": "Draymoor District",
-        "description": "District level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "jdn",
-              "display": "Jurisdiction"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-region-lakeside"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-district-draymoor"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-constituency-draymoor-east",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-constituency-draymoor-east",
-        "status": "active",
-        "mode": "instance",
-        "name": "Draymoor East Constituency",
-        "description": "Constituency level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "jdn",
-              "display": "Jurisdiction"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-district-draymoor"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-constituency-draymoor-east"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-ward-draymoor-east-a",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-ward-draymoor-east-a",
-        "status": "active",
-        "mode": "instance",
-        "name": "Draymoor East Ward A",
-        "description": "Ward level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "jdn",
-              "display": "Jurisdiction"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-constituency-draymoor-east"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-ward-draymoor-east-a"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-draymoor-east-a-hc",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-draymoor-east-a-hc",
-        "status": "active",
-        "mode": "instance",
-        "name": "Draymoor East Ward A Health Centre",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-draymoor-east-a"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-draymoor-east-a-hc"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-draymoor-east-a-disp",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-draymoor-east-a-disp",
-        "status": "active",
-        "mode": "instance",
-        "name": "Draymoor East Ward A Dispensary",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-draymoor-east-a"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-draymoor-east-a-disp"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-ward-draymoor-east-b",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-ward-draymoor-east-b",
-        "status": "active",
-        "mode": "instance",
-        "name": "Draymoor East Ward B",
-        "description": "Ward level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "jdn",
-              "display": "Jurisdiction"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-constituency-draymoor-east"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-ward-draymoor-east-b"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-draymoor-east-b-hc",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-draymoor-east-b-hc",
-        "status": "active",
-        "mode": "instance",
-        "name": "Draymoor East Ward B Health Centre",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-draymoor-east-b"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-draymoor-east-b-hc"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-draymoor-east-b-disp",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-draymoor-east-b-disp",
-        "status": "active",
-        "mode": "instance",
-        "name": "Draymoor East Ward B Dispensary",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-draymoor-east-b"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-draymoor-east-b-disp"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-constituency-draymoor-west",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-constituency-draymoor-west",
-        "status": "active",
-        "mode": "instance",
-        "name": "Draymoor West Constituency",
-        "description": "Constituency level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "jdn",
-              "display": "Jurisdiction"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-district-draymoor"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-constituency-draymoor-west"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-ward-draymoor-west-a",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-ward-draymoor-west-a",
-        "status": "active",
-        "mode": "instance",
-        "name": "Draymoor West Ward A",
-        "description": "Ward level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "jdn",
-              "display": "Jurisdiction"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-constituency-draymoor-west"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-ward-draymoor-west-a"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-draymoor-west-a-hc",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-draymoor-west-a-hc",
-        "status": "active",
-        "mode": "instance",
-        "name": "Draymoor West Ward A Health Centre",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-draymoor-west-a"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-draymoor-west-a-hc"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-draymoor-west-a-disp",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-draymoor-west-a-disp",
-        "status": "active",
-        "mode": "instance",
-        "name": "Draymoor West Ward A Dispensary",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-draymoor-west-a"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-draymoor-west-a-disp"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-ward-draymoor-west-b",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-ward-draymoor-west-b",
-        "status": "active",
-        "mode": "instance",
-        "name": "Draymoor West Ward B",
-        "description": "Ward level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "jdn",
-              "display": "Jurisdiction"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-constituency-draymoor-west"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-ward-draymoor-west-b"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-draymoor-west-b-hc",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-draymoor-west-b-hc",
-        "status": "active",
-        "mode": "instance",
-        "name": "Draymoor West Ward B Health Centre",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-draymoor-west-b"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-draymoor-west-b-hc"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-loc-facility-draymoor-west-b-disp",
-      "resource": {
-        "resourceType": "Location",
-        "id": "seed-loc-facility-draymoor-west-b-disp",
-        "status": "active",
-        "mode": "instance",
-        "name": "Draymoor West Ward B Dispensary",
-        "description": "Facility level of the sample location hierarchy",
-        "physicalType": {
-          "coding": [
-            {
-              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
-              "code": "si",
-              "display": "Site"
-            }
-          ]
-        },
-        "partOf": {
-          "reference": "Location/seed-loc-ward-draymoor-west-b"
-        },
-        "managingOrganization": {
-          "reference": "Organization/seed-org-zamara-health"
-        }
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Location/seed-loc-facility-draymoor-west-b-disp"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-practitioner-doctor",
-      "resource": {
-        "resourceType": "Practitioner",
-        "id": "seed-practitioner-doctor",
-        "active": true,
-        "identifier": [
-          {
-            "system": "http://ohs.dev/identifiers/source-id",
-            "value": "seed-doctor"
-          }
-        ],
-        "name": [
-          {
-            "use": "official",
-            "family": "Okonjo",
-            "given": ["Amara"]
-          }
-        ]
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Practitioner/seed-practitioner-doctor"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-practitionerrole-doctor",
-      "resource": {
-        "resourceType": "PractitionerRole",
-        "id": "seed-practitionerrole-doctor",
-        "active": true,
-        "practitioner": {
-          "reference": "Practitioner/seed-practitioner-doctor"
-        },
-        "organization": {
-          "reference": "Organization/seed-org-zamara-health"
-        },
-        "location": [
-          {
-            "reference": "Location/seed-loc-facility-ashford-east-a-hc"
-          }
-        ],
-        "code": [
-          {
-            "coding": [
-              {
-                "system": "http://terminology.hl7.org/CodeSystem/practitioner-role",
-                "code": "doctor",
-                "display": "Doctor"
-              }
-            ]
-          }
-        ]
-      },
-      "request": {
-        "method": "PUT",
-        "url": "PractitionerRole/seed-practitionerrole-doctor"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-practitioner-nurse",
-      "resource": {
-        "resourceType": "Practitioner",
-        "id": "seed-practitioner-nurse",
-        "active": true,
-        "identifier": [
-          {
-            "system": "http://ohs.dev/identifiers/source-id",
-            "value": "seed-nurse"
-          }
-        ],
-        "name": [
-          {
-            "use": "official",
-            "family": "Mwangi",
-            "given": ["Joseph"]
-          }
-        ]
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Practitioner/seed-practitioner-nurse"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-practitionerrole-nurse",
-      "resource": {
-        "resourceType": "PractitionerRole",
-        "id": "seed-practitionerrole-nurse",
-        "active": true,
-        "practitioner": {
-          "reference": "Practitioner/seed-practitioner-nurse"
-        },
-        "organization": {
-          "reference": "Organization/seed-org-zamara-health"
-        },
-        "location": [
-          {
-            "reference": "Location/seed-loc-facility-ashford-east-a-hc"
-          }
-        ],
-        "code": [
-          {
-            "coding": [
-              {
-                "system": "http://terminology.hl7.org/CodeSystem/practitioner-role",
-                "code": "nurse",
-                "display": "Nurse"
-              }
-            ]
-          }
-        ]
-      },
-      "request": {
-        "method": "PUT",
-        "url": "PractitionerRole/seed-practitionerrole-nurse"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-practitioner-pharmacist",
-      "resource": {
-        "resourceType": "Practitioner",
-        "id": "seed-practitioner-pharmacist",
-        "active": true,
-        "identifier": [
-          {
-            "system": "http://ohs.dev/identifiers/source-id",
-            "value": "seed-pharmacist"
-          }
-        ],
-        "name": [
-          {
-            "use": "official",
-            "family": "Hassan",
-            "given": ["Fatima"]
-          }
-        ]
-      },
-      "request": {
-        "method": "PUT",
-        "url": "Practitioner/seed-practitioner-pharmacist"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-practitionerrole-pharmacist",
-      "resource": {
-        "resourceType": "PractitionerRole",
-        "id": "seed-practitionerrole-pharmacist",
-        "active": true,
-        "practitioner": {
-          "reference": "Practitioner/seed-practitioner-pharmacist"
-        },
-        "organization": {
-          "reference": "Organization/seed-org-zamara-health"
-        },
-        "location": [
-          {
-            "reference": "Location/seed-loc-facility-ashford-east-a-hc"
-          }
-        ],
-        "code": [
-          {
-            "coding": [
-              {
-                "system": "http://terminology.hl7.org/CodeSystem/practitioner-role",
-                "code": "pharmacist",
-                "display": "Pharmacist"
-              }
-            ]
-          }
-        ]
-      },
-      "request": {
-        "method": "PUT",
-        "url": "PractitionerRole/seed-practitionerrole-pharmacist"
-      }
-    },
-    {
-      "fullUrl": "urn:uuid:seed-careteam-ashford",
-      "resource": {
-        "resourceType": "CareTeam",
-        "id": "seed-careteam-ashford",
-        "status": "active",
-        "name": "Ashford East Primary Care Team",
-        "managingOrganization": [
-          {
-            "reference": "Organization/seed-org-zamara-health"
-          }
-        ],
-        "participant": [
-          {
-            "role": [
-              {
-                "coding": [
-                  {
-                    "system": "http://terminology.hl7.org/CodeSystem/care-team-roles",
-                    "code": "doctor",
-                    "display": "Doctor"
-                  }
-                ]
-              }
-            ],
-            "member": {
-              "reference": "Practitioner/seed-practitioner-doctor",
-              "display": "Amara Okonjo"
-            }
-          },
-          {
-            "role": [
-              {
-                "coding": [
-                  {
-                    "system": "http://terminology.hl7.org/CodeSystem/care-team-roles",
-                    "code": "nurse",
-                    "display": "Nurse"
-                  }
-                ]
-              }
-            ],
-            "member": {
-              "reference": "Practitioner/seed-practitioner-nurse",
-              "display": "Joseph Mwangi"
-            }
-          }
-        ]
-      },
-      "request": {
-        "method": "PUT",
-        "url": "CareTeam/seed-careteam-ashford"
+        "url": "Location/seed-loc-facility-limuru-central-disp"
       }
     }
   ]
