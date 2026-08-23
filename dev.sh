@@ -304,6 +304,44 @@ maybe_seed() {
     esac
 }
 
+# This is a development stack and the sample logins are printed deliberately.
+# They are fixed values in a tracked file, so the terminal reveals nothing a
+# reader of the repository does not already have. The Keycloak admin password is
+# different — it is generated per install — but a developer cannot administer the
+# realm without it, and it is already sitting in .env on the same machine.
+#
+# Read from the realm template rather than hardcoded here, so this stays correct
+# if the roster changes.
+print_login_details() {
+    local realm="$SCRIPT_DIR/keycloak/ohs-player-realm.json.example"
+    [[ -f "$realm" ]] || return 0
+
+    echo
+    info "Sign in to the Web Portal at http://localhost:${OHS_PLAYER_WEB_PORT:-8084}"
+    python3 - "$realm" <<'PYEOF'
+import json, sys
+users = []
+for u in json.load(open(sys.argv[1])).get("users", []):
+    if u.get("serviceAccountClientId"):
+        continue                      # machine identities; no interactive login
+    creds = u.get("credentials") or []
+    users.append((u["username"],
+                  creds[0]["value"] if creds else "(no password)",
+                  (u.get("groups") or ["-"])[0].lstrip("/")))
+if users:
+    w = max(len(u[0]) for u in users)
+    p = max(len(u[1]) for u in users)
+    print(f"    {'USER':<{w}}  {'PASSWORD':<{p}}  GROUP")
+    for user, pw, grp in users:
+        print(f"    {user:<{w}}  {pw:<{p}}  {grp}")
+PYEOF
+    echo
+    info "Keycloak admin console at ${KEYCLOAK_PUBLIC_URL:-http://keycloak.localhost:8081}"
+    echo "    ${KEYCLOAK_ADMIN_USERNAME:-admin} / ${KEYCLOAK_ADMIN_PASSWORD:-(see .env)}"
+    echo
+    warn "Sample credentials — change them before this stack is reachable by anyone else."
+}
+
 # --- Subcommands -------------------------------------------------------------
 cmd_up() {
     parse_profiles "$@"
@@ -321,6 +359,7 @@ cmd_up() {
     info "Stack started. Container status:"
     compose "${PROFILE_ARGS[@]}" ps
     maybe_seed
+    print_login_details
 }
 
 cmd_down() {

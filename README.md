@@ -453,6 +453,8 @@ a warning and a running stack, not a failed command.
 | `admin-user` | `admin` | Super User | `Practitioner/admin-user` |
 | `practitioner-user` | `practitioner-user` | Practitioner | `Practitioner/practitioner-user` |
 
+`./dev.sh up` prints these at the end of every run, so you do not have to look them up.
+
 The users come from the realm import; the seed creates their Practitioner records. **The
 Practitioner id is the Keycloak username**, so one name identifies a person in both
 systems.
