@@ -440,11 +440,17 @@ a warning and a running stack, not a failed command.
 
 | Resource | Count | What it is |
 |---|---|---|
-| Location | 63 | A six-level tree: Country, Region, District, Constituency, Ward, Facility — two children at every level |
-| Organization | 1 | Zamara Health Services |
-| Practitioner | 5 | Three staff, plus one for each loginable user |
-| PractitionerRole | 5 | Each practitioner against the organization and a facility |
-| CareTeam | 1 | A doctor and a nurse |
+| Location | 17 | A six-level tree: Country, Region, District, Constituency, Ward, Facility |
+| Organization | 1 | Ndumberi Health Services |
+| Practitioner | 2 | One per login |
+| PractitionerRole | 2 | Each practitioner at a facility, in the organization |
+| CareTeam | 1 | Both practitioners |
+
+The hierarchy runs from one country (`Zamara`) down through Kenyan constituencies and
+wards to eight facilities, so every level has something beneath it.
+
+Everything else is one resource per person. There are no practitioner records without a
+matching login, so nothing in the Portal's lists is unreachable.
 
 ### Users you can sign in as
 
