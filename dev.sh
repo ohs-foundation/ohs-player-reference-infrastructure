@@ -10,6 +10,7 @@ set -euo pipefail
 #   reset                       Stop services and wipe named volumes
 #   logs [service]              Tail logs (all services or one)
 #   render                      Render service config templates from .env
+#   seed                        Load sample FHIR data
 #   clean                       Remove generated files (.env, application-*.yaml)
 #   help                        Show this help
 #
@@ -31,6 +32,8 @@ error() { echo -e "${RED}[ERROR]${NC} $*" >&2; exit 1; }
 # --- Paths -------------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_FILE="$SCRIPT_DIR/.env"
+# One resource from seed/fhir-seed.json, used to detect whether it has been loaded.
+SEED_MARKER="seed-loc-country"
 
 # --- Prerequisites -----------------------------------------------------------
 # The package name differs on every platform, so "install gettext-base" is
@@ -214,18 +217,91 @@ compose() {
 
 parse_profiles() {
     PROFILE_ARGS=()
+    SEED=auto
     for arg in "$@"; do
         case "$arg" in
             # The web portal is part of the default set; --web is kept so existing
             # commands and docs keep working, and selects nothing.
             --web)   ;;
+            --seed)    SEED=1 ;;
+            --no-seed) SEED=0 ;;
             --pipes) PROFILE_ARGS+=(--profile pipes) ;;
             --synth) PROFILE_ARGS+=(--profile synth) ;;
             --proxy) PROFILE_ARGS+=(--profile proxy) ;;
             --full)  PROFILE_ARGS+=(--profile full)  ;;
-            *)       error "Unknown flag: $arg (expected --web, --pipes, --synth, --proxy, or --full)" ;;
+            *)       error "Unknown flag: $arg (expected --web, --seed, --no-seed, --pipes, --synth, --proxy, or --full)" ;;
         esac
     done
+}
+
+# HAPI builds its schema on first boot and can take minutes to answer. Anything
+# that queries it right after `up` must wait, or it sees a connection failure and
+# mistakes an unready server for an empty one.
+wait_for_hapi() {
+    local net; net="$(compose_network)"
+    for _ in $(seq 1 60); do
+        docker run --rm --network "$net" curlimages/curl:latest \
+            -sf -o /dev/null http://hapi-fhir:8080/fhir/metadata 2>/dev/null && return 0
+        sleep 5
+    done
+    return 1
+}
+
+# --- Seeding -----------------------------------------------------------------
+# Waits for the services the seed writes through before running it, so a slow
+# first boot surfaces as a wait rather than a confusing connection failure.
+cmd_seed() {
+    check_prerequisites
+    load_env
+    local script="$SCRIPT_DIR/seed/seed-fhir.sh"
+    [[ -x "$script" ]] || error "Seed script missing or not executable: $script"
+
+    wait_for_hapi || error "HAPI FHIR did not become ready; is the stack up?"
+
+    info "Seeding sample FHIR data..."
+    FHIR_NET="$(compose_network)" "$script"
+}
+
+# The compose project name prefixes the network; deriving it keeps the seed
+# working if the directory is renamed or COMPOSE_PROJECT_NAME is set.
+compose_network() {
+    printf '%s_fhir_net' "${COMPOSE_PROJECT_NAME:-$(basename "$SCRIPT_DIR")}"
+}
+
+# A first run against an empty FHIR server leaves every list in the Portal blank,
+# which reads as a broken deployment rather than an empty one. Seed it — but only
+# when the server really is empty, so a later `up` never overwrites resources the
+# user created or edited. --seed forces it, --no-seed skips it.
+maybe_seed() {
+    case "${SEED:-auto}" in
+        0) return 0 ;;
+        1) cmd_seed; return $? ;;
+    esac
+
+    info "Waiting for HAPI FHIR before checking for sample data..."
+    if ! wait_for_hapi; then
+        warn "HAPI FHIR did not become ready; skipped seeding."
+        warn "Run './dev.sh seed' once it is up if the Portal's lists are empty."
+        return 0
+    fi
+
+    # Probe one known resource by id rather than counting. An unfiltered
+    # `Location?_summary=count` reports 0 for a while after a bulk write even
+    # though the resources are readable, so counting here would re-seed on every
+    # single `up`. A read by id is always consistent.
+    local code
+    code=$(docker run --rm --network "$(compose_network)" curlimages/curl:latest \
+             -s -o /dev/null -w '%{http_code}' \
+             "http://hapi-fhir:8080/fhir/Location/$SEED_MARKER" 2>/dev/null) || code=000
+
+    case "$code" in
+        200) info "Sample data already present — leaving the FHIR server alone." ;;
+        404) info "No sample data found — loading it so the Portal has something to show."
+             # Never fail `up` over the seed: the stack is already running.
+             cmd_seed || warn "Seeding did not complete. Run './dev.sh seed' to retry." ;;
+        *)   warn "Could not tell whether sample data is present (HTTP $code); skipped seeding."
+             warn "Run './dev.sh seed' if the Portal's lists are empty." ;;
+    esac
 }
 
 # --- Subcommands -------------------------------------------------------------
@@ -244,6 +320,7 @@ cmd_up() {
     compose "${PROFILE_ARGS[@]}" up -d --build
     info "Stack started. Container status:"
     compose "${PROFILE_ARGS[@]}" ps
+    maybe_seed
 }
 
 cmd_down() {
@@ -313,10 +390,13 @@ Commands:
                               --synth  adds synthetic HAPI + postgres
                               --pipes  adds synth + analytics pipeline + Superset
                               --proxy  adds the same-origin nginx front
+                              --seed     force-load the sample FHIR data
+                              --no-seed  never load it
   down                        Stop all running services
   reset                       Stop services and wipe named volumes
   logs [service]              Tail logs (all services or one)
   render                      Render service config templates from .env
+  seed                        Load sample FHIR data (locations, org, practitioners)
   clean                       Remove generated files (.env, application-*.yaml)
   help                        Show this help
 
@@ -337,6 +417,7 @@ main() {
         reset)    cmd_reset ;;
         logs)     cmd_logs "$@" ;;
         render)   cmd_render ;;
+        seed)     cmd_seed ;;
         clean)    cmd_clean ;;
         help|--help|-h) usage ;;
         *)        error "Unknown command: $command. Run '$0 help' for usage." ;;

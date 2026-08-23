@@ -418,6 +418,49 @@ config is the default.
 
 ---
 
+## Sample data
+
+The stack starts empty. `seed` loads a small, deliberately fictional dataset so the
+Portal and the location endpoints have something to show:
+
+`./dev.sh up` loads it automatically the first time, so the Portal's lists are never
+blank on a fresh install. It checks for one known resource before doing anything, and
+leaves the server alone if it is already there — a later `up` never overwrites what you
+have created or edited.
+
+```bash
+./dev.sh up             # seeds automatically, but only if the sample data is absent
+./dev.sh seed           # load it explicitly, against a running stack
+./dev.sh up --seed      # force it, even if it is already loaded
+./dev.sh up --no-seed   # never load it
+```
+
+Seeding never fails `up`: if HAPI is slow to start or the load does not complete, you get
+a warning and a running stack, not a failed command.
+
+| Resource | Count | What it is |
+|---|---|---|
+| Location | 63 | A six-level tree: Country, Region, District, Constituency, Ward, Facility — two children at every level |
+| Organization | 1 | Zamara Health Services |
+| Practitioner | 5 | Three staff, plus one each for `admin-user` and `manager-user` |
+| PractitionerRole | 5 | Each practitioner against the organization and a facility |
+| CareTeam | 1 | A doctor and a nurse |
+
+The two extra Practitioners are the point of the second phase: each carries the
+`http://ohs.dev/identifiers/keycloak-user-id` identifier with its Keycloak user id, which
+is how the backend resolves a caller to their own record. Without them,
+`GET /api/practitioner-details` returns nothing for a signed-in user.
+
+Everything is written with `PUT` at fixed ids, so re-running upserts rather than
+duplicating. Writes go straight to HAPI rather than through the gateway, so seeding does
+not depend on the access control it is populating.
+
+To see the tree:
+
+```bash
+GET /api/location-hierarchy/seed-loc-country
+```
+
 ## Roles and permissions
 
 The realm carries **two independent role models**, because the backend enforces two. They
