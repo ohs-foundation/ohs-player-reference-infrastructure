@@ -1831,9 +1831,7 @@
           {
             "use": "official",
             "family": "Okonjo",
-            "given": [
-              "Amara"
-            ]
+            "given": ["Amara"]
           }
         ]
       },
@@ -1892,9 +1890,7 @@
           {
             "use": "official",
             "family": "Mwangi",
-            "given": [
-              "Joseph"
-            ]
+            "given": ["Joseph"]
           }
         ]
       },
@@ -1953,9 +1949,7 @@
           {
             "use": "official",
             "family": "Hassan",
-            "given": [
-              "Fatima"
-            ]
+            "given": ["Fatima"]
           }
         ]
       },
