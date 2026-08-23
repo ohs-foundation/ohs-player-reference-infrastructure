@@ -442,14 +442,27 @@ a warning and a running stack, not a failed command.
 |---|---|---|
 | Location | 63 | A six-level tree: Country, Region, District, Constituency, Ward, Facility — two children at every level |
 | Organization | 1 | Zamara Health Services |
-| Practitioner | 5 | Three staff, plus one each for `admin-user` and `manager-user` |
+| Practitioner | 5 | Three staff, plus one for each loginable user |
 | PractitionerRole | 5 | Each practitioner against the organization and a facility |
 | CareTeam | 1 | A doctor and a nurse |
 
-The two extra Practitioners are the point of the second phase: each carries the
-`http://ohs.dev/identifiers/keycloak-user-id` identifier with its Keycloak user id, which
-is how the backend resolves a caller to their own record. Without them,
-`GET /api/practitioner-details` returns nothing for a signed-in user.
+### Users you can sign in as
+
+| Username | Password | Group | Practitioner |
+|---|---|---|---|
+| `admin-user` | `admin` | Super User | `Practitioner/admin-user` |
+| `practitioner-user` | `practitioner-user` | Practitioner | `Practitioner/practitioner-user` |
+
+The users come from the realm import; the seed creates their Practitioner records. **The
+Practitioner id is the Keycloak username**, so one name identifies a person in both
+systems.
+
+Each record carries the `http://ohs.dev/identifiers/keycloak-user-id` identifier holding
+that user's Keycloak id, which is how the backend resolves a caller to their own record.
+Without it, `GET /api/practitioner-details` returns nothing for a signed-in user.
+
+These are sample credentials. Change them before the stack is reachable by anyone else —
+see [Secrets and exposure](#secrets-and-exposure).
 
 Everything is written with `PUT` at fixed ids, so re-running upserts rather than
 duplicating. Writes go straight to HAPI rather than through the gateway, so seeding does
@@ -536,19 +549,12 @@ Users get roles by group membership. What each group carries:
 
 | Group | FHIR roles | Backend roles | Portal |
 |---|---|---|---|
-| **Super User** | 94 | `users.manage`, `groups.manage`, `bulk-import.manage`, `roles.view`, `practitioner-details.view`, `location-hierarchy.view` | `admin` |
-| **Provider** | 90 | `location-hierarchy.view` | `care-team-manager` |
+| **Super User** | 96 | `users.manage`, `groups.manage`, `bulk-import.manage`, `roles.view`, `practitioner-details.view`, `location-hierarchy.view` | `admin`, `care-team-manager` |
 | **Practitioner** | 72 | — | — |
-| **Cam** | 0 | — | — |
 
-> **`Cam` grants nothing.** It exists in the realm with no roles at all, so a user in it
-> is refused everything. Useful as a deliberate negative case; surprising if you assign it
-> expecting access.
-
-**No user shipped in the realm import belongs to any group.** A fresh stack authenticates
-its default user and then denies it every FHIR request — which reads like a broken
-gateway rather than a missing group membership. Assign a group in the admin console
-before testing access.
+Each group has exactly one member: `admin-user` in Super User, `practitioner-user` in
+Practitioner. The three service accounts belong to no group, which is correct — they
+authenticate machine-to-machine and never make FHIR requests on a person's behalf.
 
 ### Where a refusal comes from
 
@@ -565,7 +571,7 @@ before testing access.
 `VIEW_KEYCLOAK_USERS` and `EDIT_KEYCLOAK_USERS` predate the `users.*` roles and do the
 same job by a different route: they are composite roles granting `realm-management`
 client roles straight to the end user, rather than going through the backend with its
-service account. They are still assigned to Practitioner, Provider and Super User.
+service account. They are still assigned to Practitioner and Super User.
 
 Prefer `users.view` / `users.edit` / `users.manage` for anything new.
 

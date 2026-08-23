@@ -29,9 +29,11 @@ ORG="seed-org-zamara-health"
 ANCHOR_LOCATION="seed-loc-facility-ashford-east-a-hc"
 
 # username | practitioner id | given | family | role code | role display
+# The Practitioner id is the Keycloak username, so one name identifies the person
+# in both systems and neither has to be looked up to find the other.
 LINKED_USERS=(
-  "admin-user|seed-practitioner-admin-user|Admin|User|doctor|Doctor"
-  "manager-user|seed-practitioner-manager-user|Manager|User|nurse|Nurse"
+  "admin-user|admin-user|Admin|User|doctor|Doctor"
+  "practitioner-user|practitioner-user|Practitioner|User|nurse|Nurse"
 )
 
 curl_net() { docker run --rm -i --network "$NET" "$CURL_IMG" "$@"; }
