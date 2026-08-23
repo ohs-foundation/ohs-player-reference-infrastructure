@@ -30,7 +30,7 @@ platform already provides — there is nothing to install for it.
 Pick your platform. `dev.sh` checks everything it needs before doing anything, and tells
 you the right command for your system if something is missing.
 
-**Linux (Debian, Ubuntu, or WSL)**
+#### Linux (Debian, Ubuntu or WSL)
 
 ```bash
 sudo apt update
@@ -40,7 +40,7 @@ sudo apt install gettext-base
 Docker Engine and the Compose plugin follow
 [Docker's own instructions](https://docs.docker.com/engine/install/).
 
-**Linux (Fedora or RHEL)**
+#### Linux (Fedora or RHEL)
 
 ```bash
 sudo dnf install gettext
@@ -48,7 +48,7 @@ sudo dnf install gettext
 
 Note the package is `gettext` here, not `gettext-base`.
 
-**macOS**
+#### macOS
 
 Bash ships with the system. You need `envsubst`, which comes from Homebrew's `gettext`:
 
@@ -67,7 +67,7 @@ macOS also ships Bash 3.2, which is too old. If `bash --version` reports 3.x:
 brew install bash
 ```
 
-**Windows**
+#### Windows
 
 Do not run these scripts from `cmd.exe` or PowerShell — they are Bash scripts and
 `envsubst` has no native Windows build worth using.
@@ -113,34 +113,22 @@ clone works without one. See [HAPI FHIR healthcheck](#hapi-fhir-healthcheck).
 
 ## Bring it up
 
-**Step 1 — get the code.**
-
 ```bash
 git clone https://github.com/ohs-foundation/ohs-player-reference-infrastructure.git
 cd ohs-player-reference-infrastructure
-```
-
-**Step 2 — start the stack.**
-
-```bash
 ./dev.sh up
 ```
 
-That one command does five things, in order:
+The first run copies `.env.example` to `.env`, replaces every `[generated]` placeholder in
+it with a random secret, renders the Keycloak realm and the HAPI FHIR configuration from
+those values, builds the gateway and the Web Portal from source, and starts the stack.
+Building from source takes several minutes. Subsequent runs reuse what is already there.
 
-1. Copies `.env.example` to `.env` if you do not have one yet.
-2. Replaces every `[generated]` placeholder in `.env` with a random secret.
-3. Renders the Keycloak realm and HAPI FHIR config from those values.
-4. Builds the gateway image from source (first run only — this takes several minutes).
-5. Starts the four core services.
+`.env` holds generated credentials and is deliberately untracked. Do not commit it.
 
-Later runs reuse what is already there, so they are much faster.
-
-> **`.env` holds your generated credentials and is deliberately untracked. Never commit it.**
-
-**Step 3 — wait.** Identity and the FHIR server take appreciably longer to become ready
-than the database. Allow up to **90 seconds for Keycloak** and up to **3 minutes for HAPI
-FHIR** on a first run.
+Identity and the FHIR server both take appreciably longer to become ready than the
+database does. Allow up to ninety seconds for Keycloak and up to three minutes for HAPI
+FHIR on a first run.
 
 ---
 
@@ -172,16 +160,11 @@ any `*.localhost` name to `127.0.0.1` on their own, so there is nothing to add t
 
 ## Confirm it is healthy
 
-**Step 1 — check the containers.**
+`docker compose ps` lists the containers. All five should show `Up`, and Postgres,
+Keycloak and HAPI FHIR should also show `(healthy)`.
 
-```bash
-docker compose ps
-```
-
-All five should show `Up`, and Postgres, Keycloak and HAPI FHIR should show `(healthy)`.
-
-**Step 2 — check each service answers.** Run all three; three silent successes mean
-identity is up, the FHIR server is serving, and the gateway is proxying to it.
+Then check that each service answers. Three silent successes mean identity is up, the FHIR
+server is serving, and the gateway is proxying to it.
 
 ```bash
 curl -sf http://localhost:8081/realms/ohs-player/.well-known/openid-configuration | grep -q issuer
@@ -189,19 +172,11 @@ curl -sf http://localhost:8082/fhir/metadata | grep -q CapabilityStatement
 curl -sf http://localhost:8083/fhir/metadata | grep -q CapabilityStatement
 ```
 
-If you prefer to see output rather than silence:
-
-```bash
-curl -sf http://localhost:8081/realms/ohs-player/.well-known/openid-configuration | grep -q issuer && echo "Keycloak: OK"
-curl -sf http://localhost:8082/fhir/metadata | grep -q CapabilityStatement && echo "HAPI FHIR: OK"
-curl -sf http://localhost:8083/fhir/metadata | grep -q CapabilityStatement && echo "FHIR Gateway: OK"
-```
-
-> The first command checks the realm rather than `/health/ready`. Keycloak 26 serves its
-> health endpoints on a separate management port (`9000`) that this stack does not publish,
-> so `curl http://localhost:8081/health/ready` returns 404 even on a perfectly healthy
-> Keycloak. The container's own healthcheck probes port 9000 internally, which is what
-> `docker compose ps` reports.
+The first command checks the realm rather than `/health/ready`. Keycloak 26 serves its
+health endpoints on a separate management port that this stack does not publish, so
+`curl http://localhost:8081/health/ready` returns 404 even on a healthy Keycloak. The
+container's own healthcheck probes that port internally, which is what `docker compose ps`
+reports.
 
 ---
 
@@ -280,7 +255,7 @@ The Web Portal and the Client App both depend on it.
 
 ---
 
-# Beyond the core stack
+## Beyond the core stack
 
 Everything above is the environment the guide describes. The rest of this file covers the
 optional add-ons, server-oriented configuration, and reference material owned by this
@@ -324,7 +299,7 @@ build, so it takes several minutes. The browser-facing values are baked into the
 build time, which is why changing any `VITE_*` value in `.env` requires a rebuild —
 `./dev.sh up` does that for you.
 
-### Synthetic data — `--synth`
+### Synthetic data
 
 Adds a **second** HAPI FHIR server and its own Postgres, at
 <http://localhost:8085/fhir>.
@@ -332,7 +307,7 @@ Adds a **second** HAPI FHIR server and its own Postgres, at
 It is deliberately separate from the transactional server so generated test data never
 touches real records. Point a data generator at port `8085` rather than `8082`.
 
-### Analytics — `--pipes`
+### Analytics
 
 Adds FHIR Data Pipes and Superset on top of the synth pair.
 
@@ -349,7 +324,7 @@ then charts those tables.
 to the synth server; point it at `http://hapi-fhir:8080/fhir` once you have transactional
 data worth reporting on.
 
-### Same-origin proxy — `--proxy`
+### Same-origin proxy
 
 By default each service sits on its own port, so the browser makes cross-origin requests.
 `--proxy` puts an nginx container in front that serves the SPA, the gateway and Keycloak
@@ -358,7 +333,7 @@ from a **single origin**, so no CORS is involved at all.
 That matters because the gateway plugin's `/api/*` endpoints send no CORS headers of their
 own. A single origin avoids the problem rather than working around it.
 
-**Step 1 — change two values in `.env`.** They must change together: the first is baked
+Two values in `.env` must change together. The first is baked
 into the Keycloak realm import, the second into the SPA bundle.
 
 ```dotenv
@@ -369,7 +344,7 @@ OHS_PLAYER_APP_HOST=ohs-player.localhost
 `VITE_FHIR_BASE_URL` needs no change — it is the relative `/fhir`, so it follows whichever
 origin serves the SPA.
 
-**Step 2 — start with both flags.**
+Then start the stack with the proxy profile.
 
 ```bash
 ./dev.sh up --proxy
@@ -606,7 +581,7 @@ Eight values, each 24 random bytes from `/dev/urandom`, written into `.env` on f
 
 `.env` is gitignored and created `chmod 600`. Never commit it.
 
-### What ships with a fixed value — change these
+### What ships with a fixed value
 
 **1. Superset's login is `admin` / `admin`.**
 
@@ -696,10 +671,10 @@ FHIR data included.
 The bundled `postgres` service creates the `keycloak` and `hapi_fhir` roles on first boot
 via `postgres/init/01-init.sh`. To use a database you already run instead:
 
-**Step 1 — point the stack at it.** Set `POSTGRES_HOST` in `.env` to its hostname, or to
+Set `POSTGRES_HOST` in `.env` to its hostname, or to
 `host.docker.internal` for one running on this same machine.
 
-**Step 2 — create the roles and databases yourself.**
+Then create the roles and databases yourself.
 
 ```sql
 CREATE USER keycloak WITH PASSWORD '<KEYCLOAK_DB_PASSWORD>';
@@ -879,7 +854,7 @@ All four outputs contain secrets and are gitignored. Never commit them.
 > so there is no variable to keep in step — and no way for the realm file, the compose
 > issuer and the SPA bundle to disagree about them.
 
-#### Step 4 — the HAPI healthcheck (usually nothing to do)
+#### Step 4 — the HAPI healthcheck
 
 `hapi-fhir/health/Healthcheck.class` is committed, so there is nothing to build. Only if
 you edited the `.java` source:
@@ -969,6 +944,9 @@ ohs-player-reference-infrastructure/
 ├── postgres/
 │   └── init/01-init.sh                # runs once, on volume creation
 ├── data-pipes/                        # ViewDefinitions and pipeline config
+├── seed/
+│   ├── fhir-seed.json                 # organisation and location hierarchy
+│   └── seed-fhir.sh                   # loads it, and links realm users
 ├── nginx/
 │   ├── spa.conf                       # inside the web image; proxies /fhir and /api
 │   ├── ohs-player.conf                # same-origin front (--proxy)
