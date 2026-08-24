@@ -317,7 +317,8 @@ print_login_details() {
     [[ -f "$realm" ]] || return 0
 
     echo
-    info "Sign in to the Web Portal at http://localhost:${OHS_PLAYER_WEB_PORT:-8084}"
+    info "Login credentials"
+    echo "    Web Portal at http://localhost:${OHS_PLAYER_WEB_PORT:-8084}"
     python3 - "$realm" <<'PYEOF'
 import json, sys
 users = []
@@ -329,17 +330,21 @@ for u in json.load(open(sys.argv[1])).get("users", []):
                   creds[0]["value"] if creds else "(no password)",
                   (u.get("groups") or ["-"])[0].lstrip("/")))
 if users:
-    w = max(len(u[0]) for u in users)
-    p = max(len(u[1]) for u in users)
-    print(f"    {'USER':<{w}}  {'PASSWORD':<{p}}  GROUP")
-    for user, pw, grp in users:
-        print(f"    {user:<{w}}  {pw:<{p}}  {grp}")
+    rows = [("USER", "PASSWORD", "GROUP")] + users
+    w0 = max(len(r[0]) for r in rows)
+    w1 = max(len(r[1]) for r in rows)
+    for user, pw, grp in rows:
+        print(f"        {user:<{w0}}  {pw:<{w1}}  {grp}")
 PYEOF
     echo
-    info "Keycloak admin console at ${KEYCLOAK_PUBLIC_URL:-http://keycloak.localhost:8081}"
-    echo "    ${KEYCLOAK_ADMIN_USERNAME:-admin} / ${KEYCLOAK_ADMIN_PASSWORD:-(see .env)}"
+    echo "    Keycloak admin console at ${KEYCLOAK_PUBLIC_URL:-http://keycloak.localhost:8081}"
+    local kc_user="${KEYCLOAK_ADMIN_USERNAME:-admin}"
+    local kc_pass="${KEYCLOAK_ADMIN_PASSWORD:-(see .env)}"
+    local w=$(( ${#kc_user} > 4 ? ${#kc_user} : 4 ))
+    printf "        %-${w}s  %s\n" "USER" "PASSWORD"
+    printf "        %-${w}s  %s\n" "$kc_user" "$kc_pass"
     echo
-    warn "Sample credentials — change them before this stack is reachable by anyone else."
+    warn "Sample credentials — change them for anything beyond development, staging or testing."
 }
 
 # --- Subcommands -------------------------------------------------------------

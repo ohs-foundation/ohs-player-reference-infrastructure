@@ -29,7 +29,7 @@ CURL_IMG="${CURL_IMG:-curlimages/curl:latest}"
 KC_ID_SYSTEM="http://ohs.dev/identifiers/keycloak-user-id"
 ROLE_SYSTEM="http://terminology.hl7.org/CodeSystem/practitioner-role"
 TEAM_SYSTEM="http://terminology.hl7.org/CodeSystem/care-team-roles"
-ORG="seed-org-zamara-health"
+ORG="seed-org-ndumberi-health"
 FACILITY="seed-loc-facility-ndumberi-hc"
 CARE_TEAM="seed-careteam-ndumberi"
 
@@ -43,21 +43,45 @@ PEOPLE=(
 
 curl_net() { docker run --rm -i --network "$NET" "$CURL_IMG" "$@"; }
 
-# PUT a resource and report the status on one line.
+# Quiet on success: a list of 2xx lines tells the reader nothing. A failure names
+# the resource and its status, because that is the only case worth reading.
+SEEDED_TYPES=""
+FAILURES=0
+record() { case ",$SEEDED_TYPES," in *",$1,"*) ;; *) SEEDED_TYPES="${SEEDED_TYPES:+$SEEDED_TYPES,}$1" ;; esac; }
+
 put() {
-    local type="$1" id="$2" label="$3"
-    curl_net -s -o /dev/null -w "    ${label} -> HTTP %{http_code}\n" \
+    local type="$1" id="$2" body="$3" code
+    code=$(curl_net -s -o /dev/null -w '%{http_code}' \
         -X PUT "$FHIR/$type/$id" \
-        -H 'Content-Type: application/fhir+json' --data-binary @-
+        -H 'Content-Type: application/fhir+json' --data-binary @- <<<"$body")
+    if [[ "$code" =~ ^2 ]]; then
+        record "$type"
+    else
+        echo "    failed: $type/$id -> HTTP $code" >&2
+        FAILURES=$((FAILURES + 1))
+    fi
 }
 
-echo "==> reference data (organization and locations)"
-curl_net -s -o /dev/null -w '    bundle -> HTTP %{http_code}\n' \
+code=$(curl_net -s -o /dev/null -w '%{http_code}' \
     -X POST "$FHIR" \
     -H 'Content-Type: application/fhir+json' -H 'Accept: application/fhir+json' \
-    --data-binary @- < "$HERE/fhir-seed.json"
+    --data-binary @- < "$HERE/fhir-seed.json")
+if [[ "$code" =~ ^2 ]]; then
+    # Types come from the bundle itself, so the summary cannot drift from what it holds.
+    for t in $(python3 -c '
+import json, sys
+seen = []
+for e in json.load(open(sys.argv[1]))["entry"]:
+    t = e["resource"]["resourceType"]
+    if t not in seen: seen.append(t)
+print(" ".join(seen))' "$HERE/fhir-seed.json"); do
+        record "$t"
+    done
+else
+    echo "    failed: reference data bundle -> HTTP $code" >&2
+    FAILURES=$((FAILURES + 1))
+fi
 
-echo "==> people"
 TOKEN="$(curl_net -s -X POST "$KC/realms/master/protocol/openid-connect/token" \
     -d grant_type=password -d client_id=admin-cli \
     -d "username=${KEYCLOAK_ADMIN_USERNAME:-admin}" \
@@ -77,32 +101,34 @@ for row in "${PEOPLE[@]}"; do
         continue
     fi
 
-    printf '{"resourceType":"Practitioner","id":"%s","active":true,
+    put Practitioner "$username" "$(printf '{"resourceType":"Practitioner","id":"%s","active":true,
       "identifier":[{"system":"%s","value":"%s"}],
       "name":[{"use":"official","family":"%s","given":["%s"]}]}' \
-      "$username" "$KC_ID_SYSTEM" "$uid" "$family" "$given" \
-      | put Practitioner "$username" "Practitioner/$username"
+      "$username" "$KC_ID_SYSTEM" "$uid" "$family" "$given")"
 
-    printf '{"resourceType":"PractitionerRole","id":"%s-role","active":true,
+    put PractitionerRole "$username-role" "$(printf '{"resourceType":"PractitionerRole","id":"%s-role","active":true,
       "practitioner":{"reference":"Practitioner/%s"},
       "organization":{"reference":"Organization/%s"},
       "location":[{"reference":"Location/%s"}],
       "code":[{"coding":[{"system":"%s","code":"%s"}]}]}' \
-      "$username" "$username" "$ORG" "$FACILITY" "$ROLE_SYSTEM" "$role" \
-      | put PractitionerRole "$username-role" "PractitionerRole/$username-role"
+      "$username" "$username" "$ORG" "$FACILITY" "$ROLE_SYSTEM" "$role")"
 
     members+=("{\"role\":[{\"coding\":[{\"system\":\"$TEAM_SYSTEM\",\"code\":\"$role\"}]}],\"member\":{\"reference\":\"Practitioner/$username\"}}")
 done
 
 # Written last: HAPI rejects a reference to a resource that does not exist yet.
 if [[ ${#members[@]} -gt 0 ]]; then
-    printf '{"resourceType":"CareTeam","id":"%s","status":"active",
+    put CareTeam "$CARE_TEAM" "$(printf '{"resourceType":"CareTeam","id":"%s","status":"active",
       "name":"Ndumberi Primary Care Team",
       "managingOrganization":[{"reference":"Organization/%s"}],
       "participant":[%s]}' \
-      "$CARE_TEAM" "$ORG" "$(IFS=,; echo "${members[*]}")" \
-      | put CareTeam "$CARE_TEAM" "CareTeam/$CARE_TEAM"
+      "$CARE_TEAM" "$ORG" "$(IFS=,; echo "${members[*]}")")"
 fi
 
 echo
-echo "Seeded. Location hierarchy root: Location/seed-loc-country"
+if [[ "$FAILURES" -gt 0 ]]; then
+    echo "Seeding failed: $FAILURES resource(s) could not be written." >&2
+    exit 1
+fi
+echo "Seeded ${SEEDED_TYPES//,/, }."
+echo "Location hierarchy root: Location/seed-loc-country"

@@ -1731,7 +1731,7 @@
       "credentials": [
         {
           "type": "password",
-          "value": "admin",
+          "value": "Admin@123",
           "temporary": false
         }
       ],
@@ -1757,7 +1757,7 @@
       "credentials": [
         {
           "type": "password",
-          "value": "practitioner-user",
+          "value": "Practitioner@123",
           "temporary": false
         }
       ],
