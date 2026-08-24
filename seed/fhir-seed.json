@@ -28,7 +28,7 @@
         "id": "seed-loc-country",
         "status": "active",
         "mode": "instance",
-        "name": "Zamara",
+        "name": "Kenya",
         "description": "Country in the sample location hierarchy",
         "physicalType": {
           "coding": [
@@ -73,13 +73,13 @@
       }
     },
     {
-      "fullUrl": "urn:uuid:seed-loc-district-brookdale",
+      "fullUrl": "urn:uuid:seed-loc-district-kiambu",
       "resource": {
         "resourceType": "Location",
-        "id": "seed-loc-district-brookdale",
+        "id": "seed-loc-district-kiambu",
         "status": "active",
         "mode": "instance",
-        "name": "Brookdale",
+        "name": "Kiambu County",
         "description": "District in the sample location hierarchy",
         "physicalType": {
           "coding": [
@@ -96,7 +96,7 @@
       },
       "request": {
         "method": "PUT",
-        "url": "Location/seed-loc-district-brookdale"
+        "url": "Location/seed-loc-district-kiambu"
       }
     },
     {
@@ -118,7 +118,7 @@
           ]
         },
         "partOf": {
-          "reference": "Location/seed-loc-district-brookdale"
+          "reference": "Location/seed-loc-district-kiambu"
         }
       },
       "request": {
@@ -319,7 +319,7 @@
           ]
         },
         "partOf": {
-          "reference": "Location/seed-loc-district-brookdale"
+          "reference": "Location/seed-loc-district-kiambu"
         }
       },
       "request": {

@@ -21,7 +21,11 @@ RUN git clone --depth 1 --branch "${WEB_REF}" \
 RUN pnpm install --frozen-lockfile || pnpm install --frozen-lockfile
 
 # Browser-facing config, baked into the bundle at build time.
-ARG VITE_FHIR_BASE_URL=/fhir
+# VITE_FHIR_BASE_URL must be absolute and must name the SPA's own origin: the
+# Portal derives its /api/* base by stripping a trailing `/fhir`, and a bare
+# `/fhir` strips to nothing, leaving every custom endpoint at /fhir/api/... .
+# See the note in .env.example.
+ARG VITE_FHIR_BASE_URL=http://localhost:8084/fhir
 ARG VITE_OIDC_ISSUER=http://keycloak.localhost:8081/realms/ohs-player
 ARG VITE_CLIENT_ID=ohs-player-client
 ARG VITE_FHIR_VERSION=R4

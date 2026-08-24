@@ -97,6 +97,16 @@ Written into the compose start-up command rather than `.env`, so nothing randomi
 and Superset publishes on all interfaces. Documented under **Secrets and exposure** with the
 reset command, but it remains a fixed credential in a tracked file.
 
+### The Portal cannot take a relative FHIR base URL
+
+It derives the base for its `/api/*` calls by stripping a trailing `/fhir` from
+`VITE_FHIR_BASE_URL`, then falls back to the original value if what remains is empty. A bare
+`/fhir` strips to nothing, so every custom endpoint is requested at `/fhir/api/...`, which the
+gateway reads as a FHIR resource named `api` and refuses for want of a `GET_API` role. The
+403 names a missing permission and sends you looking at the realm, where nothing is wrong.
+Worked around by setting an absolute URL on the SPA's own origin. The fix belongs upstream:
+the fallback should yield an empty base, not the unstripped one.
+
 ### The analytics pipeline cannot read an authenticated FHIR server
 
 Removing the synth stack pointed the pipeline at `hapi-fhir`, which it reads anonymously and
