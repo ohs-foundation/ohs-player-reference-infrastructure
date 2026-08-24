@@ -6,8 +6,7 @@
 #
 #   ./dev.sh up          # core services only
 #   ./dev.sh up --web    # core + web-portal
-#   ./dev.sh up --synth  # core + synthetic-data HAPI + postgres
-#   ./dev.sh up --pipes  # core + synth + analytics pipeline + Superset
+#   ./dev.sh up --pipes  # core + analytics pipeline + Superset
 #   ./dev.sh up --proxy  # core + same-origin nginx front
 #   ./dev.sh up --full   # everything
 #
@@ -34,7 +33,7 @@ services:
     volumes:
       # Mounted at /var/lib/postgresql, not /var/lib/postgresql/data: postgres:18
       # moved its default PGDATA and refuses to start against a volume at the old
-      # path unless PGDATA is set explicitly. Matches postgres-synth below.
+      # path unless PGDATA is set explicitly. Matches postgres-analytics below.
       - postgres_data:/var/lib/postgresql
       - ./postgres/init:/docker-entrypoint-initdb.d:ro
     ports:
@@ -227,73 +226,9 @@ services:
           - ${PUBLIC_HOST:-ohs-player.localhost}
 
   # ---------------------------------------------------------------------------
-  # synth stack (profile: synth / pipes / full)
-  #
-  # Isolated HAPI FHIR + PostgreSQL for synthetic/test data generation.
-  # Kept separate from the transactional instance (ohs-hapi-fhir) so test
-  # data never touches production records.
-  # Also included in the pipes profile so the pipeline has a FHIR source.
-  #
-  # FHIR endpoint:  http://localhost:${HAPI_SYNTH_PORT:-8085}/fhir
-  # Postgres:       localhost:${POSTGRES_SYNTH_PORT:-5435}
-  #
-  # Load synthetic data:
-  #   python ohs-player-analytics/test-data/generate.py \
-  #     --fhir-url http://localhost:${HAPI_SYNTH_PORT:-8085}/fhir
-  # ---------------------------------------------------------------------------
-  postgres-synth:
-    profiles: ["synth", "pipes", "full"]
-    image: postgres:18
-    container_name: ohs-postgres-synth
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
-      POSTGRES_DB: hapi_fhir
-    volumes:
-      - postgres_synth_data:/var/lib/postgresql
-    ports:
-      - "127.0.0.1:${POSTGRES_SYNTH_PORT:-5435}:5432"
-    networks: [fhir_net]
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-
-  hapi-synth:
-    profiles: ["synth", "pipes", "full"]
-    image: hapiproject/hapi:v8.8.0-1
-    container_name: ohs-hapi-synth
-    restart: unless-stopped
-    depends_on:
-      postgres-synth:
-        condition: service_healthy
-    ports:
-      - "${HAPI_SYNTH_PORT:-8085}:8080"
-    environment:
-      - hapi.fhir.mdm_enabled=false
-      - hapi.fhir.bulk_export_enabled=true
-      - spring.datasource.url=jdbc:postgresql://postgres-synth:5432/hapi_fhir
-      - spring.datasource.username=postgres
-      - spring.datasource.password=${POSTGRES_ADMIN_PASSWORD}
-      - spring.datasource.driverClassName=org.postgresql.Driver
-      - spring.jpa.properties.hibernate.dialect=ca.uhn.fhir.jpa.model.dialect.HapiFhirPostgresDialect
-    volumes:
-      - ./hapi-fhir/health/Healthcheck.class:/healthcheck/Healthcheck.class:ro
-    networks: [fhir_net]
-    healthcheck:
-      test: ["CMD", "java", "-cp", "/healthcheck", "Healthcheck"]
-      interval: 30s
-      timeout: 10s
-      retries: 10
-      start_period: 180s
-
-  # ---------------------------------------------------------------------------
   # analytics pipeline (profile: pipes / full)
   #
-  # FHIR Data Pipes reads from hapi-synth, applies ViewDefinitions, and writes
+  # FHIR Data Pipes reads from hapi-fhir, applies ViewDefinitions, and writes
   # flat tables into postgres-analytics. Superset dashboards query those tables.
   #
   # Pipeline control panel: http://localhost:${PIPELINE_PORT:-8090}
@@ -331,13 +266,13 @@ services:
     depends_on:
       postgres-analytics:
         condition: service_healthy
-      hapi-synth:
+      hapi-fhir:
         condition: service_healthy
     ports:
       - "${PIPELINE_PORT:-8090}:8080"
     environment:
       - JAVA_OPTS=${PIPELINE_JAVA_OPTS:--Xms512m -Xmx4g}
-      - FHIRDATA_FHIRSERVERURL=${PIPELINE_FHIR_SOURCE:-http://hapi-synth:8080/fhir}
+      - FHIRDATA_FHIRSERVERURL=${PIPELINE_FHIR_SOURCE:-http://hapi-fhir:8080/fhir}
       - FHIRDATA_SINKDBCONFIGPATH=config/postgres-analytics.json
     volumes:
       - ./data-pipes/config:/app/config:ro
@@ -381,6 +316,5 @@ networks:
 
 volumes:
   postgres_data:
-  postgres_synth_data:
   postgres_analytics_data:
   superset_home:

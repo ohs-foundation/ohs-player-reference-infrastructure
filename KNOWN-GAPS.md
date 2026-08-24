@@ -95,6 +95,14 @@ Written into the compose start-up command rather than `.env`, so nothing randomi
 and Superset publishes on all interfaces. Documented under **Secrets and exposure** with the
 reset command, but it remains a fixed credential in a tracked file.
 
+### The analytics pipeline cannot read an authenticated FHIR server
+
+Removing the synth stack pointed the pipeline at `hapi-fhir`, which it reads anonymously and
+directly rather than through the gateway. That works against the default
+`application-no-auth.yaml`; under `application-auth.yaml` the FHIR server rejects it and the
+pipeline collects nothing. Giving the pipeline a service account of its own is the fix.
+Recorded with the rest of the trade-off in [SYNTH-STACK.md](SYNTH-STACK.md).
+
 ### `KEYCLOAK_ACCESS_TOKEN_LIFESPAN`
 
 Keycloak's five-minute default expires during long-running work and returns a 401 that reads

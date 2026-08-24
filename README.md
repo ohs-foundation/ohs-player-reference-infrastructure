@@ -276,12 +276,11 @@ Everything else is opt-in behind a flag:
 | Command | Adds |
 |---|---|
 | `./dev.sh up` | Nothing — the five default services |
-| `./dev.sh up --synth` | An isolated HAPI FHIR + Postgres pair for synthetic test data |
-| `./dev.sh up --pipes` | The synth pair, plus FHIR Data Pipes and Superset |
+| `./dev.sh up --pipes` | FHIR Data Pipes and Superset |
 | `./dev.sh up --proxy` | A same-origin nginx front |
 | `./dev.sh up --full` | Everything |
 
-Flags combine: `./dev.sh up --synth --proxy`.
+Flags combine: `./dev.sh up --pipes --proxy`.
 
 `--web` is still accepted so existing commands keep working, but it now selects nothing —
 the Web Portal is always started.
@@ -291,8 +290,6 @@ Ports for the optional services:
 | Service | Profile | Host port | Variable |
 |---|---|---|---|
 | nginx front | `--proxy` | `80` | `PROXY_PORT` |
-| Synth Postgres | `--synth`, `--pipes` | `127.0.0.1:5435` | `POSTGRES_SYNTH_PORT` |
-| Synth HAPI FHIR | `--synth`, `--pipes` | `8085` | `HAPI_SYNTH_PORT` |
 | Analytics Postgres | `--pipes` | `127.0.0.1:5434` | `POSTGRES_ANALYTICS_PORT` |
 | Pipeline controller | `--pipes` | `8090` | `PIPELINE_PORT` |
 | Superset | `--pipes` | `8088` | `SUPERSET_PORT` |
@@ -306,30 +303,23 @@ build, so it takes several minutes. The browser-facing values are baked into the
 build time, which is why changing any `VITE_*` value in `.env` requires a rebuild —
 `./dev.sh up` does that for you.
 
-### Synthetic data
-
-Adds a **second** HAPI FHIR server and its own Postgres, at
-<http://localhost:8085/fhir>.
-
-It is deliberately separate from the transactional server so generated test data never
-touches real records. Point a data generator at port `8085` rather than `8082`.
-
 ### Analytics
 
-Adds FHIR Data Pipes and Superset on top of the synth pair.
+Adds FHIR Data Pipes and Superset.
 
-The pipeline reads FHIR resources from the synth server, applies the ViewDefinitions in
-`data-pipes/config/views/`, and writes flat tables into an analytics Postgres. Superset
-then charts those tables.
+The pipeline reads FHIR resources from the transactional server, applies the
+ViewDefinitions in `data-pipes/config/views/`, and writes flat tables into an analytics
+Postgres. Superset then charts those tables.
 
 | What | Where |
 |---|---|
 | Pipeline control panel | <http://localhost:8090> |
 | Superset | <http://localhost:8088> — log in with `admin` / `admin` |
 
-`PIPELINE_FHIR_SOURCE` in `.env` selects which FHIR server the pipeline reads. It defaults
-to the synth server; point it at `http://hapi-fhir:8080/fhir` once you have transactional
-data worth reporting on.
+`PIPELINE_FHIR_SOURCE` in `.env` selects which FHIR server the pipeline reads. It points
+at the transactional server, so the pipeline reports on the same records the Portal
+writes. It reads anonymously, which `HAPI_CONFIG=application-auth.yaml` does not allow —
+see [SYNTH-STACK.md](SYNTH-STACK.md).
 
 ### Same-origin proxy
 
@@ -621,12 +611,11 @@ interfaces**:
 
 | Service | Port | Bound to |
 |---|---|---|
-| Postgres, synth Postgres, analytics Postgres | `5433`, `5435`, `5434` | Loopback only |
+| Postgres, analytics Postgres | `5433`, `5434` | Loopback only |
 | Keycloak | `8081` | All interfaces |
 | HAPI FHIR | `8082` | All interfaces |
 | FHIR Gateway | `8083` | All interfaces |
 | Web Portal | `8084` | All interfaces |
-| Synth HAPI FHIR | `8085` | All interfaces |
 | Pipeline controller | `8090` | All interfaces |
 | Superset | `8088` | All interfaces |
 
@@ -887,8 +876,7 @@ To include optional services, add profiles:
 
 ```bash
 docker compose --profile web up -d --build         # + Web Portal
-docker compose --profile synth up -d --build       # + synthetic-data HAPI and Postgres
-docker compose --profile pipes up -d --build       # + synth, Data Pipes and Superset
+docker compose --profile pipes up -d --build       # + Data Pipes and Superset
 docker compose --profile proxy up -d --build       # + nginx front (and the Web Portal)
 docker compose --profile full up -d --build        # everything
 ```
@@ -900,10 +888,10 @@ running:
 
 ```bash
 # stop, keeping data
-docker compose --profile web --profile pipes --profile synth --profile proxy --profile full down
+docker compose --profile web --profile pipes --profile proxy --profile full down
 
 # stop and delete all volumes — destroys the realm and every FHIR resource
-docker compose --profile web --profile pipes --profile synth --profile proxy --profile full down --volumes
+docker compose --profile web --profile pipes --profile proxy --profile full down --volumes
 ```
 
 #### Command equivalents
