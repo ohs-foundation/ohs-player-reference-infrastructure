@@ -169,8 +169,13 @@ Then check that each service answers. Three silent successes mean identity is up
 server is serving, and the gateway is proxying to it.
 
 ```bash
+# identity is serving the realm
 curl -sf http://localhost:8081/realms/ohs-player/.well-known/openid-configuration | grep -q issuer
+
+# the FHIR server, reached directly
 curl -sf http://localhost:8082/fhir/metadata | grep -q CapabilityStatement
+
+# the same document through the gateway, which is the only route clients use
 curl -sf http://localhost:8083/fhir/metadata | grep -q CapabilityStatement
 ```
 
