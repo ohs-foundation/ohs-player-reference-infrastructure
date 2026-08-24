@@ -36,9 +36,11 @@ Retire the pair in favour of the documented roles.
 ### The Practitioner group's role set has never been reviewed
 
 `GET_PRACTITIONER` and `GET_PRACTITIONERDETAIL` were missing from the higher groups and had
-to be added after the Portal failed on its first request. Practitioner is still short 24 of
-the 96 FHIR roles. That may be a deliberate tier or the same oversight repeated — nobody has
-gone through the list.
+to be added after the Portal failed on its first request, and the group held none of the
+backend's `resource.level` roles at all until the Portal returned a 403 on the location
+tree; it now has the two read-only ones. Practitioner is still short 24 of the 96 FHIR
+roles. That may be a deliberate tier or the same oversight repeated — nobody has gone
+through the list.
 
 ## Build and distribution
 

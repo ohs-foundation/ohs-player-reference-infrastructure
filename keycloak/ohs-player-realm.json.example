@@ -1417,6 +1417,8 @@
       "subGroups": [],
       "attributes": {},
       "realmRoles": [
+        "location-hierarchy.view",
+        "practitioner-details.view",
         "GET_RELATEDPERSON",
         "POST_PRACTITIONERROLE",
         "PATCH_FLAG",
@@ -1503,6 +1505,10 @@
       "subGroups": [],
       "attributes": {},
       "realmRoles": [
+        "users.view",
+        "users.edit",
+        "groups.view",
+        "groups.edit",
         "EDIT_KEYCLOAK_USERS",
         "GET_BINARY",
         "GET_BUNDLE",
