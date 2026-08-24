@@ -6,13 +6,19 @@
 FROM node:22-alpine AS web-build
 WORKDIR /repo
 RUN apk add --no-cache git
-RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
+# Corepack takes the pnpm version from the cloned repo's `packageManager` field, so
+# pinning one here is ignored — it only downloads a pnpm that never runs. Enable
+# corepack and let the repo decide.
+ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+RUN corepack enable
 
 ARG WEB_REF=main
 RUN git clone --depth 1 --branch "${WEB_REF}" \
     https://github.com/ohs-foundation/ohs-player-reference-web-portal.git .
 
-RUN pnpm install --frozen-lockfile
+# One retry: this step fetches corepack's pnpm and the whole dependency tree, and a
+# transient registry timeout here fails the entire image build.
+RUN pnpm install --frozen-lockfile || pnpm install --frozen-lockfile
 
 # Browser-facing config, baked into the bundle at build time.
 ARG VITE_FHIR_BASE_URL=/fhir

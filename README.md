@@ -122,7 +122,9 @@ cd ohs-player-reference-infrastructure
 The first run copies `.env.example` to `.env`, replaces every `[generated]` placeholder in
 it with a random secret, renders the Keycloak realm and the HAPI FHIR configuration from
 those values, builds the gateway and the Web Portal from source, and starts the stack.
-Building from source takes several minutes. Subsequent runs reuse what is already there.
+Building from source takes several minutes. Published images for the gateway and the Web
+Portal are planned, so a first run will pull them rather than build them. Subsequent runs
+reuse what is already there.
 
 `.env` holds generated credentials and is deliberately untracked. Do not commit it.
 
@@ -444,8 +446,8 @@ Each record carries the `http://ohs.dev/identifiers/keycloak-user-id` identifier
 that user's Keycloak id, which is how the backend resolves a caller to their own record.
 Without it, `GET /api/practitioner-details` returns nothing for a signed-in user.
 
-These are sample credentials. Change them before the stack is reachable by anyone else —
-see [Secrets and exposure](#secrets-and-exposure).
+These are sample credentials. Change them for anything beyond development, staging or
+testing — see [Secrets and exposure](#secrets-and-exposure).
 
 Everything is written with `PUT` at fixed ids, so re-running upserts rather than
 duplicating. Writes go straight to HAPI rather than through the gateway, so seeding does
