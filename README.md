@@ -336,10 +336,14 @@ into the Keycloak realm import, the second into the SPA bundle.
 ```dotenv
 KEYCLOAK_PUBLIC_URL=http://ohs-player.localhost
 OHS_PLAYER_APP_HOST=ohs-player.localhost
+VITE_FHIR_BASE_URL=http://ohs-player.localhost/fhir
 ```
 
-`VITE_FHIR_BASE_URL` needs no change — it is the relative `/fhir`, so it follows whichever
-origin serves the SPA.
+`VITE_FHIR_BASE_URL` changes with them because it carries an origin. It has to be absolute
+— the Portal derives the base for its `/api/*` calls by stripping a trailing `/fhir`, and a
+bare `/fhir` strips to nothing, which sends every custom endpoint to `/fhir/api/...` and
+earns a 403 from the gateway. It must also name the origin serving the SPA rather than the
+gateway, so those calls stay same-origin.
 
 Then start the stack with the proxy profile.
 
@@ -418,8 +422,9 @@ a warning and a running stack, not a failed command.
 | PractitionerRole | 2 | Each practitioner at a facility, in the organization |
 | CareTeam | 1 | Both practitioners |
 
-The hierarchy runs from one country (`Zamara`) down through Kenyan constituencies and
-wards to eight facilities, so every level has something beneath it.
+The hierarchy runs from Kenya down through Central, Kiambu County, the Kiambu and Limuru
+constituencies and their wards to eight facilities, so every level has something beneath
+it.
 
 Everything else is one resource per person. There are no practitioner records without a
 matching login, so nothing in the Portal's lists is unreachable.
