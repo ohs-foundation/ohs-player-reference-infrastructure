@@ -484,13 +484,13 @@ verb and the upper-cased resource type.
 For a Bundle, **every entry** must be individually authorized or the whole Bundle is
 refused.
 
-The realm defines 96 of these, covering 29 resource types:
+The realm defines 99 of these, covering 30 resource types:
 
 | Verb | Roles |
 |---|---|
-| `GET` | 28 |
-| `POST` | 26 |
-| `PUT` | 27 |
+| `GET` | 29 |
+| `POST` | 27 |
+| `PUT` | 28 |
 | `PATCH` | 15 |
 | `DELETE` | **0** |
 
@@ -535,10 +535,10 @@ Users get roles by group membership. What each group carries:
 
 | Group | FHIR roles | Backend roles | Portal |
 |---|---|---|---|
-| **Super User** | 96 | all ten | `admin`, `care-team-manager` |
+| **Super User** | 99 | all ten | `admin`, `care-team-manager` |
 | **Practitioner** | 72 | `location-hierarchy.view`, `practitioner-details.view` | — |
 
-Super User holds every role the realm defines, all 113 of them. Practitioner holds the two
+Super User holds every role the realm defines, all 116 of them. Practitioner holds the two
 read-only backend roles, which is what lets it open the location tree and read a
 practitioner record; the other eight administer users, groups and imports and are not a
 health worker's to hold.
