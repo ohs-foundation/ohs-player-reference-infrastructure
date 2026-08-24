@@ -511,8 +511,9 @@ level satisfies every lower check: **manage ⊇ edit ⊇ view**.
 | `location-hierarchy.view` | `GET /api/location-hierarchy/{rootId}` |
 
 The hierarchy is resolved in the backend's code, not through Keycloak composite roles, so
-assigning `users.manage` alone is enough — there is no need to also assign `users.edit`
-and `users.view`.
+assigning `users.manage` alone would be enough — `users.edit` and `users.view` add nothing
+on top of it. Super User is nonetheless given all ten, so that what a token carries matches
+what the group is meant to be able to do without relying on the backend to infer it.
 
 `GET /api/practitioner-details` with no query parameters resolves the caller's own record
 from their token and needs no role beyond a valid one.
@@ -529,8 +530,13 @@ Users get roles by group membership. What each group carries:
 
 | Group | FHIR roles | Backend roles | Portal |
 |---|---|---|---|
-| **Super User** | 96 | `users.manage`, `groups.manage`, `bulk-import.manage`, `roles.view`, `practitioner-details.view`, `location-hierarchy.view` | `admin`, `care-team-manager` |
-| **Practitioner** | 72 | — | — |
+| **Super User** | 96 | all ten | `admin`, `care-team-manager` |
+| **Practitioner** | 72 | `location-hierarchy.view`, `practitioner-details.view` | — |
+
+Super User holds every role the realm defines, all 113 of them. Practitioner holds the two
+read-only backend roles, which is what lets it open the location tree and read a
+practitioner record; the other eight administer users, groups and imports and are not a
+health worker's to hold.
 
 Each group has exactly one member: `admin-user` in Super User, `practitioner-user` in
 Practitioner. The three service accounts belong to no group, which is correct — they
@@ -551,7 +557,8 @@ authenticate machine-to-machine and never make FHIR requests on a person's behal
 `VIEW_KEYCLOAK_USERS` and `EDIT_KEYCLOAK_USERS` predate the `users.*` roles and do the
 same job by a different route: they are composite roles granting `realm-management`
 client roles straight to the end user, rather than going through the backend with its
-service account. They are still assigned to Practitioner and Super User.
+service account. Super User still carries both; Practitioner carries `VIEW_KEYCLOAK_USERS`
+only.
 
 Prefer `users.view` / `users.edit` / `users.manage` for anything new.
 
