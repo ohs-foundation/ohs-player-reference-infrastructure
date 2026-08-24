@@ -48,6 +48,33 @@
   "roles": {
     "realm": [
       {
+        "id": "cc4147ae-0160-417e-a1c7-c43bb64925c9",
+        "name": "GET_AUDITEVENT",
+        "description": "",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "ohs-player",
+        "attributes": {}
+      },
+      {
+        "id": "543a7bf9-8777-4986-a4c6-a5586d952e9e",
+        "name": "POST_AUDITEVENT",
+        "description": "",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "ohs-player",
+        "attributes": {}
+      },
+      {
+        "id": "a4ca79c5-4481-4aa4-9368-0f9cbd5f5ba3",
+        "name": "PUT_AUDITEVENT",
+        "description": "",
+        "composite": false,
+        "clientRole": false,
+        "containerId": "ohs-player",
+        "attributes": {}
+      },
+      {
         "id": "3bda9f8f-7079-43e9-8982-b5c5fd075854",
         "name": "GET_RELATEDPERSON",
         "description": "",
@@ -1505,6 +1532,9 @@
       "subGroups": [],
       "attributes": {},
       "realmRoles": [
+        "GET_AUDITEVENT",
+        "POST_AUDITEVENT",
+        "PUT_AUDITEVENT",
         "users.view",
         "users.edit",
         "groups.view",
