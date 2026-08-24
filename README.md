@@ -1009,3 +1009,5 @@ the file from version control.
   page.
 - **Web Portal dev mode** — whether the Portal runs in-container with hot reload, or on the
   host against a backend-only compose, is still an open decision.
+
+Outstanding work on the stack itself is recorded in [KNOWN-GAPS.md](KNOWN-GAPS.md).
