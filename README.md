@@ -433,8 +433,8 @@ matching login, so nothing in the Portal's lists is unreachable.
 
 | Username | Password | Group | Practitioner |
 |---|---|---|---|
-| `admin-user` | `admin` | Super User | `Practitioner/admin-user` |
-| `practitioner-user` | `practitioner-user` | Practitioner | `Practitioner/practitioner-user` |
+| `admin-user` | `Admin@123` | Super User | `Practitioner/admin-user` |
+| `practitioner-user` | `Practitioner@123` | Practitioner | `Practitioner/practitioner-user` |
 
 `./dev.sh up` prints these at the end of every run, so you do not have to look them up.
 
