@@ -34,6 +34,9 @@ keycloak/ohs-player-realm.json
 hapi-fhir/application-no-auth.yaml
 hapi-fhir/application-auth.yaml
 data-pipes/config/postgres-analytics.json
+nginx/host/keycloak.conf
+nginx/host/gateway.conf
+nginx/host/web.conf
 
 # --- Logs & Temps ---
 logs/

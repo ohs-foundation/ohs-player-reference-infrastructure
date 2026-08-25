@@ -388,9 +388,9 @@ For a hostname other than `*.localhost`, set `PUBLIC_HOST` and add a matching li
 Containers do not read your `/etc/hosts` — they resolve `PUBLIC_HOST` through the nginx
 service's Docker network alias, which is why nothing is needed on the container side.
 
-`nginx/ohs-player-subdomains.conf.example` documents the alternative layout, one hostname
-per service. It needs explicit CORS handling for `/api/*`, which is why the same-origin
-config is the default.
+The templates under `nginx/host/` document the alternative layout, one hostname per
+service, for an nginx running on the host rather than the bundled container. See
+[Running on a server](#running-on-a-server).
 
 ---
 
@@ -718,17 +718,66 @@ from inside the Docker network, so the token issuer matches everywhere. If you c
 
 ### Running on a server
 
-This repository targets local development. For a server deployment:
+This repository targets local development, so treat what follows as the shape of a
+deployment rather than a hardened one. Read [Secrets and exposure](#secrets-and-exposure)
+alongside it.
 
-- `nginx/ohs-player.conf` is the same-origin front and works unchanged behind a real
-  hostname; set `PUBLIC_HOST` to that hostname.
-- `nginx/ohs-player-subdomains.conf.example` is the one-hostname-per-service alternative,
-  written for an nginx installed on the host rather than the bundled container.
-- Add TLS at whichever nginx terminates traffic, and switch `KEYCLOAK_PUBLIC_URL` and
-  `OHS_PLAYER_APP_HOST` to `https://` values.
-- Keep `RUN_MODE=PROD` and a real `ACCESS_CHECKER`. `RUN_MODE=DEV` with
+There are two layouts. `--proxy` puts every service on one hostname behind the bundled
+nginx, and works on a server unchanged once `PUBLIC_HOST` is a real name. The alternative
+gives each service its own subdomain behind an nginx installed on the host, which is what
+`nginx/host/` is for.
+
+#### One subdomain per service
+
+Three names, one per service, all resolving publicly to the server's external IP:
+
+| Variable | Example | Serves |
+|---|---|---|
+| `KEYCLOAK_HOST` | `keycloak-ohs-player.example.org` | Sign-in and token issuance |
+| `WEB_HOST` | `web-ohs-player.example.org` | The Portal, and its FHIR and API calls |
+| `GATEWAY_HOST` | `gateway-ohs-player.example.org` | The Client App, other native clients, debugging |
+
+Set those in `.env`, then bring the browser-facing values into line:
+
+```dotenv
+KEYCLOAK_PUBLIC_URL=http://keycloak-ohs-player.example.org
+OHS_PLAYER_APP_HOST=web-ohs-player.example.org
+VITE_FHIR_BASE_URL=http://web-ohs-player.example.org/fhir
+```
+
+`VITE_FHIR_BASE_URL` names `WEB_HOST`, not `GATEWAY_HOST`. The web image's own nginx
+forwards `/fhir` and `/api/` to the gateway over the compose network, so the browser only
+ever talks to one origin and no CORS is involved. Pointing it at `GATEWAY_HOST` also works,
+but only because `gateway.conf.example` adds the CORS headers the plugin's `/api/*`
+servlets do not send for themselves.
+
+Render the vhosts, install them, and start the stack:
+
+```bash
+./dev.sh render
+sudo ln -s "$PWD"/nginx/host/*.conf /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+./dev.sh up
+```
+
+`./dev.sh render` writes `nginx/host/*.conf` from the `.example` templates beside them,
+substituting each hostname and its port. Change a name in `.env` and re-render rather than
+editing the rendered file, which is untracked and overwritten on every `up`.
+
+#### Before calling it a deployment
+
+- **Bind the published ports to loopback.** They currently listen on every interface, so
+  the containers are reachable around nginx. Only Postgres is restricted today.
+- **Terminate TLS.** The vhosts are plain HTTP. Each carries the `certbot` command for its
+  own name in its header comment, and they serve `/.well-known/acme-challenge/` from
+  `/var/www/certbot` so a webroot challenge succeeds. Take the certificate first and add the
+  443 block after — nginx refuses to start if it references certificate files that do not
+  exist yet. Then switch the three values above to `https://`, re-render and rebuild, since
+  `VITE_FHIR_BASE_URL` and `KEYCLOAK_PUBLIC_URL` are baked into the bundle and the realm.
+- **Keep `RUN_MODE=PROD` and a real `ACCESS_CHECKER`.** `RUN_MODE=DEV` with
   `ACCESS_CHECKER=permissive` disables access control entirely and exists only for local
   debugging.
+- **Change the sample credentials**, including Superset's `admin` / `admin`.
 
 ---
 
@@ -957,7 +1006,10 @@ ohs-player-reference-infrastructure/
 ├── nginx/
 │   ├── spa.conf                       # inside the web image; proxies /fhir and /api
 │   ├── ohs-player.conf                # same-origin front (--proxy)
-│   └── ohs-player-subdomains.conf.example
+│   └── host/                          # one vhost per subdomain, for a server
+│       ├── keycloak.conf.example
+│       ├── gateway.conf.example
+│       └── web.conf.example
 ├── Dockerfile                         # fhir-gateway + ohs-player plugin
 ├── Dockerfile.web                     # ohs-player-web SPA
 ├── docker-compose.yaml                # all services; extras behind profiles

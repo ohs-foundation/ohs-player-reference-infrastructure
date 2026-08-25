@@ -181,6 +181,21 @@ render_templates() {
            data-pipes/config/postgres-analytics.json \
            '${POSTGRES_ADMIN_PASSWORD}'
 
+    # Host nginx vhosts, one per public subdomain. Only used for a server
+    # deployment; harmless to render for a local stack, which never reads them.
+    # The allow-lists keep nginx's own $host, $scheme and $http_origin intact.
+    render nginx/host/keycloak.conf.example \
+           nginx/host/keycloak.conf \
+           '${KEYCLOAK_HOST} ${KEYCLOAK_PORT}'
+
+    render nginx/host/gateway.conf.example \
+           nginx/host/gateway.conf \
+           '${GATEWAY_HOST} ${FHIR_GATEWAY_PORT}'
+
+    render nginx/host/web.conf.example \
+           nginx/host/web.conf \
+           '${WEB_HOST} ${OHS_PLAYER_WEB_PORT}'
+
     compile_healthcheck
 }
 
@@ -406,6 +421,9 @@ cmd_clean() {
     rm -f "$SCRIPT_DIR/hapi-fhir/application-no-auth.yaml"
     rm -f "$SCRIPT_DIR/hapi-fhir/application-auth.yaml"
     rm -f "$SCRIPT_DIR/data-pipes/config/postgres-analytics.json"
+    rm -f "$SCRIPT_DIR/nginx/host/keycloak.conf" \
+          "$SCRIPT_DIR/nginx/host/gateway.conf" \
+          "$SCRIPT_DIR/nginx/host/web.conf"
 
     local project
     project="$(basename "$SCRIPT_DIR")"
