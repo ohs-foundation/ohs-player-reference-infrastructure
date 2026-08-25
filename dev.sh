@@ -12,6 +12,7 @@ set -euo pipefail
 #   render                      Render service config templates from .env
 #   seed                        Load sample FHIR data
 #   clean                       Remove generated files (.env, application-*.yaml)
+#   nginx                       Install host vhosts and take TLS certificates
 #   help                        Show this help
 #
 # On first run, copy .env.example to .env and fill in values:
@@ -34,6 +35,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_FILE="$SCRIPT_DIR/.env"
 # One resource from seed/fhir-seed.json, used to detect whether it has been loaded.
 SEED_MARKER="seed-loc-country"
+
+# --- Host nginx (server deployment) ------------------------------------------
+# Overridable for distributions that lay nginx out differently.
+NGINX_SITES_AVAILABLE="${NGINX_SITES_AVAILABLE:-/etc/nginx/sites-available}"
+NGINX_SITES_ENABLED="${NGINX_SITES_ENABLED:-/etc/nginx/sites-enabled}"
+CERTBOT_WEBROOT="${CERTBOT_WEBROOT:-/var/www/certbot}"
+LETSENCRYPT_LIVE="${LETSENCRYPT_LIVE:-/etc/letsencrypt/live}"
 
 # --- Prerequisites -----------------------------------------------------------
 # The package name differs on every platform, so "install gettext-base" is
@@ -438,6 +446,121 @@ cmd_clean() {
     info "Cleaned. Run './dev.sh render' to regenerate configs, or './dev.sh up' to regenerate and start services."
 }
 
+# --- Host nginx --------------------------------------------------------------
+# Root already has the privileges, so calling sudo would only fail where it is not installed.
+as_root() {
+    if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then "$@"; else sudo "$@"; fi
+}
+
+# A vhost serving nothing but the ACME challenge. The rendered vhosts reference certificates that
+# do not exist yet, so nginx would refuse to load them and certbot could never obtain the very
+# certificates they need. This breaks that cycle for the port 80 phase.
+bootstrap_vhost() {
+    cat <<EOF
+# Temporary, written by './dev.sh nginx' so certbot can answer the HTTP-01 challenge for $1.
+# Replaced by the rendered vhost once the certificate exists.
+server {
+    listen 80;
+    listen [::]:80;
+    server_name $1;
+
+    location /.well-known/acme-challenge/ {
+        root $CERTBOT_WEBROOT;
+    }
+
+    location / {
+        return 404;
+    }
+}
+EOF
+}
+
+nginx_reload() {
+    as_root nginx -t || error "nginx rejected the configuration. Nothing was reloaded."
+    if command -v systemctl >/dev/null 2>&1; then
+        as_root systemctl reload nginx || warn "Could not reload nginx via systemctl."
+    else
+        as_root nginx -s reload || warn "Could not signal nginx to reload."
+    fi
+}
+
+enable_site() {
+    local file="$1" base
+    base="$(basename "$file")"
+    as_root cp "$file" "$NGINX_SITES_AVAILABLE/$base"
+    as_root ln -sfn "$NGINX_SITES_AVAILABLE/$base" "$NGINX_SITES_ENABLED/$base"
+}
+
+# Installs the rendered vhosts and obtains a certificate per subdomain, one certbot run each so a
+# single failing name does not cost the others their certificate.
+cmd_nginx() {
+    command -v nginx >/dev/null 2>&1 || error "nginx is not installed on this host."
+    require_env_file
+    load_env
+    render_templates
+
+    local -a hosts=("${KEYCLOAK_HOST:-}" "${GATEWAY_HOST:-}" "${WEB_HOST:-}")
+    local -a files=("keycloak.conf" "gateway.conf" "web.conf")
+    local -a pending=()
+    local i host file
+
+    as_root mkdir -p "$CERTBOT_WEBROOT" "$NGINX_SITES_AVAILABLE" "$NGINX_SITES_ENABLED"
+
+    for i in "${!hosts[@]}"; do
+        host="${hosts[$i]}"
+        [[ -n "$host" ]] || { warn "Skipping ${files[$i]}, its hostname is unset in .env."; continue; }
+        if [[ -f "$LETSENCRYPT_LIVE/$host/fullchain.pem" ]]; then
+            info "Certificate already present for $host."
+        else
+            pending+=("$i")
+        fi
+    done
+
+    # Phase one. Only the hosts still needing a certificate get a bootstrap vhost, so hosts that
+    # already have one keep serving from their real config throughout.
+    if (( ${#pending[@]} )); then
+        info "Installing temporary port 80 vhosts for the ACME challenge..."
+        for i in "${pending[@]}"; do
+            host="${hosts[$i]}"
+            bootstrap_vhost "$host" | as_root tee "$NGINX_SITES_AVAILABLE/${files[$i]}" >/dev/null
+            as_root ln -sfn "$NGINX_SITES_AVAILABLE/${files[$i]}" "$NGINX_SITES_ENABLED/${files[$i]}"
+            echo "    $host -> ${files[$i]}"
+        done
+        nginx_reload
+
+        command -v certbot >/dev/null 2>&1 || error "certbot is not installed on this host."
+        local -a certbot_args=(certonly --webroot -w "$CERTBOT_WEBROOT")
+        if [[ -n "${CERTBOT_EMAIL:-}" ]]; then
+            certbot_args+=(--non-interactive --agree-tos -m "$CERTBOT_EMAIL")
+        fi
+
+        for i in "${pending[@]}"; do
+            host="${hosts[$i]}"
+            info "Requesting a certificate for $host..."
+            # One run per name rather than a single multi-domain certificate, so one failing DNS
+            # record does not deny the others.
+            as_root certbot "${certbot_args[@]}" -d "$host" \
+                || warn "certbot failed for $host. Its vhost stays on port 80 only."
+        done
+    fi
+
+    # Phase two. Only install a rendered vhost where the certificate it references now exists,
+    # otherwise nginx would refuse to load and take the working sites down with it.
+    info "Installing the rendered vhosts..."
+    for i in "${!hosts[@]}"; do
+        host="${hosts[$i]}"; file="$SCRIPT_DIR/nginx/host/${files[$i]}"
+        [[ -n "$host" && -f "$file" ]] || continue
+        if [[ -f "$LETSENCRYPT_LIVE/$host/fullchain.pem" ]]; then
+            enable_site "$file"
+            echo "    $host -> ${files[$i]}"
+        else
+            warn "No certificate for $host, leaving its temporary port 80 vhost in place."
+        fi
+    done
+    nginx_reload
+    info "Host nginx updated."
+}
+
 # --- Usage -------------------------------------------------------------------
 usage() {
     cat <<EOF
@@ -458,6 +581,9 @@ Commands:
   render                      Render service config templates from .env
   seed                        Load sample FHIR data (locations, org, practitioners)
   clean                       Remove generated files (.env, application-*.yaml)
+  nginx                       Install the host nginx vhosts and take a TLS
+                              certificate per subdomain. Needs sudo, nginx
+                              and certbot. Server deployments only.
   help                        Show this help
 
 First-run setup:
@@ -479,6 +605,7 @@ main() {
         render)   cmd_render ;;
         seed)     cmd_seed ;;
         clean)    cmd_clean ;;
+        nginx)    cmd_nginx ;;
         help|--help|-h) usage ;;
         *)        error "Unknown command: $command. Run '$0 help' for usage." ;;
     esac

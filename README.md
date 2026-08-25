@@ -224,6 +224,7 @@ realm.
 | `./dev.sh logs [service]` | Tail logs for everything, or one service |
 | `./dev.sh render` | Regenerate service configuration from `.env` |
 | `./dev.sh clean` | Remove generated files |
+| `./dev.sh nginx` | Install the host vhosts and take TLS certificates (server only) |
 | `./dev.sh help` | Show usage |
 
 `reset` is the one to reach for when the environment has drifted into a state you cannot
@@ -740,9 +741,10 @@ Three names, one per service, all resolving publicly to the server's external IP
 Set those in `.env`, then bring the browser-facing values into line:
 
 ```dotenv
-KEYCLOAK_PUBLIC_URL=http://keycloak-ohs-player.example.org
+KEYCLOAK_PUBLIC_URL=https://keycloak-ohs-player.example.org
 OHS_PLAYER_APP_HOST=web-ohs-player.example.org
-VITE_FHIR_BASE_URL=http://web-ohs-player.example.org/fhir
+VITE_FHIR_BASE_URL=https://web-ohs-player.example.org/fhir
+CERTBOT_EMAIL=ops@example.org
 ```
 
 `VITE_FHIR_BASE_URL` names `WEB_HOST`, not `GATEWAY_HOST`. The web image's own nginx
@@ -751,29 +753,44 @@ ever talks to one origin and no CORS is involved. Pointing it at `GATEWAY_HOST` 
 but only because `gateway.conf.example` adds the CORS headers the plugin's `/api/*`
 servlets do not send for themselves.
 
-Render the vhosts, install them, and start the stack:
+Install the vhosts and start the stack:
 
 ```bash
-./dev.sh render
-sudo ln -s "$PWD"/nginx/host/*.conf /etc/nginx/sites-enabled/
-sudo nginx -t && sudo systemctl reload nginx
+./dev.sh nginx
 ./dev.sh up
 ```
 
-`./dev.sh render` writes `nginx/host/*.conf` from the `.example` templates beside them,
+`./dev.sh nginx` needs `sudo`, `nginx` and `certbot` on the host. It renders the vhosts,
+puts a temporary port 80 one in place for each name that still needs a certificate, runs
+certbot, then installs the real vhost.
+
+That order is the whole point. Each rendered vhost names the certificate files it will use,
+and nginx refuses to load a vhost whose certificate is missing — so installing them first
+would leave certbot unable to obtain the very certificate they need. Setting `CERTBOT_EMAIL`
+runs certbot unattended; leaving it empty makes certbot prompt.
+
+It takes one certificate per name rather than a single multi-domain one, so a name whose DNS
+is not ready yet does not deny the others theirs. Any name that fails keeps its temporary
+port 80 vhost, and re-running the command retries just that one.
+
+`./dev.sh render` alone writes `nginx/host/*.conf` from the `.example` templates beside them,
 substituting each hostname and its port. Change a name in `.env` and re-render rather than
 editing the rendered file, which is untracked and overwritten on every `up`.
+
+The vhosts redirect port 80 to 443 and keep serving `/.well-known/acme-challenge/` from
+`/var/www/certbot`, so renewals continue to work.
 
 #### Before calling it a deployment
 
 - **Bind the published ports to loopback.** They currently listen on every interface, so
   the containers are reachable around nginx. Only Postgres is restricted today.
-- **Terminate TLS.** The vhosts are plain HTTP. Each carries the `certbot` command for its
-  own name in its header comment, and they serve `/.well-known/acme-challenge/` from
-  `/var/www/certbot` so a webroot challenge succeeds. Take the certificate first and add the
-  443 block after — nginx refuses to start if it references certificate files that do not
-  exist yet. Then switch the three values above to `https://`, re-render and rebuild, since
-  `VITE_FHIR_BASE_URL` and `KEYCLOAK_PUBLIC_URL` are baked into the bundle and the realm.
+- **Rebuild after changing the `https://` values.** `VITE_FHIR_BASE_URL` is baked into the
+  SPA bundle and `KEYCLOAK_PUBLIC_URL` into the realm import, so both need `./dev.sh up` to
+  re-render and rebuild. An already-imported realm ignores the re-rendered file, so switching
+  an existing stack also needs `./dev.sh reset`.
+- **Leave nginx listening on all interfaces.** The gateway container resolves `KEYCLOAK_HOST`
+  for OIDC discovery and calls back in on 443, so binding the listener to the external address
+  alone would break token validation from inside the stack.
 - **Keep `RUN_MODE=PROD` and a real `ACCESS_CHECKER`.** `RUN_MODE=DEV` with
   `ACCESS_CHECKER=permissive` disables access control entirely and exists only for local
   debugging.
@@ -801,8 +818,12 @@ your secrets are filled in:
 | `hapi-fhir/application-no-auth.yaml.example` | `hapi-fhir/application-no-auth.yaml` |
 | `hapi-fhir/application-auth.yaml.example` | `hapi-fhir/application-auth.yaml` |
 | `data-pipes/config/postgres-analytics.json.example` | `data-pipes/config/postgres-analytics.json` |
+| `nginx/host/keycloak.conf.example` | `nginx/host/keycloak.conf` |
+| `nginx/host/gateway.conf.example` | `nginx/host/gateway.conf` |
+| `nginx/host/web.conf.example` | `nginx/host/web.conf` |
 
-All four rendered files are gitignored — they contain secrets.
+All seven rendered files are gitignored. The first four hold secrets; the vhosts are
+generated rather than secret, and only a server deployment installs them.
 
 **3. Recompiles the HAPI healthcheck**, if a JDK is present and the source is newer than
 the committed `.class`.
@@ -896,7 +917,23 @@ envsubst '${HAPI_FHIR_DB_PASSWORD} ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET} ${
 envsubst '${POSTGRES_ADMIN_PASSWORD}' \
   < data-pipes/config/postgres-analytics.json.example \
   > data-pipes/config/postgres-analytics.json
+
+# host nginx vhosts, only needed for a server deployment
+envsubst '${KEYCLOAK_HOST} ${KEYCLOAK_PORT}' \
+  < nginx/host/keycloak.conf.example \
+  > nginx/host/keycloak.conf
+
+envsubst '${GATEWAY_HOST} ${FHIR_GATEWAY_PORT}' \
+  < nginx/host/gateway.conf.example \
+  > nginx/host/gateway.conf
+
+envsubst '${WEB_HOST} ${OHS_PLAYER_WEB_PORT}' \
+  < nginx/host/web.conf.example \
+  > nginx/host/web.conf
 ```
+
+The vhost allow-lists carry only a hostname and a port, which is what keeps nginx's own
+`$host`, `$scheme` and `$http_origin` from being substituted away.
 
 Check the realm rendered cleanly — this should print `0`:
 
@@ -964,7 +1001,8 @@ docker compose --profile web --profile pipes --profile proxy --profile full down
 | `./dev.sh reset` | The same `down` with `--volumes` |
 | `./dev.sh logs [service]` | `docker compose logs -f [service]` |
 | `./dev.sh render` | Step 3 |
-| `./dev.sh clean` | `rm -f .env keycloak/ohs-player-realm.json hapi-fhir/application-*.yaml data-pipes/config/postgres-analytics.json` |
+| `./dev.sh clean` | `rm -f .env keycloak/ohs-player-realm.json hapi-fhir/application-*.yaml data-pipes/config/postgres-analytics.json nginx/host/*.conf` |
+| `./dev.sh nginx` | No short equivalent — it is a two-phase certbot bootstrap, see [Running on a server](#running-on-a-server) |
 
 After `clean`, remember that any existing Postgres volume still holds roles created from
 the **old** secrets. Regenerating `.env` without also removing the volumes gives you a
