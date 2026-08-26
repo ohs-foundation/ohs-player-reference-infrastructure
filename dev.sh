@@ -133,17 +133,36 @@ require_env_file() {
     fi
     if grep -q '=\[generated\]' "$ENV_FILE"; then
         info "Replacing [generated] markers in .env with random secrets..."
-        # Assign first, then substitute. Calling generate_secret inline inside the
-        # sed expression looks equivalent but is not: a command substitution used
-        # as a word does not trip `set -e`, so a failing openssl would leave sed
-        # succeeding with an empty replacement and every credential blank — an
-        # exit status of 0 on a stack booted with no passwords.
-        local secret
-        while grep -q '=\[generated\]' "$ENV_FILE"; do
-            secret="$(generate_secret)"
-            [[ -n "$secret" ]] || error "Generated an empty secret; refusing to write blank credentials to .env."
-            sed -i "0,/=\[generated\]/{s/=\[generated\]/=${secret}/}" "$ENV_FILE"
-        done
+        # Bash substitution, not `sed -i`: BSD sed (macOS) reads the word after
+        # -i as a backup suffix, and has no GNU `0,/re/` for "first match only".
+        # `1,/re/` is not a substitute — it spans to the *second* match and would
+        # share one secret across two credentials.
+        #
+        # Assign first, then substitute. Inline, a failing generate_secret would
+        # not trip `set -e` — command substitution used as a word never does —
+        # and every credential would be blank on a zero exit status.
+        #
+        # The temp file's bytes are copied back so .env keeps its own mode.
+        local tmp line secret
+        tmp="$(mktemp "${TMPDIR:-/tmp}/ohs-env.XXXXXX")" \
+            || error "Cannot create a temporary file to rewrite .env."
+        # The trailing -n test keeps a final line that has no newline.
+        while IFS= read -r line || [[ -n "$line" ]]; do
+            while [[ "$line" == *"=[generated]"* ]]; do
+                secret="$(generate_secret)"
+                # Hex, not merely non-empty: bash 5.2 expands an unquoted `&`
+                # in the replacement to the matched text, so a non-hex secret
+                # would corrupt on Linux but not on macOS. Quoting the
+                # replacement instead is worse — bash 3.2 writes the quotes
+                # literally.
+                [[ -n "$secret" && "$secret" != *[!0-9a-f]* ]] \
+                    || { rm -f "$tmp"; error "generate_secret produced an empty or non-hexadecimal value; refusing to write unusable credentials to .env."; }
+                line="${line/"=[generated]"/=$secret}"
+            done
+            printf '%s\n' "$line"
+        done < "$ENV_FILE" > "$tmp"
+        cat "$tmp" > "$ENV_FILE"
+        rm -f "$tmp"
         info "Secrets generated. Review at: $ENV_FILE"
     fi
 }
@@ -236,6 +255,15 @@ compile_healthcheck() {
 # --- Compose helpers ---------------------------------------------------------
 compose() {
     (cd "$SCRIPT_DIR" && docker compose "$@")
+}
+
+# compose, prefixed with the --profile flags parse_profiles selected.
+#
+# `${arr[@]+"${arr[@]}"}` rather than plain `"${arr[@]}"`: bash 3.2 (macOS)
+# counts an empty array as unbound under `set -u`, and a flagless `./dev.sh up`
+# leaves it empty. The `+` form expands to no words, so nothing stray is passed.
+compose_profiles() {
+    compose ${PROFILE_ARGS[@]+"${PROFILE_ARGS[@]}"} "$@"
 }
 
 parse_profiles() {
@@ -378,13 +406,13 @@ cmd_up() {
     # (ohs-fhir-gateway:local, ohs-player-web:local) and exist in no registry, so
     # a plain `pull` fails and set -e would abort before anything starts.
     info "Pulling images..."
-    compose "${PROFILE_ARGS[@]}" pull --ignore-buildable
+    compose_profiles pull --ignore-buildable
     # --build: `up -d` alone only builds when the image is absent, so changed
     # build args (VITE_*, *_REF) would otherwise never reach a rebuilt image.
     info "Starting stack..."
-    compose "${PROFILE_ARGS[@]}" up -d --build
+    compose_profiles up -d --build
     info "Stack started. Container status:"
-    compose "${PROFILE_ARGS[@]}" ps
+    compose_profiles ps
     maybe_seed
     print_login_details
 }
