@@ -59,6 +59,23 @@ install_hint() {
                 "  Windows               : run this script from WSL or Git Bash; gettext is" \
                 "                          not available to cmd.exe or PowerShell"
             ;;
+        buildx)
+            printf '%s\n' \
+                "  Debian / Ubuntu / WSL : sudo apt install docker-buildx-plugin" \
+                "  Fedora / RHEL         : sudo dnf install docker-buildx-plugin" \
+                "  Arch                  : sudo pacman -S docker-buildx" \
+                "  macOS (Homebrew)      : brew install docker-buildx, then link it in:" \
+                '                          mkdir -p ~/.docker/cli-plugins && ln -sfn \' \
+                '                            "$(brew --prefix)/opt/docker-buildx/bin/docker-buildx" \' \
+                "                            ~/.docker/cli-plugins/docker-buildx" \
+                "  Docker Desktop        : bundled already; update Docker Desktop"
+            ;;
+        memory)
+            printf '%s\n' \
+                "  Colima         : colima stop && colima start --cpu 4 --memory 8" \
+                "  Docker Desktop : Settings > Resources > Memory, raise it to 8 GB" \
+                "  Linux          : the daemon uses host memory directly; free some up"
+            ;;
         secret)
             printf '%s\n' \
                 "  Secrets come from /dev/urandom via od, which is present on virtually" \
@@ -82,6 +99,23 @@ check_prerequisites() {
     command -v docker >/dev/null 2>&1 || error "Docker is not installed. See 'Before you begin' in the README."
     docker compose version >/dev/null 2>&1 \
         || error "The Docker Compose v2 plugin is not installed (v2.29 or newer is required)."
+    # The gateway and web images use `RUN --mount=type=cache`, which only BuildKit
+    # understands. Without buildx, compose falls back to the legacy builder and
+    # dies several minutes into `up`, after the pulls. Fail here instead.
+    docker buildx version >/dev/null 2>&1 \
+        || error "$(printf 'The Docker Buildx plugin is not installed, and the images need it to build.\n\n%s' "$(install_hint buildx)")"
+    # HAPI's JVM settles around 800 MB resident, and Keycloak, Postgres and the
+    # gateway sit alongside it. On a 2 GB Docker VM — the Colima default — the
+    # guest kernel OOM-kills HAPI in a loop. That is near-invisible from the
+    # outside: a global OOM is not a cgroup limit, so the container still reports
+    # OOMKilled=false and simply looks slow to start. Warn rather than error, as
+    # the figure is a heuristic and a tuned JVM may fit in less.
+    local mem_total
+    mem_total="$(docker info --format '{{.MemTotal}}' 2>/dev/null || echo 0)"
+    if [[ "$mem_total" =~ ^[0-9]+$ ]] && (( mem_total > 0 && mem_total < 4294967296 )); then
+        warn "$(printf 'Docker has only %s MiB of memory. The stack needs about 4 GiB, and\nHAPI FHIR will be OOM-killed in a restart loop below that.\n\n%s' \
+            "$(( mem_total / 1048576 ))" "$(install_hint memory)")"
+    fi
     # envsubst renders the config templates; openssl generates every secret.
     # Both are checked here so a missing one stops us now rather than surfacing
     # later as an unrendered template or a blank password.
