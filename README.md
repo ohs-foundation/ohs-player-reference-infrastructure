@@ -1092,17 +1092,3 @@ keg-only trap: `brew install gettext` alone is not enough, you also need
 
 **`.env.example not found`.** The repository is missing its template. Re-clone, or restore
 the file from version control.
-<<<<<<< Updated upstream
-=======
-
----
-
-## Not covered here
-
-- **Public demo deployment** — VM provisioning, a periodic reset job, and a public landing
-  page.
-- **Web Portal dev mode** — whether the Portal runs in-container with hot reload, or on the
-  host against a backend-only compose, is still an open decision.
-
-Outstanding work on the stack itself is tracked outside this file.
->>>>>>> Stashed changes
