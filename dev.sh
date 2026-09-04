@@ -212,19 +212,33 @@ load_env() {
 # --- Template rendering ------------------------------------------------------
 # Uses envsubst with an explicit variable list so Spring placeholders like
 # ${DB_HOST} are left untouched.
+# Renders to a temp file first and only replaces the target when the bytes
+# differ, so a repeat `up` reports the handful of files that actually moved
+# rather than reprinting the whole list and looking like it rewrote everything.
+RENDER_CHANGED=0
 render() {
     local src="$SCRIPT_DIR/$1"
     local dst="$SCRIPT_DIR/$2"
     local vars="$3"
+    local tmp
     [[ -f "$src" ]] || error "Template missing: $1"
-    envsubst "$vars" < "$src" > "$dst"
+    tmp="$(mktemp "${TMPDIR:-/tmp}/ohs-render.XXXXXX")" \
+        || error "Cannot create a temporary file to render $2."
+    envsubst "$vars" < "$src" > "$tmp"
+    if [[ -f "$dst" ]] && cmp -s "$tmp" "$dst"; then
+        rm -f "$tmp"
+        return 0
+    fi
+    cat "$tmp" > "$dst"
+    rm -f "$tmp"
     chmod 644 "$dst"
+    RENDER_CHANGED=$((RENDER_CHANGED + 1))
     info "  rendered $2"
 }
 
 render_templates() {
-    info "Rendering configuration from *.example templates..."
     load_env
+    RENDER_CHANGED=0
 
     render keycloak/ohs-player-realm.json.example \
            keycloak/ohs-player-realm.json \
@@ -272,7 +286,56 @@ render_templates() {
                '${SUPERSET_HOST} ${SUPERSET_PORT}'
     fi
 
+    if (( RENDER_CHANGED == 0 )); then
+        info "Configuration is up to date."
+    fi
     compile_healthcheck
+}
+
+# Service and container id for everything in the selected profiles. Comparing
+# two of these across `up` is what lets the summary say which containers were
+# actually touched, rather than leaving the reader to infer it from compose
+# listing every service it considered.
+container_snapshot() {
+    # State as well as id: starting a stopped container keeps its id, so an id
+    # comparison alone would report a restart as untouched.
+    compose_profiles ps -a --format '{{.Service}}:{{.ID}}:{{.State}}' 2>/dev/null | sort
+}
+
+report_container_changes() {
+    local before="$1" after line svc started="" unchanged=""
+    after="$(container_snapshot)"
+    while IFS= read -r line; do
+        [[ -n "$line" ]] || continue
+        svc="${line%%:*}"
+        if printf '%s\n' "$before" | grep -qxF "$line"; then
+            unchanged="${unchanged:+$unchanged, }$svc"
+        else
+            started="${started:+$started, }$svc"
+        fi
+    done <<<"$after"
+    [[ -n "$started" ]]   && info "Started: $started"
+    [[ -n "$unchanged" ]] && info "Left running, untouched: $unchanged"
+    return 0
+}
+
+# True when the named profile was selected, either directly or through --full.
+profile_active() {
+    local want="$1" arg
+    for arg in ${PROFILE_ARGS[@]+"${PROFILE_ARGS[@]}"}; do
+        case "$arg" in
+            "$want"|full) return 0 ;;
+        esac
+    done
+    return 1
+}
+
+# Both images already present means this is a repeat run, where the build is a
+# cache check worth a second or two and its sixty lines of CACHED steps are
+# noise. A first run is the opposite, so let it print.
+build_is_incremental() {
+    docker image inspect ohs-fhir-gateway:local >/dev/null 2>&1 \
+        && docker image inspect ohs-player-web:local >/dev/null 2>&1
 }
 
 # --- HAPI healthcheck binary -------------------------------------------------
@@ -442,8 +505,34 @@ PYEOF
     local w=$(( ${#kc_user} > 4 ? ${#kc_user} : 4 ))
     printf "        %-${w}s  %s\n" "USER" "PASSWORD"
     printf "        %-${w}s  %s\n" "$kc_user" "$kc_pass"
+
+    # Services that only exist behind a profile. Printed here rather than in the
+    # compose comments because this is where someone looks after `up`, and the
+    # ports move with .env.
+    if profile_active pipes; then
+        echo
+        echo "    Superset at http://localhost:${SUPERSET_PORT:-8088}"
+        printf "        %-5s  %s\n" "USER" "PASSWORD"
+        printf "        %-5s  %s\n" "admin" "admin"
+        echo
+        echo "    Pipeline control panel at http://localhost:${PIPELINE_PORT:-8090}"
+        echo "        No sign-in of its own. Anyone who reaches the port can start a"
+        echo "        pipeline run and read the warehouse it writes."
+    fi
+
+    if profile_active proxy; then
+        local origin="http://${PUBLIC_HOST:-ohs-player.localhost}"
+        [[ "${PROXY_PORT:-80}" == "80" ]] || origin="$origin:${PROXY_PORT}"
+        echo
+        echo "    Single origin front at $origin"
+        echo "        Serves the Portal, the gateway and Keycloak from one name."
+    fi
+
     echo
     warn "Sample credentials — change them for anything beyond development, staging or testing."
+    if profile_active pipes; then
+        warn "Superset's admin/admin is fixed in docker-compose.yaml, so it is the same on every install."
+    fi
 }
 
 # --- Subcommands -------------------------------------------------------------
@@ -454,14 +543,28 @@ cmd_up() {
     # --ignore-buildable: fhir-gateway and ohs-player-web are built from source
     # (ohs-fhir-gateway:local, ohs-player-web:local) and exist in no registry, so
     # a plain `pull` fails and set -e would abort before anything starts.
-    info "Pulling images..."
+    # Left with its own progress output, unlike the build. A pull is the one
+    # step that can genuinely fetch hundreds of megabytes, and watching that
+    # happen beats a silent wait. What it changes also shows in the summary
+    # below, because a new image id makes compose recreate that container.
+    info "Checking for image updates..."
     compose_profiles pull --ignore-buildable
+
     # --build: `up -d` alone only builds when the image is absent, so changed
     # build args (VITE_*, *_REF) would otherwise never reach a rebuilt image.
-    info "Starting stack..."
-    compose_profiles up -d --build
-    info "Stack started. Container status:"
-    compose_profiles ps
+    # Quiet on a repeat run, because a full-cache rebuild changes nothing and
+    # its output reads as though the stack were being rebuilt from scratch.
+    local before
+    before="$(container_snapshot)"
+    if build_is_incremental; then
+        info "Starting services..."
+        compose_profiles --progress quiet up -d --build
+    else
+        info "Building images and starting services. The first build takes several minutes..."
+        compose_profiles up -d --build
+    fi
+
+    report_container_changes "$before"
     maybe_seed
     print_login_details
 }

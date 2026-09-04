@@ -275,6 +275,13 @@ services:
       - FHIRDATA_FHIRSERVERURL=${PIPELINE_FHIR_SOURCE:-http://hapi-fhir:8080/fhir}
       - FHIRDATA_SINKDBCONFIGPATH=config/postgres-analytics.json
     volumes:
+      # This REPLACES the image's own /app/config rather than merging with it, so
+      # every file the controller expects there has to exist on this side too.
+      # The image ships application.yaml, views/, sample JDBC configs and
+      # flink-conf.yaml, and FLINK_CONF_DIR points at that directory. Omitting
+      # flink-conf.yaml costs a pipeline run: Flink reads it during static
+      # initialisation and throws IllegalConfigurationException, which surfaces as
+      # an ExceptionInInitializerError with no mention of the mount.
       - ./data-pipes/config:/app/config:ro
       - ./data-pipes/dwh:/dwh
     networks: [fhir_net]
