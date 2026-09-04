@@ -1,0 +1,505 @@
+{
+  "resourceType": "Bundle",
+  "type": "transaction",
+  "entry": [
+    {
+      "fullUrl": "urn:uuid:seed-org-ndumberi-health",
+      "resource": {
+        "resourceType": "Organization",
+        "id": "seed-org-ndumberi-health",
+        "active": true,
+        "name": "Ndumberi Health Services",
+        "identifier": [
+          {
+            "system": "http://ohs.dev/identifiers/organization",
+            "value": "seed-org-ndumberi-health"
+          }
+        ]
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Organization/seed-org-ndumberi-health"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:seed-loc-country",
+      "resource": {
+        "resourceType": "Location",
+        "id": "seed-loc-country",
+        "status": "active",
+        "mode": "instance",
+        "name": "Kenya",
+        "description": "Country in the sample location hierarchy",
+        "physicalType": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
+              "code": "jdn",
+              "display": "Jurisdiction"
+            }
+          ]
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Location/seed-loc-country"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:seed-loc-region-central",
+      "resource": {
+        "resourceType": "Location",
+        "id": "seed-loc-region-central",
+        "status": "active",
+        "mode": "instance",
+        "name": "Central",
+        "description": "Region in the sample location hierarchy",
+        "physicalType": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
+              "code": "jdn",
+              "display": "Jurisdiction"
+            }
+          ]
+        },
+        "partOf": {
+          "reference": "Location/seed-loc-country"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Location/seed-loc-region-central"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:seed-loc-district-kiambu",
+      "resource": {
+        "resourceType": "Location",
+        "id": "seed-loc-district-kiambu",
+        "status": "active",
+        "mode": "instance",
+        "name": "Kiambu County",
+        "description": "District in the sample location hierarchy",
+        "physicalType": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
+              "code": "jdn",
+              "display": "Jurisdiction"
+            }
+          ]
+        },
+        "partOf": {
+          "reference": "Location/seed-loc-region-central"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Location/seed-loc-district-kiambu"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:seed-loc-constituency-kiambu",
+      "resource": {
+        "resourceType": "Location",
+        "id": "seed-loc-constituency-kiambu",
+        "status": "active",
+        "mode": "instance",
+        "name": "Kiambu",
+        "description": "Constituency in the sample location hierarchy",
+        "physicalType": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
+              "code": "jdn",
+              "display": "Jurisdiction"
+            }
+          ]
+        },
+        "partOf": {
+          "reference": "Location/seed-loc-district-kiambu"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Location/seed-loc-constituency-kiambu"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:seed-loc-ward-ndumberi",
+      "resource": {
+        "resourceType": "Location",
+        "id": "seed-loc-ward-ndumberi",
+        "status": "active",
+        "mode": "instance",
+        "name": "Ndumberi",
+        "description": "Ward in the sample location hierarchy",
+        "physicalType": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
+              "code": "jdn",
+              "display": "Jurisdiction"
+            }
+          ]
+        },
+        "partOf": {
+          "reference": "Location/seed-loc-constituency-kiambu"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Location/seed-loc-ward-ndumberi"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:seed-loc-facility-ndumberi-hc",
+      "resource": {
+        "resourceType": "Location",
+        "id": "seed-loc-facility-ndumberi-hc",
+        "status": "active",
+        "mode": "instance",
+        "name": "Ndumberi Health Centre",
+        "description": "Facility in the sample location hierarchy",
+        "physicalType": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
+              "code": "si",
+              "display": "Site"
+            }
+          ]
+        },
+        "partOf": {
+          "reference": "Location/seed-loc-ward-ndumberi"
+        },
+        "managingOrganization": {
+          "reference": "Organization/seed-org-ndumberi-health"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Location/seed-loc-facility-ndumberi-hc"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:seed-loc-facility-ndumberi-disp",
+      "resource": {
+        "resourceType": "Location",
+        "id": "seed-loc-facility-ndumberi-disp",
+        "status": "active",
+        "mode": "instance",
+        "name": "Ndumberi Dispensary",
+        "description": "Facility in the sample location hierarchy",
+        "physicalType": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
+              "code": "si",
+              "display": "Site"
+            }
+          ]
+        },
+        "partOf": {
+          "reference": "Location/seed-loc-ward-ndumberi"
+        },
+        "managingOrganization": {
+          "reference": "Organization/seed-org-ndumberi-health"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Location/seed-loc-facility-ndumberi-disp"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:seed-loc-ward-riabai",
+      "resource": {
+        "resourceType": "Location",
+        "id": "seed-loc-ward-riabai",
+        "status": "active",
+        "mode": "instance",
+        "name": "Riabai",
+        "description": "Ward in the sample location hierarchy",
+        "physicalType": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
+              "code": "jdn",
+              "display": "Jurisdiction"
+            }
+          ]
+        },
+        "partOf": {
+          "reference": "Location/seed-loc-constituency-kiambu"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Location/seed-loc-ward-riabai"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:seed-loc-facility-riabai-hc",
+      "resource": {
+        "resourceType": "Location",
+        "id": "seed-loc-facility-riabai-hc",
+        "status": "active",
+        "mode": "instance",
+        "name": "Riabai Health Centre",
+        "description": "Facility in the sample location hierarchy",
+        "physicalType": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
+              "code": "si",
+              "display": "Site"
+            }
+          ]
+        },
+        "partOf": {
+          "reference": "Location/seed-loc-ward-riabai"
+        },
+        "managingOrganization": {
+          "reference": "Organization/seed-org-ndumberi-health"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Location/seed-loc-facility-riabai-hc"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:seed-loc-facility-riabai-disp",
+      "resource": {
+        "resourceType": "Location",
+        "id": "seed-loc-facility-riabai-disp",
+        "status": "active",
+        "mode": "instance",
+        "name": "Riabai Dispensary",
+        "description": "Facility in the sample location hierarchy",
+        "physicalType": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
+              "code": "si",
+              "display": "Site"
+            }
+          ]
+        },
+        "partOf": {
+          "reference": "Location/seed-loc-ward-riabai"
+        },
+        "managingOrganization": {
+          "reference": "Organization/seed-org-ndumberi-health"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Location/seed-loc-facility-riabai-disp"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:seed-loc-constituency-limuru",
+      "resource": {
+        "resourceType": "Location",
+        "id": "seed-loc-constituency-limuru",
+        "status": "active",
+        "mode": "instance",
+        "name": "Limuru",
+        "description": "Constituency in the sample location hierarchy",
+        "physicalType": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
+              "code": "jdn",
+              "display": "Jurisdiction"
+            }
+          ]
+        },
+        "partOf": {
+          "reference": "Location/seed-loc-district-kiambu"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Location/seed-loc-constituency-limuru"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:seed-loc-ward-ngecha",
+      "resource": {
+        "resourceType": "Location",
+        "id": "seed-loc-ward-ngecha",
+        "status": "active",
+        "mode": "instance",
+        "name": "Ngecha Tigoni",
+        "description": "Ward in the sample location hierarchy",
+        "physicalType": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
+              "code": "jdn",
+              "display": "Jurisdiction"
+            }
+          ]
+        },
+        "partOf": {
+          "reference": "Location/seed-loc-constituency-limuru"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Location/seed-loc-ward-ngecha"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:seed-loc-facility-ngecha-hc",
+      "resource": {
+        "resourceType": "Location",
+        "id": "seed-loc-facility-ngecha-hc",
+        "status": "active",
+        "mode": "instance",
+        "name": "Ngecha Tigoni Health Centre",
+        "description": "Facility in the sample location hierarchy",
+        "physicalType": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
+              "code": "si",
+              "display": "Site"
+            }
+          ]
+        },
+        "partOf": {
+          "reference": "Location/seed-loc-ward-ngecha"
+        },
+        "managingOrganization": {
+          "reference": "Organization/seed-org-ndumberi-health"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Location/seed-loc-facility-ngecha-hc"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:seed-loc-facility-ngecha-disp",
+      "resource": {
+        "resourceType": "Location",
+        "id": "seed-loc-facility-ngecha-disp",
+        "status": "active",
+        "mode": "instance",
+        "name": "Ngecha Tigoni Dispensary",
+        "description": "Facility in the sample location hierarchy",
+        "physicalType": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
+              "code": "si",
+              "display": "Site"
+            }
+          ]
+        },
+        "partOf": {
+          "reference": "Location/seed-loc-ward-ngecha"
+        },
+        "managingOrganization": {
+          "reference": "Organization/seed-org-ndumberi-health"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Location/seed-loc-facility-ngecha-disp"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:seed-loc-ward-limuru-central",
+      "resource": {
+        "resourceType": "Location",
+        "id": "seed-loc-ward-limuru-central",
+        "status": "active",
+        "mode": "instance",
+        "name": "Limuru Central",
+        "description": "Ward in the sample location hierarchy",
+        "physicalType": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
+              "code": "jdn",
+              "display": "Jurisdiction"
+            }
+          ]
+        },
+        "partOf": {
+          "reference": "Location/seed-loc-constituency-limuru"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Location/seed-loc-ward-limuru-central"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:seed-loc-facility-limuru-central-hc",
+      "resource": {
+        "resourceType": "Location",
+        "id": "seed-loc-facility-limuru-central-hc",
+        "status": "active",
+        "mode": "instance",
+        "name": "Limuru Central Health Centre",
+        "description": "Facility in the sample location hierarchy",
+        "physicalType": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
+              "code": "si",
+              "display": "Site"
+            }
+          ]
+        },
+        "partOf": {
+          "reference": "Location/seed-loc-ward-limuru-central"
+        },
+        "managingOrganization": {
+          "reference": "Organization/seed-org-ndumberi-health"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Location/seed-loc-facility-limuru-central-hc"
+      }
+    },
+    {
+      "fullUrl": "urn:uuid:seed-loc-facility-limuru-central-disp",
+      "resource": {
+        "resourceType": "Location",
+        "id": "seed-loc-facility-limuru-central-disp",
+        "status": "active",
+        "mode": "instance",
+        "name": "Limuru Central Dispensary",
+        "description": "Facility in the sample location hierarchy",
+        "physicalType": {
+          "coding": [
+            {
+              "system": "http://terminology.hl7.org/CodeSystem/location-physical-type",
+              "code": "si",
+              "display": "Site"
+            }
+          ]
+        },
+        "partOf": {
+          "reference": "Location/seed-loc-ward-limuru-central"
+        },
+        "managingOrganization": {
+          "reference": "Organization/seed-org-ndumberi-health"
+        }
+      },
+      "request": {
+        "method": "PUT",
+        "url": "Location/seed-loc-facility-limuru-central-disp"
+      }
+    }
+  ]
+}

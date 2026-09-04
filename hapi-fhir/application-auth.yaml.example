@@ -64,9 +64,11 @@ hapi:
 
 keycloak:
   enabled: true
-  auth-server-url: http://keycloak:8080/
-  realm: ${KEYCLOAK_REALM}
-  resource: ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_ID}
+  # Must be the same issuer authority the tokens are minted under, and must be
+  # resolvable from inside this container — KEYCLOAK_PUBLIC_URL is both.
+  auth-server-url: ${KEYCLOAK_PUBLIC_URL}/
+  realm: ohs-player
+  resource: hapi-fhir-server-client
   ssl-required: none
   credentials:
     secret: ${HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET}

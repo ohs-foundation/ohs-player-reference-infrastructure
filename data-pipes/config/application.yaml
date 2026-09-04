@@ -1,8 +1,7 @@
 fhirdata:
   fhirFetchMode: "FHIR_SEARCH"
   # Source overridden at runtime via FHIRDATA_FHIRSERVERURL env var in compose.
-  # Default: hapi-synth. Switch to hapi-fhir for transactional data.
-  fhirServerUrl: "http://hapi-synth:8080/fhir"
+  fhirServerUrl: "http://hapi-fhir:8080/fhir"
 
   dwhRootPrefix: "/dwh/controller_DWH"
   generateParquetFiles: true

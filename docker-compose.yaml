@@ -6,31 +6,38 @@
 #
 #   ./dev.sh up          # core services only
 #   ./dev.sh up --web    # core + web-portal
-#   ./dev.sh up --pipes  # core + data-pipes
+#   ./dev.sh up --pipes  # core + analytics pipeline + Superset
+#   ./dev.sh up --proxy  # core + same-origin nginx front
 #   ./dev.sh up --full   # everything
 #
 # Auth mode for HAPI FHIR is controlled by the HAPI_CONFIG variable in `.env`.
-#
-# NOTE: A public demo deployment (reverse proxy, VM provisioning, periodic
-# reset job, landing page) is out of scope for this file and will be added
-# later.
 # =============================================================================
 
 services:
+  # Local Postgres for Keycloak and the transactional HAPI FHIR server.
+  # postgres/init/01-init.sh runs once on volume creation and provisions the
+  # keycloak and hapi_fhir roles/databases from the passwords below.
+  #
+  # To use an external instance instead, set POSTGRES_HOST in .env to its
+  # hostname (or host.docker.internal for one running on this machine) and
+  # provision the roles yourself — see the README.
   postgres:
     image: postgres:18
     container_name: ohs-postgres
     restart: unless-stopped
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=${POSTGRES_ADMIN_PASSWORD}
-      - KEYCLOAK_DB_PASSWORD=${KEYCLOAK_DB_PASSWORD}
-      - HAPI_FHIR_DB_PASSWORD=${HAPI_FHIR_DB_PASSWORD}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
+      KEYCLOAK_DB_PASSWORD: ${KEYCLOAK_DB_PASSWORD}
+      HAPI_FHIR_DB_PASSWORD: ${HAPI_FHIR_DB_PASSWORD}
     volumes:
+      # Mounted at /var/lib/postgresql, not /var/lib/postgresql/data: postgres:18
+      # moved its default PGDATA and refuses to start against a volume at the old
+      # path unless PGDATA is set explicitly. Matches postgres-analytics below.
       - postgres_data:/var/lib/postgresql
-      - ./postgres/init/:/docker-entrypoint-initdb.d/
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
     ports:
-      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5433}:5432"
     networks: [fhir_net]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -43,39 +50,54 @@ services:
     restart: unless-stopped
     image: quay.io/keycloak/keycloak:26.5.0
     container_name: ohs-keycloak
-    depends_on:
-      postgres:
-        condition: service_healthy
     volumes:
-      # Keycloak 26.x requires the import filename to match <realm>-realm.json.
-      # If you change KEYCLOAK_REALM value, you MUST rename keycloak/ohs-player-realm.json to
-      # <new-realm>-realm.json and update the path below to match.
       - ./keycloak/ohs-player-realm.json:/opt/keycloak/data/import/ohs-player-realm.json:ro
+      - ./keycloak/themes:/opt/keycloak/themes:ro
     environment:
-      - KC_BOOTSTRAP_ADMIN_USERNAME=${KEYCLOAK_ADMIN_USERNAME:-admin}
+      - KC_BOOTSTRAP_ADMIN_USERNAME=${KEYCLOAK_ADMIN_USERNAME:-default-admin}
       - KC_BOOTSTRAP_ADMIN_PASSWORD=${KEYCLOAK_ADMIN_PASSWORD}
       - KC_DB=postgres
-      - KC_DB_URL_HOST=postgres
-      - KC_DB_URL_PORT=5432
+      - KC_DB_URL_HOST=${POSTGRES_HOST}
+      - KC_DB_URL_PORT=${POSTGRES_PORT:-5432}
       - KC_DB_PASSWORD=${KEYCLOAK_DB_PASSWORD}
       - KC_DB_USERNAME=keycloak
       - KC_DB_URL_DATABASE=keycloak
       - KC_PROXY_HEADERS=xforwarded
-      - KC_HOSTNAME=http://localhost:${KEYCLOAK_PORT:-8081}
+      - KC_HOSTNAME=${KEYCLOAK_PUBLIC_URL}
+    # Lets POSTGRES_HOST=host.docker.internal resolve to the Docker host for
+    # local testing against a host-run Postgres. No-op when POSTGRES_HOST is a
+    # real hostname/IP (e.g. on the server).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     command:
       - "--verbose"
       - "start"
       - "--features=persistent-user-sessions"
       - "--http-enabled=true"
       - "--hostname-strict=false"
-      - "--http-port=8080"
+      # Keycloak listens on KEYCLOAK_PORT *inside* the container and is published
+      # 1:1, so http://keycloak.localhost:${KEYCLOAK_PORT} is one URL that
+      # resolves from the browser (any *.localhost name goes to 127.0.0.1) and
+      # from other containers (via the fhir_net alias below). The gateway needs
+      # KEYCLOAK_PUBLIC_URL to work from inside the network, which a
+      # localhost-based value cannot do.
+      - "--http-port=${KEYCLOAK_PORT:-8081}"
       - "--spi-events-listener-jboss-logging-success-level=info"
       - "--spi-events-listener-jboss-logging-error-level=warn"
       - "--health-enabled=true"
       - "--import-realm"
     ports:
-      - "${KEYCLOAK_PORT:-8081}:8080"
-    networks: [fhir_net]
+      - "${BIND_ADDR:-0.0.0.0}:${KEYCLOAK_PORT:-8081}:${KEYCLOAK_PORT:-8081}"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      fhir_net:
+        aliases:
+          # Resolves to this container from inside the network, and to
+          # 127.0.0.1 in the browser, so KEYCLOAK_PUBLIC_URL is one value for
+          # both. nginx/ohs-player.conf hardcodes KEYCLOAK_PORT — keep in sync.
+          - keycloak.localhost
     healthcheck:
       test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/localhost/9000 && printf 'GET /health/ready HTTP/1.0\\r\\nHost: localhost\\r\\n\\r\\n' >&3 && cat <&3 | grep -q UP"]
       interval: 30s
@@ -87,18 +109,23 @@ services:
     restart: unless-stopped
     image: hapiproject/hapi:v8.8.0-1
     container_name: ohs-hapi-fhir
-    depends_on:
-      postgres:
-        condition: service_healthy
     ports:
-      - "${HAPI_FHIR_PORT:-8082}:8080"
+      - "${BIND_ADDR:-0.0.0.0}:${HAPI_FHIR_PORT:-8082}:8080"
     volumes:
       - ./hapi-fhir/${HAPI_CONFIG}:/data/hapi-fhir/config/application.yaml:ro
       - ./hapi-fhir/health/Healthcheck.class:/healthcheck/Healthcheck.class:ro
     environment:
       - "SPRING_CONFIG_LOCATION=/data/hapi-fhir/config/"
-      - DB_HOST=postgres
-      - DB_PORT=5432
+      - DB_HOST=${POSTGRES_HOST}
+      - DB_PORT=${POSTGRES_PORT:-5432}
+    # See keycloak service: lets host.docker.internal resolve for local testing.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
     networks: [fhir_net]
     healthcheck:
       test: ["CMD", "java", "-cp", "/healthcheck", "Healthcheck"]
@@ -108,120 +135,100 @@ services:
       start_period: 180s
 
   fhir-gateway:
-    image: onaio/fhir-gateway-plugin:v3.0.5
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        GATEWAY_REF: ${GATEWAY_REF:-main}
+        PLUGIN_REF: ${PLUGIN_REF:-main}
+    image: ohs-fhir-gateway:local
     container_name: ohs-fhir-gateway
     restart: unless-stopped
     environment:
       - PROXY_TO=http://hapi-fhir:8080/fhir
-      - TOKEN_ISSUER=http://keycloak:8080/realms/${KEYCLOAK_REALM:-ohs-player}
-      - ACCESS_CHECKER=permission
+      - TOKEN_ISSUER=${KEYCLOAK_PUBLIC_URL}/realms/ohs-player
+      # IAM admin client (client_credentials) for user/group/role management.
+      - IAM_PROVIDER=keycloak
+      - IAM_PROVIDER_CLIENT_ID=fhir-gateway-admin
+      - IAM_PROVIDER_CLIENT_SECRET=${FHIR_GATEWAY_KEYCLOAK_CLIENT_SECRET}
+      # ACCESS_CHECKER selects the FHIR proxy access checker. This build registers
+      # "ohs_player_access" (from the ohs-player plugin) plus "list" and "patient"
+      # (from the gateway itself). "permissive" disables access control, and only
+      # when RUN_MODE=DEV. An unrecognised name makes every request return 500.
+      - ACCESS_CHECKER=${ACCESS_CHECKER:-ohs_player_access}
       - ALLOWED_QUERIES_FILE=resources/hapi_page_url_allowed_queries.json
       - SYNC_FILTER_IGNORE_RESOURCES_FILE=resources/hapi_sync_filter_ignored_queries.json
       - BACKEND_TYPE=HAPI
-      - RUN_MODE=PROD
+      - RUN_MODE=${RUN_MODE:-PROD}
     ports:
-      - "${FHIR_GATEWAY_PORT:-8083}:8080"
+      - "${BIND_ADDR:-0.0.0.0}:${FHIR_GATEWAY_PORT:-8083}:8080"
     depends_on:
       hapi-fhir:
+        condition: service_started
+      # The gateway resolves TOKEN_ISSUER at startup, so it must not race
+      # Keycloak — which itself waits for Postgres and has a 90s start_period.
+      # Without this, restart: unless-stopped turns a missing issuer into a
+      # crash loop instead of a clear failure.
+      keycloak:
+        condition: service_healthy
+    networks: [fhir_net]
+
+  # "proxy" is in the profile list because nginx/ohs-player.conf proxies
+  # location / to this service; without it `--proxy` alone serves 502 at /.
+  ohs-player-web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        WEB_REF: ${WEB_REF:-main}
+        VITE_FHIR_BASE_URL: ${VITE_FHIR_BASE_URL}
+        VITE_OIDC_ISSUER: ${KEYCLOAK_PUBLIC_URL}/realms/ohs-player
+        VITE_CLIENT_ID: ohs-player-client
+        VITE_FHIR_VERSION: ${VITE_FHIR_VERSION:-R4}
+    image: ohs-player-web:local
+    container_name: ohs-player-web
+    restart: unless-stopped
+    ports:
+      - "${BIND_ADDR:-0.0.0.0}:${OHS_PLAYER_WEB_PORT:-8084}:80"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+      fhir-gateway:
         condition: service_started
     networks: [fhir_net]
 
   # ---------------------------------------------------------------------------
-  # web-portal (extension service, profile: web / full)
+  # reverse proxy (profile: proxy / full)
   #
-  # Stub — not yet wired up. Before enabling, the following still need to be
-  # decided and filled in:
-  #   - Image source: prebuilt registry image, or local build via
-  #     Dockerfile.dev with hot reload for frontend development.
-  #   - Whether dev mode runs in-container or on the host against a
-  #     backend-only compose (documented workflow).
-  #   - Published host port for the web UI.
-  #   - Env vars for backend URLs (fhir-gateway base URL, keycloak issuer,
-  #     OIDC client id, redirect URIs).
-  #   - Dependency order on keycloak and fhir-gateway.
+  # Puts the SPA, the gateway and Keycloak on one origin, so the browser makes
+  # no cross-origin requests and the gateway's CORS-less /api/* routes work.
+  #
+  # The network alias is the point: containers resolve PUBLIC_HOST to this
+  # container through Docker DNS, so the gateway's OIDC discovery against
+  # KEYCLOAK_PUBLIC_URL succeeds from inside the network without any host
+  # mapping. Browsers reach it on http://${PUBLIC_HOST}:${PROXY_PORT}.
   # ---------------------------------------------------------------------------
-  # web-portal:
-  #   profiles: ["web", "full"]
-  #   image: TBD
-  #   container_name: ohs-web-portal
-  #   restart: unless-stopped
-  #   depends_on:
-  #     fhir-gateway:
-  #       condition: service_started
-  #     keycloak:
-  #       condition: service_healthy
-  #   ports:
-  #     - "3000:3000"
-  #   networks: [fhir_net]
-
-  # ---------------------------------------------------------------------------
-  # synth stack (profile: synth / pipes / full)
-  #
-  # Isolated HAPI FHIR + PostgreSQL for synthetic/test data generation.
-  # Kept separate from the transactional instance (ohs-hapi-fhir) so test
-  # data never touches production records.
-  # Also included in the pipes profile so the pipeline has a FHIR source.
-  #
-  # FHIR endpoint:  http://localhost:${HAPI_SYNTH_PORT:-8085}/fhir
-  # Postgres:       localhost:${POSTGRES_SYNTH_PORT:-5435}
-  #
-  # Load synthetic data:
-  #   python ohs-player-analytics/test-data/generate.py \
-  #     --fhir-url http://localhost:${HAPI_SYNTH_PORT:-8085}/fhir
-  # ---------------------------------------------------------------------------
-  postgres-synth:
-    profiles: ["synth", "pipes", "full"]
-    image: postgres:18
-    container_name: ohs-postgres-synth
+  nginx:
+    profiles: ["proxy", "full"]
+    image: nginx:1.27-alpine
+    container_name: ohs-nginx
     restart: unless-stopped
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD}
-      POSTGRES_DB: hapi_fhir
-    volumes:
-      - postgres_synth_data:/var/lib/postgresql
     ports:
-      - "127.0.0.1:${POSTGRES_SYNTH_PORT:-5435}:5432"
-    networks: [fhir_net]
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-
-  hapi-synth:
-    profiles: ["synth", "pipes", "full"]
-    image: hapiproject/hapi:v8.8.0-1
-    container_name: ohs-hapi-synth
-    restart: unless-stopped
+      - "${PROXY_PORT:-80}:80"
+    volumes:
+      - ./nginx/ohs-player.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-      postgres-synth:
+      keycloak:
         condition: service_healthy
-    ports:
-      - "${HAPI_SYNTH_PORT:-8085}:8080"
-    environment:
-      - hapi.fhir.mdm_enabled=false
-      - hapi.fhir.bulk_export_enabled=true
-      - spring.datasource.url=jdbc:postgresql://postgres-synth:5432/hapi_fhir
-      - spring.datasource.username=postgres
-      - spring.datasource.password=${POSTGRES_ADMIN_PASSWORD}
-      - spring.datasource.driverClassName=org.postgresql.Driver
-      - spring.jpa.properties.hibernate.dialect=ca.uhn.fhir.jpa.model.dialect.HapiFhirPostgresDialect
-    volumes:
-      - ./hapi-fhir/health/Healthcheck.class:/healthcheck/Healthcheck.class:ro
-    networks: [fhir_net]
-    healthcheck:
-      test: ["CMD", "java", "-cp", "/healthcheck", "Healthcheck"]
-      interval: 30s
-      timeout: 10s
-      retries: 10
-      start_period: 180s
+    networks:
+      fhir_net:
+        aliases:
+          - ${PUBLIC_HOST:-ohs-player.localhost}
 
   # ---------------------------------------------------------------------------
   # analytics pipeline (profile: pipes / full)
   #
-  # FHIR Data Pipes reads from hapi-synth, applies ViewDefinitions, and writes
+  # FHIR Data Pipes reads from hapi-fhir, applies ViewDefinitions, and writes
   # flat tables into postgres-analytics. Superset dashboards query those tables.
   #
   # Pipeline control panel: http://localhost:${PIPELINE_PORT:-8090}
@@ -259,15 +266,22 @@ services:
     depends_on:
       postgres-analytics:
         condition: service_healthy
-      hapi-synth:
+      hapi-fhir:
         condition: service_healthy
     ports:
-      - "${PIPELINE_PORT:-8090}:8080"
+      - "${BIND_ADDR:-0.0.0.0}:${PIPELINE_PORT:-8090}:8080"
     environment:
       - JAVA_OPTS=${PIPELINE_JAVA_OPTS:--Xms512m -Xmx4g}
-      - FHIRDATA_FHIRSERVERURL=${PIPELINE_FHIR_SOURCE:-http://hapi-synth:8080/fhir}
+      - FHIRDATA_FHIRSERVERURL=${PIPELINE_FHIR_SOURCE:-http://hapi-fhir:8080/fhir}
       - FHIRDATA_SINKDBCONFIGPATH=config/postgres-analytics.json
     volumes:
+      # This REPLACES the image's own /app/config rather than merging with it, so
+      # every file the controller expects there has to exist on this side too.
+      # The image ships application.yaml, views/, sample JDBC configs and
+      # flink-conf.yaml, and FLINK_CONF_DIR points at that directory. Omitting
+      # flink-conf.yaml costs a pipeline run: Flink reads it during static
+      # initialisation and throws IllegalConfigurationException, which surfaces as
+      # an ExceptionInInitializerError with no mention of the mount.
       - ./data-pipes/config:/app/config:ro
       - ./data-pipes/dwh:/dwh
     networks: [fhir_net]
@@ -282,7 +296,7 @@ services:
       postgres-analytics:
         condition: service_healthy
     ports:
-      - "${SUPERSET_PORT:-8088}:8088"
+      - "${BIND_ADDR:-0.0.0.0}:${SUPERSET_PORT:-8088}:8088"
     environment:
       - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
       - SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://postgres:${POSTGRES_ADMIN_PASSWORD}@postgres-analytics:5432/superset
@@ -309,6 +323,5 @@ networks:
 
 volumes:
   postgres_data:
-  postgres_synth_data:
   postgres_analytics_data:
   superset_home:
