@@ -54,17 +54,37 @@ docker exec "$SUPERSET_CONTAINER" sh -c '
 # one fails with "Columns missing in dataset". fetch_metadata reads the actual
 # table and fills them in, which also repairs any dataset the dashboard bundle
 # has just overwritten with a shorter list.
-docker exec "$SUPERSET_CONTAINER" python -c "
+# Reported rather than silenced. A dataset with no columns still looks fine in a
+# listing, so a failure here surfaces later as "Columns missing in dataset" on a
+# chart, a long way from the cause.
+synced="$(docker exec "$SUPERSET_CONTAINER" python -c "
 from superset.app import create_app
 with create_app().app_context():
     from superset import db
     from superset.connectors.sqla.models import SqlaTable
+    ok = 0
+    problems = []
     for dataset in db.session.query(SqlaTable).all():
         try:
             dataset.fetch_metadata()
+            ok += 1
         except Exception as exc:
-            print(f'    could not read columns for {dataset.table_name}: {exc}')
+            problems.append(f'{dataset.table_name}: {type(exc).__name__}')
     db.session.commit()
-" >/dev/null 2>&1 || echo "    could not sync dataset columns from the analytics tables" >&2
+    print(f'SYNCED={ok}')
+    for line in problems[:3]:
+        print(line)
+" 2>/dev/null | tr -d '\r')" || synced=""
+
+# Superset prints a configuration-load line before anything we ask for, so the
+# count is tagged rather than taken from the first line.
+count="$(printf '%s\n' "$synced" | sed -n 's/^SYNCED=//p' | head -1)"
+if [[ ! "$count" =~ ^[0-9]+$ ]] || (( count == 0 )); then
+    echo "    could not read columns from the analytics tables, so charts on these" >&2
+    echo "    datasets will report missing columns. Check the connection credentials." >&2
+    printf '%s\n' "$synced" | tail -n +2 | sed 's/^/      /' >&2
+else
+    echo "    synced columns for $count dataset(s)"
+fi
 
 echo "    registered $(printf '%s\n' "$tables" | wc -l | tr -d ' ') Superset dataset(s) against '${ANALYTICS_DB}'"

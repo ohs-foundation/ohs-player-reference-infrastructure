@@ -545,16 +545,15 @@ maybe_register_superset() {
         sleep 3
     done
 
-    # The dashboard bundle declares the dataset its chart sits on, and the
-    # importer treats that declaration as the whole truth. So it runs first and
-    # the dataset registration, which syncs columns from the tables, runs after
-    # and repairs anything the bundle shortened.
+    # Datasets first. The dashboard's chart links to one by UUID, and that UUID is
+    # generated when the dataset is created, so there is nothing to point at until
+    # this has run.
+    "$script" || warn "Could not register the Superset datasets. Run superset/register-datasets.sh to retry."
+
     local dash="$SCRIPT_DIR/superset/import-dashboard.sh"
     if [[ -x "$dash" ]]; then
         "$dash" || warn "Could not import the Superset dashboard. Run superset/import-dashboard.sh to retry."
     fi
-
-    "$script" || warn "Could not register the Superset datasets. Run superset/register-datasets.sh to retry."
 }
 
 print_login_details() {
