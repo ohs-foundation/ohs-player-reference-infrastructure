@@ -1,0 +1,31 @@
+# Columns are deliberately not enumerated here. The importer would treat this
+# file as the whole truth and replace whatever the dataset already knows, so
+# register-datasets.sh syncs them from the table afterwards instead.
+table_name: location_flat
+main_dttm_col: null
+description: Locations flattened by the analytics pipeline
+default_endpoint: null
+offset: 0
+cache_timeout: null
+schema: public
+sql: null
+params: null
+template_params: null
+filter_select_enabled: true
+fetch_values_predicate: null
+extra: null
+normalize_columns: false
+always_filter_main_dttm: false
+uuid: 0a969056-281c-4cba-bef6-f9d4371035d3
+metrics:
+- metric_name: count
+  verbose_name: COUNT(*)
+  metric_type: count
+  expression: count(*)
+  description: null
+  d3format: null
+  extra: null
+  warning_text: null
+columns: []
+version: 1.0.0
+database_uuid: 0be15428-4c46-45a3-996c-5cabd736a20e

@@ -1,0 +1,17 @@
+# The connection itself is created by the superset service's start-up command,
+# which holds the real credentials. This entry exists because the importer
+# expects the database its datasets belong to, and is matched by uuid. Superset
+# keeps the existing password rather than taking the one below.
+database_name: OHS Analytics
+sqlalchemy_uri: postgresql+psycopg2://postgres:SET_BY_DEV_SH@postgres-analytics:5432/analytics
+cache_timeout: null
+expose_in_sqllab: true
+allow_run_async: false
+allow_ctas: false
+allow_cvas: false
+allow_dml: false
+allow_file_upload: false
+extra:
+  allows_virtual_table_explore: true
+uuid: 0be15428-4c46-45a3-996c-5cabd736a20e
+version: 1.0.0

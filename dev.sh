@@ -335,7 +335,14 @@ profile_active() {
 # noise. A first run is the opposite, so let it print.
 build_is_incremental() {
     docker image inspect ohs-fhir-gateway:local >/dev/null 2>&1 \
-        && docker image inspect ohs-player-web:local >/dev/null 2>&1
+        && docker image inspect ohs-player-web:local >/dev/null 2>&1 \
+        || return 1
+    # Superset is built too, but only the pipes profile ever needs it, so a
+    # core-only run should not go verbose over an image it will not build.
+    if profile_active pipes; then
+        docker image inspect ohs-superset:local >/dev/null 2>&1 || return 1
+    fi
+    return 0
 }
 
 # --- HAPI healthcheck binary -------------------------------------------------
@@ -474,6 +481,33 @@ maybe_seed() {
 #
 # Read from the realm template rather than hardcoded here, so this stays correct
 # if the roster changes.
+# Superset charts datasets, not database connections. The container registers
+# the connection at start-up, but the datasets have to be created against a
+# built app context, so this runs after `up` rather than in the compose command.
+maybe_register_superset() {
+    profile_active pipes || return 0
+    local script="$SCRIPT_DIR/superset/register-datasets.sh"
+    [[ -x "$script" ]] || return 0
+
+    # Superset takes a while past `Started` before its CLI will run.
+    local i
+    for i in 1 2 3 4 5 6 7 8 9 10; do
+        docker exec ohs-superset true >/dev/null 2>&1 && break
+        sleep 3
+    done
+
+    # The dashboard bundle declares the dataset its chart sits on, and the
+    # importer treats that declaration as the whole truth. So it runs first and
+    # the dataset registration, which syncs columns from the tables, runs after
+    # and repairs anything the bundle shortened.
+    local dash="$SCRIPT_DIR/superset/import-dashboard.sh"
+    if [[ -x "$dash" ]]; then
+        "$dash" || warn "Could not import the Superset dashboard. Run superset/import-dashboard.sh to retry."
+    fi
+
+    "$script" || warn "Could not register the Superset datasets. Run superset/register-datasets.sh to retry."
+}
+
 print_login_details() {
     local realm="$SCRIPT_DIR/keycloak/ohs-player-realm.json.example"
     [[ -f "$realm" ]] || return 0
@@ -566,6 +600,7 @@ cmd_up() {
 
     report_container_changes "$before"
     maybe_seed
+    maybe_register_superset
     print_login_details
 }
 
