@@ -5,10 +5,10 @@
 # Extension services live behind Docker profiles and are opted in via `dev.sh`:
 #
 #   ./dev.sh up          # core services only
-#   ./dev.sh up --web    # core + web-portal
 #   ./dev.sh up --pipes  # core + analytics pipeline + Superset
-#   ./dev.sh up --proxy  # core + same-origin nginx front
-#   ./dev.sh up --full   # everything
+#   ./dev.sh up --full   # core + everything above
+#   ./dev.sh up --proxy  # core behind a same-origin nginx front. Stands alone,
+#                        # and is deliberately not part of --full
 #
 # Auth mode for HAPI FHIR is controlled by the HAPI_CONFIG variable in `.env`.
 # =============================================================================
@@ -209,7 +209,10 @@ services:
   # mapping. Browsers reach it on http://${PUBLIC_HOST}:${PROXY_PORT}.
   # ---------------------------------------------------------------------------
   nginx:
-    profiles: ["proxy", "full"]
+    # Deliberately not in "full". The same-origin front is an alternative way to
+    # reach the stack rather than another service to add, and running it alongside
+    # the published ports serves the same things twice on two different origins.
+    profiles: ["proxy"]
     image: nginx:1.27-alpine
     container_name: ohs-nginx
     restart: unless-stopped
@@ -288,7 +291,10 @@ services:
 
   superset:
     profiles: ["pipes", "full"]
-    image: apache/superset:latest
+    build:
+      context: .
+      dockerfile: superset/Dockerfile
+    image: ohs-superset:local
     container_name: ohs-superset
     restart: unless-stopped
     user: root
@@ -299,9 +305,16 @@ services:
       - "${BIND_ADDR:-0.0.0.0}:${SUPERSET_PORT:-8088}:8088"
     environment:
       - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
+      # Read by superset/superset_config.py, not by Superset itself.
       - SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://postgres:${POSTGRES_ADMIN_PASSWORD}@postgres-analytics:5432/superset
+      # The database the pipeline writes its flat tables to. Registered as a
+      # data source below so the dashboards have something to read.
+      - SUPERSET_ANALYTICS_URI=postgresql+psycopg2://postgres:${POSTGRES_ADMIN_PASSWORD}@postgres-analytics:5432/analytics
+      - SUPERSET_ENABLE_PROXY_FIX=${SUPERSET_ENABLE_PROXY_FIX:-false}
+      - SUPERSET_CONFIG_PATH=/app/pythonpath/superset_config.py
     volumes:
       - superset_home:/app/superset_home
+      - ./superset/superset_config.py:/app/pythonpath/superset_config.py:ro
     command:
       - sh
       - -c
@@ -314,6 +327,9 @@ services:
           --email admin@ohs.local \
           --password admin || true &&
         superset init &&
+        superset set-database-uri \
+          --database_name 'OHS Analytics' \
+          --uri "$$SUPERSET_ANALYTICS_URI" &&
         gunicorn --bind 0.0.0.0:8088 --workers 2 --timeout 120 'superset.app:create_app()'
     networks: [fhir_net]
 

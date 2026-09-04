@@ -1,0 +1,23 @@
+# Columns are deliberately empty. register-datasets.sh reads them from the table
+# itself, and an empty list here leaves what it found alone rather than replacing
+# it with a shorter one.
+table_name: location_flat
+schema: public
+main_dttm_col: null
+description: Locations flattened by the analytics pipeline
+default_endpoint: null
+offset: 0
+cache_timeout: null
+sql: null
+params: null
+template_params: null
+filter_select_enabled: true
+fetch_values_predicate: null
+extra: null
+normalize_columns: false
+always_filter_main_dttm: false
+uuid: __LOCATION_FLAT_UUID__
+metrics: []
+columns: []
+version: 1.0.0
+database_uuid: __DATABASE_UUID__
