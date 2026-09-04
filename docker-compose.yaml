@@ -87,7 +87,7 @@ services:
       - "--health-enabled=true"
       - "--import-realm"
     ports:
-      - "${KEYCLOAK_PORT:-8081}:${KEYCLOAK_PORT:-8081}"
+      - "${BIND_ADDR:-0.0.0.0}:${KEYCLOAK_PORT:-8081}:${KEYCLOAK_PORT:-8081}"
     depends_on:
       postgres:
         condition: service_healthy
@@ -110,7 +110,7 @@ services:
     image: hapiproject/hapi:v8.8.0-1
     container_name: ohs-hapi-fhir
     ports:
-      - "${HAPI_FHIR_PORT:-8082}:8080"
+      - "${BIND_ADDR:-0.0.0.0}:${HAPI_FHIR_PORT:-8082}:8080"
     volumes:
       - ./hapi-fhir/${HAPI_CONFIG}:/data/hapi-fhir/config/application.yaml:ro
       - ./hapi-fhir/health/Healthcheck.class:/healthcheck/Healthcheck.class:ro
@@ -161,7 +161,7 @@ services:
       - BACKEND_TYPE=HAPI
       - RUN_MODE=${RUN_MODE:-PROD}
     ports:
-      - "${FHIR_GATEWAY_PORT:-8083}:8080"
+      - "${BIND_ADDR:-0.0.0.0}:${FHIR_GATEWAY_PORT:-8083}:8080"
     depends_on:
       hapi-fhir:
         condition: service_started
@@ -189,7 +189,7 @@ services:
     container_name: ohs-player-web
     restart: unless-stopped
     ports:
-      - "${OHS_PLAYER_WEB_PORT:-8084}:80"
+      - "${BIND_ADDR:-0.0.0.0}:${OHS_PLAYER_WEB_PORT:-8084}:80"
     depends_on:
       keycloak:
         condition: service_healthy
@@ -269,7 +269,7 @@ services:
       hapi-fhir:
         condition: service_healthy
     ports:
-      - "${PIPELINE_PORT:-8090}:8080"
+      - "${BIND_ADDR:-0.0.0.0}:${PIPELINE_PORT:-8090}:8080"
     environment:
       - JAVA_OPTS=${PIPELINE_JAVA_OPTS:--Xms512m -Xmx4g}
       - FHIRDATA_FHIRSERVERURL=${PIPELINE_FHIR_SOURCE:-http://hapi-fhir:8080/fhir}
@@ -289,7 +289,7 @@ services:
       postgres-analytics:
         condition: service_healthy
     ports:
-      - "${SUPERSET_PORT:-8088}:8088"
+      - "${BIND_ADDR:-0.0.0.0}:${SUPERSET_PORT:-8088}:8088"
     environment:
       - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
       - SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://postgres:${POSTGRES_ADMIN_PASSWORD}@postgres-analytics:5432/superset

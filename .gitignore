@@ -37,6 +37,8 @@ data-pipes/config/postgres-analytics.json
 nginx/host/keycloak.conf
 nginx/host/gateway.conf
 nginx/host/web.conf
+nginx/host/pipeline.conf
+nginx/host/superset.conf
 
 # --- Logs & Temps ---
 logs/

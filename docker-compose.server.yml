@@ -1,0 +1,63 @@
+# =============================================================================
+# Server-only overrides. Use ALONGSIDE the base file, never on its own.
+#
+#   docker compose -f docker-compose.yaml -f docker-compose.server.yml up -d
+#
+# Simpler, set this in .env so every docker compose call picks up both files,
+# `./dev.sh up` included, with no extra flags to remember:
+#
+#   COMPOSE_FILE=docker-compose.yaml:docker-compose.server.yml
+#
+# The stack sits behind host nginx, one vhost per subdomain rendered into
+# nginx/host/ by `./dev.sh render`, terminating TLS for the KEYCLOAK_HOST,
+# GATEWAY_HOST and WEB_HOST names set in .env.
+#
+# Addressing here comes from those three names rather than from
+# KEYCLOAK_PUBLIC_URL, so the local value in .env can stay as it is. The one
+# thing this file cannot set is OHS_PLAYER_APP_HOST, which is substituted into
+# the realm at render time rather than read by compose — set it to WEB_HOST in
+# .env yourself.
+#
+# Set BIND_ADDR=127.0.0.1 in .env alongside this file so every published port
+# binds to loopback, leaving nginx the only public listener. That lives in the
+# base file rather than here because compose APPENDS port lists across files
+# rather than replacing them, so an override cannot take a public binding away.
+# =============================================================================
+
+services:
+
+  keycloak:
+    environment:
+      # Public issuer, with no port, because nginx serves it on 443. Without
+      # this Keycloak keeps advertising whatever KEYCLOAK_PUBLIC_URL holds,
+      # which on a freshly copied .env is still http://keycloak.localhost:8081 —
+      # so the admin console redirects there and the browser goes nowhere.
+      - KC_HOSTNAME=https://${KEYCLOAK_HOST:?set KEYCLOAK_HOST in .env to the public Keycloak hostname}
+      # Keycloak builds issuer and redirect URLs from the proxy's forwarded
+      # headers. Without this it advertises its own container address instead,
+      # and every token carries an `iss` the gateway will reject.
+      - KC_PROXY_HEADERS=xforwarded
+
+  hapi-fhir:
+
+  fhir-gateway:
+    environment:
+      # Must match the `iss` Keycloak mints, character for character.
+      - TOKEN_ISSUER=https://${KEYCLOAK_HOST}/realms/ohs-player
+      # DEV is what makes ACCESS_CHECKER=permissive legal. A public deployment
+      # has no business allowing either.
+      - RUN_MODE=PROD
+    # Resolves the public Keycloak name to the docker host, so OIDC discovery
+    # goes out to nginx and back rather than trying to reach this machine's own
+    # external IP from inside a container, which does not route.
+    extra_hosts:
+      - "${KEYCLOAK_HOST}:host-gateway"
+
+  ohs-player-web:
+    build:
+      args:
+        # The SPA is served from its own subdomain and proxies /fhir and /api/
+        # to the gateway from inside its image, so this names the SPA's origin,
+        # never the gateway's.
+        VITE_FHIR_BASE_URL: https://${WEB_HOST:?set WEB_HOST in .env to the public Portal hostname}/fhir
+        VITE_OIDC_ISSUER: https://${KEYCLOAK_HOST}/realms/ohs-player

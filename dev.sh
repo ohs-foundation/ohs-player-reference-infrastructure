@@ -257,6 +257,21 @@ render_templates() {
            nginx/host/web.conf \
            '${WEB_HOST} ${OHS_PLAYER_WEB_PORT}'
 
+    # The analytics vhosts belong to the --pipes profile, which most stacks never
+    # start. Rendering them with an unset hostname would write `server_name ;`,
+    # which nginx refuses to load, so they are written only when named.
+    if [[ -n "${PIPELINE_HOST:-}" ]]; then
+        render nginx/host/pipeline.conf.example \
+               nginx/host/pipeline.conf \
+               '${PIPELINE_HOST} ${PIPELINE_PORT}'
+    fi
+
+    if [[ -n "${SUPERSET_HOST:-}" ]]; then
+        render nginx/host/superset.conf.example \
+               nginx/host/superset.conf \
+               '${SUPERSET_HOST} ${SUPERSET_PORT}'
+    fi
+
     compile_healthcheck
 }
 
@@ -493,7 +508,9 @@ cmd_clean() {
     rm -f "$SCRIPT_DIR/data-pipes/config/postgres-analytics.json"
     rm -f "$SCRIPT_DIR/nginx/host/keycloak.conf" \
           "$SCRIPT_DIR/nginx/host/gateway.conf" \
-          "$SCRIPT_DIR/nginx/host/web.conf"
+          "$SCRIPT_DIR/nginx/host/web.conf" \
+          "$SCRIPT_DIR/nginx/host/pipeline.conf" \
+          "$SCRIPT_DIR/nginx/host/superset.conf"
 
     local project
     project="$(basename "$SCRIPT_DIR")"
@@ -561,8 +578,10 @@ cmd_nginx() {
     load_env
     render_templates
 
-    local -a hosts=("${KEYCLOAK_HOST:-}" "${GATEWAY_HOST:-}" "${WEB_HOST:-}")
-    local -a files=("keycloak.conf" "gateway.conf" "web.conf")
+    local -a hosts=("${KEYCLOAK_HOST:-}" "${GATEWAY_HOST:-}" "${WEB_HOST:-}" \
+                    "${PIPELINE_HOST:-}" "${SUPERSET_HOST:-}")
+    local -a files=("keycloak.conf" "gateway.conf" "web.conf" \
+                    "pipeline.conf" "superset.conf")
     local -a pending=()
     local i host file
 

@@ -734,18 +734,37 @@ Three names, one per service, all resolving publicly to the server's external IP
 
 | Variable | Example | Serves |
 |---|---|---|
-| `KEYCLOAK_HOST` | `keycloak-ohs-player.example.org` | Sign-in and token issuance |
-| `WEB_HOST` | `web-ohs-player.example.org` | The Portal, and its FHIR and API calls |
-| `GATEWAY_HOST` | `gateway-ohs-player.example.org` | The Client App, other native clients, debugging |
+| `KEYCLOAK_HOST` | `keycloak.example.org` | Sign-in and token issuance |
+| `WEB_HOST` | `web.example.org` | The Portal, and its FHIR and API calls |
+| `GATEWAY_HOST` | `gateway.example.org` | The Client App, other native clients, debugging |
 
 Set those in `.env`, then bring the browser-facing values into line:
 
 ```dotenv
-KEYCLOAK_PUBLIC_URL=https://keycloak-ohs-player.example.org
-OHS_PLAYER_APP_HOST=web-ohs-player.example.org
-VITE_FHIR_BASE_URL=https://web-ohs-player.example.org/fhir
+OHS_PLAYER_APP_HOST=web.example.org
 CERTBOT_EMAIL=ops@example.org
+BIND_ADDR=127.0.0.1
+COMPOSE_FILE=docker-compose.yaml:docker-compose.server.yml
 ```
+
+`COMPOSE_FILE` makes every `docker compose` call load `docker-compose.server.yml` alongside
+the base file, `./dev.sh up` included. That override is what makes the stack server-shaped:
+
+| It sets | Why |
+|---|---|
+| `KC_HOSTNAME=https://$KEYCLOAK_HOST` | Otherwise Keycloak keeps advertising `KEYCLOAK_PUBLIC_URL`, and the admin console redirects to `http://keycloak.localhost:8081` |
+| `KC_PROXY_HEADERS=xforwarded` | So Keycloak builds URLs from the proxy's forwarded headers rather than its container address |
+| `TOKEN_ISSUER=https://$KEYCLOAK_HOST/realms/ohs-player` | Must match the `iss` Keycloak mints, character for character |
+| `extra_hosts` on the gateway | A container cannot route to its own machine's external IP, so the public Keycloak name is mapped to the docker host and discovery goes out to nginx and back |
+| The SPA's build args | Built against `WEB_HOST` and `KEYCLOAK_HOST` rather than localhost |
+
+`BIND_ADDR` lives in the base file rather than the override because compose **appends** port
+lists across files instead of replacing them, so an override cannot take a public binding
+away. Setting it to `127.0.0.1` moves every published port to loopback and leaves nginx the
+only public listener.
+
+`OHS_PLAYER_APP_HOST` is the one value the override cannot supply. It is substituted into
+the realm at render time rather than read by compose, so set it by hand.
 
 `VITE_FHIR_BASE_URL` names `WEB_HOST`, not `GATEWAY_HOST`. The web image's own nginx
 forwards `/fhir` and `/api/` to the gateway over the compose network, so the browser only
