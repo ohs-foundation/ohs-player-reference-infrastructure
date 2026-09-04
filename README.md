@@ -10,8 +10,6 @@ set. Everything you set up afterwards points at what this creates.
 
 Full guide: [Set up the environment](https://ohs-foundation.github.io/ohs-docs/components/reference-infrastructure/).
 
----
-
 ## Before you begin
 
 Install these on your machine:
@@ -109,8 +107,6 @@ stops with an install command for whatever is missing.
 `hapi-fhir/health/Healthcheck.java`. The compiled `.class` file is committed, so a fresh
 clone works without one. See [HAPI FHIR healthcheck](#hapi-fhir-healthcheck).
 
----
-
 ## Bring it up
 
 ```bash
@@ -131,8 +127,6 @@ reuse what is already there.
 Identity and the FHIR server both take appreciably longer to become ready than the
 database does. Allow up to ninety seconds for Keycloak and up to three minutes for HAPI
 FHIR on a first run.
-
----
 
 ## What comes up
 
@@ -185,8 +179,6 @@ health endpoints on a separate management port that this stack does not publish,
 container's own healthcheck probes that port internally, which is what `docker compose ps`
 reports.
 
----
-
 ## Choose an authentication mode
 
 The FHIR server can run open, or validate tokens issued by identity. One value in `.env`
@@ -211,8 +203,6 @@ No compose file is edited — the HAPI volume mount reads the variable directly.
 When switching **into** auth mode, check that `HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET` in
 `.env` matches the secret on the `hapi-fhir-server-client` client in the `ohs-player`
 realm.
-
----
 
 ## Managing the stack
 
@@ -242,8 +232,6 @@ A few everyday tasks:
 docker compose restart hapi-fhir
 ```
 
----
-
 ## Expected result
 
 Five services running, and the three values every other component needs:
@@ -254,14 +242,10 @@ Five services running, and the three values every other component needs:
 | Gateway URL | `http://localhost:8083` |
 | Identity issuer | `http://keycloak.localhost:8081/realms/ohs-player` |
 
----
-
 ## Next step
 
 Set up the backend, which loads the Player endpoints and access rules into the gateway.
 The Web Portal and the Client App both depend on it.
-
----
 
 ## Beyond the core stack
 
@@ -319,8 +303,8 @@ Postgres. Superset then charts those tables.
 
 `PIPELINE_FHIR_SOURCE` in `.env` selects which FHIR server the pipeline reads. It points
 at the transactional server, so the pipeline reports on the same records the Portal
-writes. It reads anonymously, which `HAPI_CONFIG=application-auth.yaml` does not allow —
-see [SYNTH-STACK.md](SYNTH-STACK.md).
+writes. It reads anonymously, which `HAPI_CONFIG=application-auth.yaml` does not allow, so the
+pipeline collects nothing in that mode until it is given a service account of its own.
 
 ### Same-origin proxy
 
@@ -392,8 +376,6 @@ service's Docker network alias, which is why nothing is needed on the container 
 The templates under `nginx/host/` document the alternative layout, one hostname per
 service, for an nginx running on the host rather than the bundled container. See
 [Running on a server](#running-on-a-server).
-
----
 
 ## Sample data
 
@@ -815,8 +797,6 @@ The vhosts redirect port 80 to 443 and keep serving `/.well-known/acme-challenge
   debugging.
 - **Change the sample credentials**, including Superset's `admin` / `admin`.
 
----
-
 ## Reference
 
 ### How `dev.sh` works
@@ -1075,8 +1055,6 @@ ohs-player-reference-infrastructure/
 └── README.md
 ```
 
----
-
 ## Troubleshooting
 
 **Keycloak fails to start with a database error.** Postgres is still initialising. Wait
@@ -1114,14 +1092,3 @@ keg-only trap: `brew install gettext` alone is not enough, you also need
 
 **`.env.example not found`.** The repository is missing its template. Re-clone, or restore
 the file from version control.
-
----
-
-## Not covered here
-
-- **Public demo deployment** — VM provisioning, a periodic reset job, and a public landing
-  page.
-- **Web Portal dev mode** — whether the Portal runs in-container with hot reload, or on the
-  host against a backend-only compose, is still an open decision.
-
-Outstanding work on the stack itself is recorded in [KNOWN-GAPS.md](KNOWN-GAPS.md).
