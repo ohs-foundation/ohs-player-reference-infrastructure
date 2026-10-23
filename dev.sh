@@ -319,12 +319,15 @@ report_container_changes() {
     return 0
 }
 
-# True when the named profile was selected, either directly or through --full.
+# True when the named profile was selected, directly or by --full.
 profile_active() {
     local want="$1" arg
     for arg in ${PROFILE_ARGS[@]+"${PROFILE_ARGS[@]}"}; do
         case "$arg" in
-            "$want"|full) return 0 ;;
+            "$want") return 0 ;;
+            # --full covers the analytics profile but deliberately not proxy,
+            # which is a different way in rather than another service to add.
+            full) [[ "$want" == "pipes" ]] && return 0 ;;
         esac
     done
     return 1
@@ -335,7 +338,14 @@ profile_active() {
 # noise. A first run is the opposite, so let it print.
 build_is_incremental() {
     docker image inspect ohs-fhir-gateway:local >/dev/null 2>&1 \
-        && docker image inspect ohs-player-web:local >/dev/null 2>&1
+        && docker image inspect ohs-player-web:local >/dev/null 2>&1 \
+        || return 1
+    # Superset is built too, but only the pipes profile ever needs it, so a
+    # core-only run should not go verbose over an image it will not build.
+    if profile_active pipes; then
+        docker image inspect ohs-superset:local >/dev/null 2>&1 || return 1
+    fi
+    return 0
 }
 
 # --- HAPI healthcheck binary -------------------------------------------------
@@ -383,15 +393,12 @@ parse_profiles() {
     SEED=auto
     for arg in "$@"; do
         case "$arg" in
-            # The web portal is part of the default set; --web is kept so existing
-            # commands and docs keep working, and selects nothing.
-            --web)   ;;
             --seed)    SEED=1 ;;
             --no-seed) SEED=0 ;;
             --pipes) PROFILE_ARGS+=(--profile pipes) ;;
             --proxy) PROFILE_ARGS+=(--profile proxy) ;;
             --full)  PROFILE_ARGS+=(--profile full)  ;;
-            *)       error "Unknown flag: $arg (expected --web, --seed, --no-seed, --pipes, --proxy, or --full)" ;;
+            *)       error "Unknown flag: $arg (expected --seed, --no-seed, --pipes, --proxy, or --full)" ;;
         esac
     done
 }
@@ -474,6 +481,81 @@ maybe_seed() {
 #
 # Read from the realm template rather than hardcoded here, so this stays correct
 # if the roster changes.
+# The analytics tables only exist once the pipeline has run, and its schedule is
+# hourly, so a fresh stack would otherwise come up with a dashboard that has
+# nothing to read. An incremental run cannot build them from nothing either, so
+# the first one has to be FULL. Skipped once any table exists, which leaves a
+# populated warehouse alone.
+maybe_run_pipeline() {
+    profile_active pipes || return 0
+
+    local count
+    count="$(docker exec ohs-postgres-analytics psql -U postgres -d analytics -tAc \
+        "select count(*) from information_schema.tables where table_schema='public';" \
+        2>/dev/null | tr -d '[:space:]')" || count=""
+    [[ "$count" =~ ^[0-9]+$ ]] || return 0
+    (( count == 0 )) || return 0
+
+    info "Analytics warehouse is empty. Running the pipeline so the dashboard has data..."
+
+    local net i code
+    net="$(compose_network)"
+    for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+        docker run --rm --network "$net" "${CURL_IMG:-curlimages/curl:latest}" \
+            -s -o /dev/null -f "http://pipeline-controller:8080/" 2>/dev/null && break
+        sleep 4
+    done
+
+    code="$(docker run --rm --network "$net" "${CURL_IMG:-curlimages/curl:latest}" \
+        -s -o /dev/null -w '%{http_code}' -X POST \
+        "http://pipeline-controller:8080/run?runMode=FULL" 2>/dev/null)" || code=000
+    if [[ ! "$code" =~ ^2 ]]; then
+        warn "Could not start the analytics pipeline (HTTP $code). Start a FULL run from"
+        warn "http://localhost:${PIPELINE_PORT:-8090}, then re-run './dev.sh up --pipes'."
+        return 0
+    fi
+
+    # Poll for the tables rather than the controller's status, because the tables
+    # are what the datasets are built from.
+    for i in $(seq 1 45); do
+        count="$(docker exec ohs-postgres-analytics psql -U postgres -d analytics -tAc \
+            "select count(*) from information_schema.tables where table_schema='public';" \
+            2>/dev/null | tr -d '[:space:]')" || count=0
+        [[ "$count" =~ ^[0-9]+$ ]] && (( count > 0 )) && {
+            info "Pipeline finished. $count analytics table(s) written."
+            return 0
+        }
+        sleep 4
+    done
+    warn "The pipeline did not produce any tables in time. Check http://localhost:${PIPELINE_PORT:-8090}."
+}
+
+# Superset charts datasets, not database connections. The container registers
+# the connection at start-up, but the datasets have to be created against a
+# built app context, so this runs after `up` rather than in the compose command.
+maybe_register_superset() {
+    profile_active pipes || return 0
+    local script="$SCRIPT_DIR/superset/register-datasets.sh"
+    [[ -x "$script" ]] || return 0
+
+    # Superset takes a while past `Started` before its CLI will run.
+    local i
+    for i in 1 2 3 4 5 6 7 8 9 10; do
+        docker exec ohs-superset true >/dev/null 2>&1 && break
+        sleep 3
+    done
+
+    # Datasets first. The dashboard's chart links to one by UUID, and that UUID is
+    # generated when the dataset is created, so there is nothing to point at until
+    # this has run.
+    "$script" || warn "Could not register the Superset datasets. Run superset/register-datasets.sh to retry."
+
+    local dash="$SCRIPT_DIR/superset/import-dashboard.sh"
+    if [[ -x "$dash" ]]; then
+        "$dash" || warn "Could not import the Superset dashboard. Run superset/import-dashboard.sh to retry."
+    fi
+}
+
 print_login_details() {
     local realm="$SCRIPT_DIR/keycloak/ohs-player-realm.json.example"
     [[ -f "$realm" ]] || return 0
@@ -566,20 +648,22 @@ cmd_up() {
 
     report_container_changes "$before"
     maybe_seed
+    maybe_run_pipeline
+    maybe_register_superset
     print_login_details
 }
 
 cmd_down() {
     check_prerequisites
     info "Stopping stack..."
-    compose --profile web --profile pipes --profile proxy --profile full down
+    compose --profile pipes --profile proxy --profile full down
 }
 
 cmd_reset() {
     check_prerequisites
     warn "This will stop all services and delete named volumes (postgres data will be lost)."
     info "Stopping stack and removing volumes..."
-    compose --profile web --profile pipes --profile proxy --profile full down --volumes
+    compose --profile pipes --profile proxy --profile full down --volumes
     info "Reset complete. Run './dev.sh up' to start fresh."
 }
 
@@ -751,14 +835,17 @@ usage() {
 Usage: $0 <command> [options]
 
 Commands:
-  up [--pipes|--proxy|--full]
+  up [--pipes|--full] [--proxy] [--seed|--no-seed]
                               Render configs and start services
-                              (no flag = postgres, keycloak, hapi-fhir,
-                               fhir-gateway and the web portal)
+                              (no flag = postgres, keycloak, hapi-fhir, fhir-gateway and the web portal)
                               --pipes  adds the analytics pipeline + Superset
-                              --proxy  adds the same-origin nginx front
+                              --full   the default services plus services started by --pipes
+                              --proxy  puts nginx in front and serves the whole
+                                       stack from one origin. Stands alone and
+                                       is NOT part of --full
                               --seed     force-load the sample FHIR data
                               --no-seed  never load it
+                              Flags combine, e.g. up --full --proxy
   down                        Stop all running services
   reset                       Stop services and wipe named volumes
   logs [service]              Tail logs (all services or one)

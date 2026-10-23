@@ -1,0 +1,74 @@
+dashboard_title: OHS Player Analytics
+description: Seeded reference data as flattened by the pipeline
+css: ''
+slug: null
+certified_by: null
+certification_details: null
+published: true
+uuid: 9a928b6e-8a3f-4cbd-8dd6-80d4e3e43eb6
+position:
+  {
+    "DASHBOARD_VERSION_KEY": "v2",
+    "ROOT_ID": {
+      "type": "ROOT",
+      "id": "ROOT_ID",
+      "children": [
+        "GRID_ID"
+      ]
+    },
+    "GRID_ID": {
+      "type": "GRID",
+      "id": "GRID_ID",
+      "children": [
+        "ROW-1"
+      ],
+      "parents": [
+        "ROOT_ID"
+      ]
+    },
+    "HEADER_ID": {
+      "type": "HEADER",
+      "id": "HEADER_ID",
+      "meta": {
+        "text": "OHS Player Analytics"
+      }
+    },
+    "ROW-1": {
+      "type": "ROW",
+      "id": "ROW-1",
+      "children": [
+        "CHART-1"
+      ],
+      "parents": [
+        "ROOT_ID",
+        "GRID_ID"
+      ],
+      "meta": {
+        "background": "BACKGROUND_TRANSPARENT"
+      }
+    },
+    "CHART-1": {
+      "type": "CHART",
+      "id": "CHART-1",
+      "children": [],
+      "parents": [
+        "ROOT_ID",
+        "GRID_ID",
+        "ROW-1"
+      ],
+      "meta": {
+        "uuid": "a305bd07-b9d5-4a0a-88a8-c414f55fb8ed",
+        "width": 8,
+        "height": 60,
+        "chartId": 0,
+        "sliceName": "Locations"
+      }
+    }
+  }
+metadata:
+  color_scheme: null
+  refresh_frequency: 0
+  expanded_slices: {}
+  timed_refresh_immune_slices: []
+  default_filters: '{}'
+version: 1.0.0

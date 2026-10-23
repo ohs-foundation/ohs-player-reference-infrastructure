@@ -21,7 +21,7 @@ Install these on your machine:
 | **Bash 4 or newer** | Runs `dev.sh` |
 
 That is the whole list. Secrets are generated from `/dev/urandom`, which every supported
-platform already provides — there is nothing to install for it.
+platform already provides - there is nothing to install for it.
 
 ### Installing them
 
@@ -67,7 +67,7 @@ brew install bash
 
 #### Windows
 
-Do not run these scripts from `cmd.exe` or PowerShell — they are Bash scripts and
+Do not run these scripts from `cmd.exe` or PowerShell - they are Bash scripts and
 `envsubst` has no native Windows build worth using.
 
 1. Install [WSL](https://learn.microsoft.com/en-us/windows/wsl/install):
@@ -141,7 +141,7 @@ FHIR on a first run.
 Every port is overridable in `.env`.
 
 > The upstream setup guide describes four services. This repository starts the Web Portal
-> as well, so the first build also compiles the SPA — several minutes on a cold cache.
+> as well, so the first build also compiles the SPA - several minutes on a cold cache.
 
 **Clients never reach the FHIR server directly.** Everything routes through the gateway,
 which is why bringing up the gateway is part of standing up the environment rather than a
@@ -198,7 +198,7 @@ To switch:
 1. Edit `HAPI_CONFIG` in `.env`.
 2. Run `./dev.sh up` again.
 
-No compose file is edited — the HAPI volume mount reads the variable directly.
+No compose file is edited - the HAPI volume mount reads the variable directly.
 
 When switching **into** auth mode, check that `HAPI_FHIR_SERVER_KEYCLOAK_CLIENT_SECRET` in
 `.env` matches the secret on the `hapi-fhir-server-client` client in the `ohs-player`
@@ -213,6 +213,7 @@ realm.
 | `./dev.sh reset` | Stop services and wipe the volumes |
 | `./dev.sh logs [service]` | Tail logs for everything, or one service |
 | `./dev.sh render` | Regenerate service configuration from `.env` |
+| `./dev.sh seed` | Load the sample FHIR data against a running stack |
 | `./dev.sh clean` | Remove generated files |
 | `./dev.sh nginx` | Install the host vhosts and take TLS certificates (server only) |
 | `./dev.sh help` | Show usage |
@@ -260,15 +261,19 @@ Everything else is opt-in behind a flag:
 
 | Command | Adds |
 |---|---|
-| `./dev.sh up` | Nothing — the five default services |
+| `./dev.sh up` | Nothing - the five default services |
 | `./dev.sh up --pipes` | FHIR Data Pipes and Superset |
+| `./dev.sh up --full` | The default services plus --pipes |
 | `./dev.sh up --proxy` | A same-origin nginx front |
-| `./dev.sh up --full` | Everything |
 
-Flags combine: `./dev.sh up --pipes --proxy`.
+`--proxy` is deliberately outside `--full`. It is not another service to add but a
+different way to reach the ones already running, so bringing it up alongside the published
+ports would serve the same stack twice on two origins. Ask for it explicitly.
 
-`--web` is still accepted so existing commands keep working, but it now selects nothing —
-the Web Portal is always started.
+Flags combine: `./dev.sh up --full --proxy`.
+
+`--full` selects the same services as `--pipes` today, since the analytics profile is the
+only one it covers. It stays as the name to reach for when more are added.
 
 Ports for the optional services:
 
@@ -279,13 +284,18 @@ Ports for the optional services:
 | Pipeline controller | `--pipes` | `8090` | `PIPELINE_PORT` |
 | Superset | `--pipes` | `8088` | `SUPERSET_PORT` |
 
+On a server each of those can also take a public hostname, `PIPELINE_HOST` and
+`SUPERSET_HOST`, which render a vhost apiece under `nginx/host/`. Both are empty by
+default, so nothing is published or certificated for a stack that never runs `--pipes`.
+Read the header of each vhost first. The pipeline controller has no login of its own.
+
 ### Web Portal
 
 Starts by default. Builds the SPA from source and serves it at <http://localhost:8084>.
 
 The first build clones the web portal repository and runs a full `pnpm` install and
 build, so it takes several minutes. The browser-facing values are baked into the bundle at
-build time, which is why changing any `VITE_*` value in `.env` requires a rebuild —
+build time, which is why changing any `VITE_*` value in `.env` requires a rebuild -
 `./dev.sh up` does that for you.
 
 ### Analytics
@@ -299,7 +309,7 @@ Postgres. Superset then charts those tables.
 | What | Where |
 |---|---|
 | Pipeline control panel | <http://localhost:8090> |
-| Superset | <http://localhost:8088> — log in with `admin` / `admin` |
+| Superset | <http://localhost:8088> - log in with `admin` / `admin` |
 
 `PIPELINE_FHIR_SOURCE` in `.env` selects which FHIR server the pipeline reads. It points
 at the transactional server, so the pipeline reports on the same records the Portal
@@ -325,7 +335,7 @@ VITE_FHIR_BASE_URL=http://ohs-player.localhost/fhir
 ```
 
 `VITE_FHIR_BASE_URL` changes with them because it carries an origin. It has to be absolute
-— the Portal derives the base for its `/api/*` calls by stripping a trailing `/fhir`, and a
+- the Portal derives the base for its `/api/*` calls by stripping a trailing `/fhir`, and a
 bare `/fhir` strips to nothing, which sends every custom endpoint to `/fhir/api/...` and
 earns a 403 from the gateway. It must also name the origin serving the SPA rather than the
 gateway, so those calls stay same-origin.
@@ -354,7 +364,7 @@ Reset first:
 ./dev.sh up --proxy
 ```
 
-The import strategy is deliberately not `OVERWRITE_EXISTING` — that would discard
+The import strategy is deliberately not `OVERWRITE_EXISTING` - that would discard
 admin-console realm changes on every single start.
 
 #### Notes on the proxy
@@ -370,7 +380,7 @@ For a hostname other than `*.localhost`, set `PUBLIC_HOST` and add a matching li
 127.0.0.1  ohs-player.local
 ```
 
-Containers do not read your `/etc/hosts` — they resolve `PUBLIC_HOST` through the nginx
+Containers do not read your `/etc/hosts` - they resolve `PUBLIC_HOST` through the nginx
 service's Docker network alias, which is why nothing is needed on the container side.
 
 The templates under `nginx/host/` document the alternative layout, one hostname per
@@ -384,7 +394,7 @@ Portal and the location endpoints have something to show:
 
 `./dev.sh up` loads it automatically the first time, so the Portal's lists are never
 blank on a fresh install. It checks for one known resource before doing anything, and
-leaves the server alone if it is already there — a later `up` never overwrites what you
+leaves the server alone if it is already there - a later `up` never overwrites what you
 have created or edited.
 
 ```bash
@@ -430,7 +440,7 @@ that user's Keycloak id, which is how the backend resolves a caller to their own
 Without it, `GET /api/practitioner-details` returns nothing for a signed-in user.
 
 These are sample credentials. Change them for anything beyond development, staging or
-testing — see [Secrets and exposure](#secrets-and-exposure).
+testing - see [Secrets and exposure](#secrets-and-exposure).
 
 Everything is written with `PUT` at fixed ids, so re-running upserts rather than
 duplicating. Writes go straight to HAPI rather than through the gateway, so seeding does
@@ -457,11 +467,11 @@ knowing which is which before you wonder why a request was refused.
 Granting one does nothing for the others. A user with `admin` and `users.manage` can
 administer the Portal and still be refused every FHIR read.
 
-### FHIR access — `<VERB>_<RESOURCE>`
+### FHIR access - `<VERB>_<RESOURCE>`
 
 `ACCESS_CHECKER=ohs_player_access` makes the gateway require one role per HTTP verb and
 FHIR resource type. Reading Encounters needs `GET_ENCOUNTER`; writing Patients needs
-`PUT_PATIENT`. The check is literal — the checker builds the name it wants by joining the
+`PUT_PATIENT`. The check is literal - the checker builds the name it wants by joining the
 verb and the upper-cased resource type.
 
 For a Bundle, **every entry** must be individually authorized or the whole Bundle is
@@ -478,9 +488,9 @@ The realm defines 99 of these, covering 30 resource types:
 | `DELETE` | **0** |
 
 > There are no `DELETE_*` roles. Deletion cannot be granted through this realm as it
-> stands — add the roles you need if you want it.
+> stands - add the roles you need if you want it.
 
-### Backend endpoints — `resource.level`
+### Backend endpoints - `resource.level`
 
 The backend's `/api/*` servlets use a three-level hierarchy per resource, where a higher
 level satisfies every lower check: **manage ⊇ edit ⊇ view**.
@@ -499,7 +509,7 @@ level satisfies every lower check: **manage ⊇ edit ⊇ view**.
 | `location-hierarchy.view` | `GET /api/location-hierarchy/{rootId}` |
 
 The hierarchy is resolved in the backend's code, not through Keycloak composite roles, so
-assigning `users.manage` alone would be enough — `users.edit` and `users.view` add nothing
+assigning `users.manage` alone would be enough - `users.edit` and `users.view` add nothing
 on top of it. Super User is nonetheless given all ten, so that what a token carries matches
 what the group is meant to be able to do without relying on the backend to infer it.
 
@@ -519,7 +529,7 @@ Users get roles by group membership. What each group carries:
 | Group | FHIR roles | Backend roles | Portal |
 |---|---|---|---|
 | **Super User** | 99 | all ten | `admin`, `care-team-manager` |
-| **Practitioner** | 72 | `location-hierarchy.view`, `practitioner-details.view` | — |
+| **Practitioner** | 72 | `location-hierarchy.view`, `practitioner-details.view` | - |
 
 Super User holds every role the realm defines, all 116 of them. Practitioner holds the two
 read-only backend roles, which is what lets it open the location tree and read a
@@ -527,7 +537,7 @@ practitioner record; the other eight administer users, groups and imports and ar
 health worker's to hold.
 
 Each group has exactly one member: `admin-user` in Super User, `practitioner-user` in
-Practitioner. The three service accounts belong to no group, which is correct — they
+Practitioner. The three service accounts belong to no group, which is correct - they
 authenticate machine-to-machine and never make FHIR requests on a person's behalf.
 
 ### Where a refusal comes from
@@ -537,7 +547,7 @@ authenticate machine-to-machine and never make FHIR requests on a person's behal
 | `401` on any request | No token, or an expired or malformed one |
 | `403` from `/fhir/*` | Missing the `<VERB>_<RESOURCE>` role for that exact call |
 | `403` from `/api/*` | Missing the `resource.level` role |
-| `500` from every `/fhir/*` request | Not a role problem — `ACCESS_CHECKER` names a checker the gateway does not register. See [Troubleshooting](#troubleshooting) |
+| `500` from every `/fhir/*` request | Not a role problem - `ACCESS_CHECKER` names a checker the gateway does not register. See [Troubleshooting](#troubleshooting) |
 | Portal hides a screen | Missing `admin` or `care-team-manager` |
 
 ### Legacy roles
@@ -553,7 +563,7 @@ Prefer `users.view` / `users.edit` / `users.manage` for anything new.
 ## Secrets and exposure
 
 `./dev.sh up` generates a unique random value for every `[generated]` marker in `.env`, so
-no two installs share a password. Three things it does **not** cover are listed below —
+no two installs share a password. Three things it does **not** cover are listed below -
 read this before putting the stack anywhere other people can reach.
 
 ### What is generated for you
@@ -577,7 +587,7 @@ Eight values, each 24 random bytes from `/dev/urandom`, written into `.env` on f
 
 **1. Superset's login is `admin` / `admin`.**
 
-This one is not in `.env` at all — it is written into `docker-compose.yaml`'s Superset
+This one is not in `.env` at all - it is written into `docker-compose.yaml`'s Superset
 start-up command, so nothing randomises it. Superset publishes on **all interfaces** on
 port `8088`, which means on any networked machine that dashboard is one guess away.
 
@@ -592,7 +602,7 @@ docker compose exec superset superset fab reset-password \
 
 The password is generated, but the username is predictable. Change `KEYCLOAK_ADMIN_USERNAME`
 in `.env` before the first start, or create a new admin account and delete `admin`
-afterwards — Keycloak only reads the bootstrap credentials when the realm database is
+afterwards - Keycloak only reads the bootstrap credentials when the realm database is
 empty.
 
 **3. The Postgres superuser is `postgres`.**
@@ -615,7 +625,7 @@ interfaces**:
 | Superset | `8088` | All interfaces |
 
 > **Two defaults combine badly.** `HAPI_CONFIG=application-no-auth.yaml` is the default, and
-> HAPI FHIR publishes on all interfaces — so on a networked machine the FHIR server accepts
+> HAPI FHIR publishes on all interfaces - so on a networked machine the FHIR server accepts
 > unauthenticated reads and writes directly on `8082`, bypassing the gateway entirely.
 > That is fine on a laptop and wrong anywhere else. Switch to `application-auth.yaml`, or
 > keep the machine off untrusted networks.
@@ -641,7 +651,7 @@ The blunt alternative, on a machine with nothing worth keeping:
 ./dev.sh reset && ./dev.sh up
 ```
 
-That wipes every volume and regenerates the lot from a clean slate — realm, users, and all
+That wipes every volume and regenerates the lot from a clean slate - realm, users, and all
 FHIR data included.
 
 ### Before any shared or public deployment
@@ -651,7 +661,7 @@ FHIR data included.
 - Switch `HAPI_CONFIG` to `application-auth.yaml`.
 - Keep `RUN_MODE=PROD` and a real `ACCESS_CHECKER`. `RUN_MODE=DEV` with
   `ACCESS_CHECKER=permissive` disables FHIR access control completely.
-- Put the stack behind TLS — see [Running on a server](#running-on-a-server).
+- Put the stack behind TLS - see [Running on a server](#running-on-a-server).
 - Treat `.env` as a credential file: `chmod 600`, never in version control, never in an
   image layer.
 
@@ -766,7 +776,7 @@ puts a temporary port 80 one in place for each name that still needs a certifica
 certbot, then installs the real vhost.
 
 That order is the whole point. Each rendered vhost names the certificate files it will use,
-and nginx refuses to load a vhost whose certificate is missing — so installing them first
+and nginx refuses to load a vhost whose certificate is missing - so installing them first
 would leave certbot unable to obtain the very certificate they need. Setting `CERTBOT_EMAIL`
 runs certbot unattended; leaving it empty makes certbot prompt.
 
@@ -837,7 +847,7 @@ these steps into your own automation, or you simply want to see exactly what hap
 
 Run all of these from the repository root.
 
-#### Step 1 — create your `.env`
+#### Step 1 - create your `.env`
 
 ```bash
 cp .env.example .env
@@ -847,7 +857,7 @@ chmod 600 .env
 `docker compose` reads `.env` from the project directory automatically, which is why none
 of the commands below pass `--env-file`.
 
-#### Step 2 — fill in the eight secrets
+#### Step 2 - fill in the eight secrets
 
 `.env` ships with the literal placeholder `[generated]` on eight settings:
 
@@ -891,7 +901,7 @@ grep -cE '^[A-Z_]+=$' .env                 # accidentally blank values
 > will accept an empty password, leaving you with a database whose credentials are nothing
 > at all.
 
-#### Step 3 — render the four config templates
+#### Step 3 - render the four config templates
 
 The services read plain config files, not templates. Each is produced with `envsubst`
 given an **explicit list of variables**. The list matters: it is what stops `envsubst`
@@ -934,7 +944,7 @@ envsubst '${WEB_HOST} ${OHS_PLAYER_WEB_PORT}' \
 The vhost allow-lists carry only a hostname and a port, which is what keeps nginx's own
 `$host`, `$scheme` and `$http_origin` from being substituted away.
 
-Check the realm rendered cleanly — this should print `0`:
+Check the realm rendered cleanly - this should print `0`:
 
 ```bash
 grep -c '\${[A-Z_]*}' keycloak/ohs-player-realm.json
@@ -944,10 +954,10 @@ All four outputs contain secrets and are gitignored. Never commit them.
 
 > The realm name and the application client id are fixed at `ohs-player` and
 > `ohs-player-client`. They are written literally into the template rather than rendered,
-> so there is no variable to keep in step — and no way for the realm file, the compose
+> so there is no variable to keep in step - and no way for the realm file, the compose
 > issuer and the SPA bundle to disagree about them.
 
-#### Step 4 — the HAPI healthcheck
+#### Step 4 - the HAPI healthcheck
 
 `hapi-fhir/health/Healthcheck.class` is committed, so there is nothing to build. Only if
 you edited the `.java` source:
@@ -956,7 +966,7 @@ you edited the `.java` source:
 cd hapi-fhir/health && javac Healthcheck.java && cd ../..
 ```
 
-#### Step 5 — start the stack
+#### Step 5 - start the stack
 
 ```bash
 docker compose pull --ignore-buildable
@@ -966,13 +976,12 @@ docker compose ps
 
 `--ignore-buildable` matters: the gateway and the web portal are built from source and
 exist in no registry, so a plain `docker compose pull` exits non-zero on them. `--build`
-matters because `up -d` alone only builds an image when it is *absent* — without it, a
+matters because `up -d` alone only builds an image when it is *absent* - without it, a
 changed `.env` value never reaches an already-built SPA bundle.
 
 To include optional services, add profiles:
 
 ```bash
-docker compose --profile web up -d --build         # + Web Portal
 docker compose --profile pipes up -d --build       # + Data Pipes and Superset
 docker compose --profile proxy up -d --build       # + nginx front (and the Web Portal)
 docker compose --profile full up -d --build        # everything
@@ -985,10 +994,10 @@ running:
 
 ```bash
 # stop, keeping data
-docker compose --profile web --profile pipes --profile proxy --profile full down
+docker compose --profile pipes --profile proxy --profile full down
 
-# stop and delete all volumes — destroys the realm and every FHIR resource
-docker compose --profile web --profile pipes --profile proxy --profile full down --volumes
+# stop and delete all volumes - destroys the realm and every FHIR resource
+docker compose --profile pipes --profile proxy --profile full down --volumes
 ```
 
 #### Command equivalents
@@ -1001,7 +1010,7 @@ docker compose --profile web --profile pipes --profile proxy --profile full down
 | `./dev.sh logs [service]` | `docker compose logs -f [service]` |
 | `./dev.sh render` | Step 3 |
 | `./dev.sh clean` | `rm -f .env keycloak/ohs-player-realm.json hapi-fhir/application-*.yaml data-pipes/config/postgres-analytics.json nginx/host/*.conf` |
-| `./dev.sh nginx` | No short equivalent — it is a two-phase certbot bootstrap, see [Running on a server](#running-on-a-server) |
+| `./dev.sh nginx` | No short equivalent - it is a two-phase certbot bootstrap, see [Running on a server](#running-on-a-server) |
 
 After `clean`, remember that any existing Postgres volume still holds roles created from
 the **old** secrets. Regenerating `.env` without also removing the volumes gives you a
@@ -1015,7 +1024,7 @@ with the JRE already inside the container.
 
 | File | Purpose |
 |---|---|
-| `hapi-fhir/health/Healthcheck.java` | Source — readable and reviewable |
+| `hapi-fhir/health/Healthcheck.java` | Source - readable and reviewable |
 | `hapi-fhir/health/Healthcheck.class` | Compiled bytecode, mounted into the container |
 
 Both are committed so a fresh clone works without a JDK. `dev.sh` recompiles the `.class`
@@ -1036,20 +1045,31 @@ ohs-player-reference-infrastructure/
 │   └── health/                        # container healthcheck source + class
 ├── postgres/
 │   └── init/01-init.sh                # runs once, on volume creation
-├── data-pipes/                        # ViewDefinitions and pipeline config
+├── data-pipes/
+│   └── config/                        # ViewDefinitions, pipeline and Flink config
+├── superset/                          # analytics dashboard (--pipes)
+│   ├── Dockerfile                     # base image plus a PostgreSQL driver
+│   ├── superset_config.py             # metadata store and proxy settings
+│   ├── register-datasets.sh           # one dataset per pipeline table
+│   ├── import-dashboard.sh            # imports the predefined dashboard
+│   └── dashboard/                     # that dashboard, as reviewable YAML
 ├── seed/
 │   ├── fhir-seed.json                 # organisation and location hierarchy
-│   └── seed-fhir.sh                   # loads it, and links realm users
+│   ├── seed-fhir.sh                   # loads it, and links realm users
+│   └── backfill-practitioners.sh      # Practitioners for realm users lacking one
 ├── nginx/
 │   ├── spa.conf                       # inside the web image; proxies /fhir and /api
 │   ├── ohs-player.conf                # same-origin front (--proxy)
 │   └── host/                          # one vhost per subdomain, for a server
 │       ├── keycloak.conf.example
 │       ├── gateway.conf.example
-│       └── web.conf.example
+│       ├── web.conf.example
+│       ├── pipeline.conf.example
+│       └── superset.conf.example
 ├── Dockerfile                         # fhir-gateway + ohs-player plugin
 ├── Dockerfile.web                     # ohs-player-web SPA
 ├── docker-compose.yaml                # all services; extras behind profiles
+├── docker-compose.server.yml          # server overrides, loaded via COMPOSE_FILE
 ├── .env.example                       # every setting, documented
 ├── dev.sh                             # lifecycle entrypoint
 └── README.md
@@ -1086,7 +1106,7 @@ and, for `VITE_*`, into the SPA bundle. Re-run `./dev.sh up`.
 hostname. See [If the stack has already run once](#if-the-stack-has-already-run-once).
 
 **`envsubst is required but was not found on your PATH`, or `Cannot generate secrets`.** A prerequisite is missing.
-`dev.sh` prints the install command for your platform — see [Installing them](#installing-them). On macOS this is nearly always the Homebrew
+`dev.sh` prints the install command for your platform - see [Installing them](#installing-them). On macOS this is nearly always the Homebrew
 keg-only trap: `brew install gettext` alone is not enough, you also need
 `brew link --force gettext`.
 
