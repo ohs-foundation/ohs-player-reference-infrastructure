@@ -19,8 +19,8 @@
 #     --username admin --password '<a real one>'
 #
 # X-Forwarded-Proto is what stops Superset issuing http:// redirects from behind this TLS
-# terminator. Superset only reads it when ENABLE_PROXY_FIX is true in its config, so set that
-# too if links come back on the wrong scheme.
+# terminator. Superset only honours it when ENABLE_PROXY_FIX is on, so set
+# SUPERSET_ENABLE_PROXY_FIX=true in .env alongside this vhost.
 #
 # No websocket handling here. It matters only for Superset's async query mode, which needs
 # Celery and Redis that this stack does not run.

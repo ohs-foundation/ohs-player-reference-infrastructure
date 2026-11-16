@@ -1,0 +1,21 @@
+# The importer validates the whole chain, database to dataset to chart, and drops
+# a chart whose dataset it cannot resolve. So this entry has to be here even
+# though dev.sh already created the connection.
+#
+# Both values are placeholders. import-dashboard.sh substitutes the UUID this
+# instance generated and the real connection string, because Superset keeps a
+# connection's password in its own encrypted column and importing a fake one
+# silently replaces the working credential.
+database_name: OHS Analytics
+sqlalchemy_uri: __ANALYTICS_URI__
+cache_timeout: null
+expose_in_sqllab: true
+allow_run_async: false
+allow_ctas: false
+allow_cvas: false
+allow_dml: false
+allow_file_upload: false
+extra:
+  allows_virtual_table_explore: true
+uuid: __DATABASE_UUID__
+version: 1.0.0
